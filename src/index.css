@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari */
+  }
+}
+
+/* ✅ Hide calendar icon visually but keep functionality */
+input[type="date"].custom-date-input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  cursor: pointer;
+  position: absolute;
+  right: 0;
+  height: 100%;
+  width: 100%;
+}
+
+/* ✅ Hide spin buttons in Chrome/Edge */
+input[type="date"].custom-date-input::-webkit-inner-spin-button {
+  display: none;
+  -webkit-appearance: none;
+}
+
+/* ✅ Firefox: remove default dropdown style */
+input[type="date"].custom-date-input {
+  -moz-appearance: textfield;
+}
+
+/* ✅ Optional: remove blue outline on focus */
+input[type="date"].custom-date-input:focus {
+  outline: none;
+  box-shadow: none;
+}

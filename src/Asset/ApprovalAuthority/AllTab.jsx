@@ -1,0 +1,138 @@
+import { Box } from "@mui/material";
+import axios from "axios";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import ApprovalTabs from "./Approvaltabs";
+import RawMaterial from "./RawMaterialTab";
+import FineGoodsTab from "./FineGoodsTab";
+import {MAIN_BASE } from "../../config/apiBase"
+const Tabs = () => {
+  const [userData, setUserData] = useState(null);
+  const navigate = useNavigate();
+  const [tabValue, setTabValue] = useState(0);
+  const userId = sessionStorage.getItem("userId");
+
+  const getToken = () => {
+    const token = sessionStorage.getItem("token");
+    return token;
+  };
+  const token = getToken();
+  console.log("Retrieved token:", token);
+
+  useEffect(() => {
+    const userId = sessionStorage.getItem("userId");
+    if (userId) {
+      const fetchUserData = async () => {
+        try {
+          console.log("Fetching data for userId:", userId);
+          const response = await axios.get(
+            `${MAIN_BASE}users/id_user/${userId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          console.log("API Response:", response);
+          if (response.data) {
+            const user = response.data;
+            console.log("User:", user);
+            setUserData(user);
+          } else {
+            console.log("No user data found");
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      };
+      fetchUserData();
+    }
+  }, [token, userId]);
+
+  useEffect(() => {
+    const verifyToken = async () => {
+      if (!token) {
+        navigate("/");
+        return;
+      }
+      try {
+        const response = await axios.post(
+          `${MAIN_BASE}users/verify-token`,
+          { token }
+        );
+        console.log("Token is valid:", response.data);
+        navigate("/AllTab");
+      } catch (error) {
+        console.error(
+          "Token verification failed:",
+          error.response ? error.response.data : error.message
+        );
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("tokenExpiry");
+        navigate("/");
+      }
+    };
+    verifyToken();
+  }, [token, navigate]);
+
+  return (
+    <div className="flex h-screen ">
+      <div className="w-full">
+        <Box>
+          <div className="flex justify-left font-bold  mt-1 border-gray-300">
+            <button
+              className={`px-6 py-2 text-14px font- relative focus:outline-none transition duration-300 rounded-t-md ${
+                tabValue === 0
+                  ? "bg-white text-blue-600 border-l border-t border-r border-gray-300"
+                  : "bg-gray-200 text-gray-600"
+              }`}
+              onClick={() => setTabValue(0)}
+            >
+                Movable
+            </button>
+            <button
+              className={`px-6 py-2 text-14px font- relative focus:outline-none transition duration-300 rounded-t-md ${
+                tabValue === 1
+                  ? "bg-white text-blue-600 border-l border-t border-r border-gray-300"
+                  : "bg-gray-200 text-gray-600"
+              }`}
+              onClick={() => setTabValue(1)}
+            >
+                Raw Material
+            </button>
+            <button
+              className={`px-6 py-2 text-14px font- relative focus:outline-none transition duration-300 rounded-t-md ${
+                tabValue === 2
+                  ? "bg-white text-blue-600 border-l border-t border-r border-gray-300"
+                  : "bg-gray-200 text-gray-600"
+              }`}
+              onClick={() => setTabValue(2)}
+            >
+                Fine Goods
+            </button>
+         
+          </div>
+
+          <div className="border-l border-r border-gray-300 h-full bg-white">
+            {tabValue === 0 && (
+              <div>
+                <ApprovalTabs />
+              </div>
+            )}
+             {tabValue === 1 && (
+              <div>
+                <RawMaterial />
+              </div>
+            )}   
+            {tabValue === 2 && (
+              <div>
+                <FineGoodsTab />
+              </div>
+            )}   
+          </div>
+        </Box>
+      </div>
+    </div>
+  );
+};
+export default Tabs;

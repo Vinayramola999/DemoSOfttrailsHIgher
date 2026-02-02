@@ -1,0 +1,457 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { TextField, MenuItem, Select, InputLabel, FormControl, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Modal, Box } from '@mui/material';
+import { FaHome } from 'react-icons/fa';
+import Sidebar from '../../Sidebar/HRMSidebar';
+import ProfileDropdown from '../../ProfileDropdown';
+import { useNavigate } from 'react-router-dom';
+import { DMS_BASE,JAVA_BASE, ASSET_NODE_BASE, UCS_BASE ,MAIN_BASE } from "../../config/apiBase"
+const Organization = () => {
+  const [userData, setUserData] = useState(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState('');
+  const [projectData, setProjectData] = useState([]);
+  const [openModal, setOpenModal] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedMaterial, setSelectedMaterial] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [uom, setUom] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const navigate = useNavigate();
+  const userId = sessionStorage.getItem('userId');
+  const token = sessionStorage.getItem('token');
+
+  const handleHome = () => {
+    navigate('/Cards');
+  };
+
+  const verifyToken = async () => {
+    if (!token) {
+      navigate('/');
+      return;
+    }
+    try {
+      const response = await axios.post(`${MAIN_BASE}users/verify-token`, { token: token });
+      console.log('Token is valid:', response.data);
+    } catch (error) {
+      console.error('Token verification failed:', error.response ? error.response.data : error.message);
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('tokenExpiry');
+      navigate('/');
+    }
+  };
+
+  useEffect(() => {
+    verifyToken();
+  }, [token]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get(`${MAIN_BASE}users/id_user/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUserData(response.data);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+
+    if (userId) {
+      fetchUserData();
+    }
+  }, [userId, token]);
+
+    // Fetch Categories on Component Mount
+useEffect(() => {
+  const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
+
+  axios.get(`${JAVA_BASE}api/categories/rawmaterials`, {
+    headers: {
+      Authorization: `Bearer ${token}`, // ✅ Token pass
+    },
+  })
+  .then((response) => {
+    setCategories(response.data); // Assuming response.data contains the category list
+  })
+  .catch((error) => {
+    console.error('Error fetching categories:', error);
+  });
+}, []);
+
+useEffect(() => {
+  const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
+
+  const fetchProjects = async () => {
+    try {
+      const response = await axios.get(`${JAVA_BASE}api/fine-goods/all`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ Token pass
+        },
+      });
+      setProjects(response.data);
+      setProjectData(response.data);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
+
+  fetchProjects();
+}, []);
+
+useEffect(() => {
+  const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
+
+  if (selectedCategory) {
+    axios.post(
+      `${ASSET_NODE_BASE}getColumnTypesAndData`,
+      { categoryName: selectedCategory },
+      {
+
+         params: { 
+          type:"Raw material"
+         },
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ Token pass
+        },
+      }
+    )
+    .then((response) => {
+      setMaterials(response.data); 
+    })
+    .catch((error) => {
+      console.error('Error fetching materials:', error);
+    });
+  }
+}, [selectedCategory]);
+
+
+  useEffect(() => {
+    if (selectedProject) {
+      const filteredData = projects.filter(
+        (project) => String(project.project_Id) === String(selectedProject)
+      );
+      setProjectData(filteredData);
+    } else {
+      setProjectData(projects);
+    }
+  }, [selectedProject, projects]);
+
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const handleProjectChange = (event) => {
+    setSelectedProject(event.target.value);
+  };
+
+  const handleCategoryChange = (event) => {
+    setSelectedCategory(event.target.value);
+    // Fetch materials based on the selected category
+    const selectedCategoryData = categories.find(
+      (category) => category.categoryId === event.target.value
+    );
+    setMaterials(selectedCategoryData ? selectedCategoryData.materials : []);
+  };
+
+  const handleMaterialChange = (event) => {
+    setSelectedMaterial(event.target.value);
+    // Set UOM based on the selected material
+    const selectedMaterialData = materials.find(
+      (material) => material.materialId === event.target.value
+    );
+    setUom(selectedMaterialData ? selectedMaterialData.uom : '');
+  };
+
+  const handleAddRequirementOpen = () => {
+    setOpenModal(true);
+  };
+
+  const handleAddRequirementClose = () => {
+    setOpenModal(false);
+  };
+
+const handleAddRequirementSubmit = () => {
+  const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
+
+  const newRequirement = {
+    selectedProject,
+    selectedCategory,
+    selectedMaterial,
+    quantity,
+    uom
+  };
+
+  axios.post(
+    `${JAVA_BASE}api/fine-goods/create`,
+    newRequirement,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`, // ✅ Token pass
+      },
+    }
+  )
+  .then(response => {
+    console.log('Requirement added successfully:', response);
+    handleAddRequirementClose();
+  })
+  .catch(error => {
+    console.error('Error adding requirement:', error);
+  });
+};
+
+  const uniqueProjects = Array.from(
+    new Map(projects.map(item => [item.project_Id, item])).values()
+  ).filter(project =>
+    project.projectName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Table Pagination
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+  const handleQuantityChange = (event) => {
+    setQuantity(event.target.value);
+  };
+
+  return (
+    <div className="flex">
+      <Sidebar />
+      <div className="p-6 w-full">
+        <div className="bg-custome-blue rounded-lg w-full px-3 py-2 flex items-center justify-between shadow-lg sticky top-0 z-10">
+          <div className="flex items-center">
+            <button onClick={handleHome} type="button" className="flex items-center p-2 rounded-full">
+              <FaHome className="text-white mr-2" size={25} />
+            </button>
+            <h1 className="text-white text-2xl sm:text-2xl font-bold ml-2">Process Management</h1>
+          </div>
+          {userData && (
+            <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} type="button" className="bg-white flex items-center rounded-full mt-2 sm:mt-0 sm:mr-5 px-2 py-2">
+              <div className="bg-white rounded-3xl flex items-center">
+                <div className="mr-2">
+                  <img
+                    src="http://cdn.builder.io/api/v1/image/assets/TEMP/8839e5a86c91c744ae902ecbb75ae11121a15ba11a67d20ec56f825e116dd9ef?placeholderIfAbsent=true&apiKey=f4328c4a551b4b9fa165bba17dc932db"
+                    alt="Profile Icon"
+                    className="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <h3 className="text-xs sm:text-sm font-bold text-custome-black">
+                    {userData.first_name} {userData.last_name}
+                  </h3>
+                </div>
+              </div>
+            </button>
+          )}
+        </div>
+
+        <div className="mt-4 flex space-x-4 items-center">
+          {/* Project Dropdown */}
+          <FormControl className="flex-1">
+            <InputLabel id="project-select-label">Select Project</InputLabel>
+            <Select
+              labelId="project-select-label"
+              id="project-select"
+              value={selectedProject}
+              onChange={handleProjectChange}
+              label="Select Project"
+            >
+              {uniqueProjects.map((project) => (
+                <MenuItem key={project.project_Id} value={project.project_Id}>
+                  {project.projectName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+
+          {/* Search Bar */}
+          <TextField
+            label="Search Projects"
+            variant="outlined"
+            fullWidth
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="mb-4 flex-1"
+          />
+          
+          {/* Add Requirement Button */}
+          <Button variant="contained" color="primary" onClick={handleAddRequirementOpen} className="px-4 py-2">
+            Add Requirement
+          </Button>
+        </div>
+
+        {/* Table to display project data */}
+        <TableContainer component={Paper} className="mt-4">
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell className="bg-gray-200 font-bold">Project Name</TableCell>
+                <TableCell className="bg-gray-200 font-bold">Material Name</TableCell>
+                <TableCell className="bg-gray-200 font-bold">Status</TableCell>
+                <TableCell className="bg-gray-200 font-bold">Stages</TableCell>
+                <TableCell className="bg-gray-200 font-bold">Quantity</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {projectData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => (
+                <TableRow key={index} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
+                  <TableCell>{row.projectName}</TableCell>
+                  <TableCell>{row.materialName}</TableCell>
+                  <TableCell>{row.status}</TableCell>
+                  <TableCell>{row.stages}</TableCell>
+                  <TableCell>{row.projectQuantity}</TableCell>
+                </TableRow>
+              ))}
+              {projectData.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} align="center">
+                    No data available
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* Pagination Controls */}
+        <div className="mt-4 flex justify-between">
+          <Button
+            variant="contained"
+            onClick={() => setPage(page - 1)}
+            disabled={page === 0}
+            className="px-4 py-2"
+          >
+            Previous
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => setPage(page + 1)}
+            disabled={page >= Math.ceil(projectData.length / rowsPerPage) - 1}
+            className="px-4 py-2"
+          >
+            Next
+          </Button>
+        </div>
+{/* Add Requirement Modal */}
+<Modal
+        open={openModal}
+        onClose={handleAddRequirementClose}
+        aria-labelledby="modal-title"
+        aria-describedby="modal-description"
+      >
+        <Box className="bg-white p-6 rounded-lg shadow-lg w-full sm:w-2/3 md:w-1/2 lg:w-1/3 mx-auto mt-12">
+          <h2 className="text-xl font-bold mb-4 text-center">Add Requirement</h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            {/* Project Dropdown */}
+            <FormControl fullWidth className="mb-4">
+              <InputLabel id="project-select-modal-label">Project</InputLabel>
+              <Select
+                labelId="project-select-modal-label"
+                id="project-select-modal"
+                value={selectedProject}
+                onChange={handleProjectChange}
+                label="Select Project"
+              >
+                {Array.isArray(projects) && projects.length > 0 ? (
+                  projects.map(project => (
+                    <MenuItem key={project.project_Id} value={project.project_Id}>
+                      {project.projectName}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem value="">No projects available</MenuItem>
+                )}
+              </Select>
+            </FormControl>
+
+            {/* Category Dropdown */}
+            <FormControl fullWidth className="mb-4">
+              <InputLabel id="category-select-modal-label">Category</InputLabel>
+              <Select
+                labelId="category-select-modal-label"
+                id="category-select-modal"
+                value={selectedCategory}
+                onChange={handleCategoryChange}
+                label="Select Category"
+              >
+                {Array.isArray(categories) && categories.length > 0 ? (
+                  categories.map(category => (
+                    <MenuItem key={category.categoryId} value={category.categoryId}>
+                      {category.categoriesname}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem value="">No categories available</MenuItem>
+                )}
+              </Select>
+            </FormControl>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            {/* Material Dropdown */}
+            <FormControl fullWidth className="mb-4">
+              <InputLabel id="material-select-modal-label">Material</InputLabel>
+              <Select
+                labelId="material-select-modal-label"
+                id="material-select-modal"
+                value={selectedMaterial}
+                onChange={handleMaterialChange}
+                label="Select Material"
+              >
+                {Array.isArray(materials) && materials.length > 0 ? (
+                  materials.map(material => (
+                    <MenuItem key={material.materialId} value={material.materialId}>
+                      {material.materialName}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem value="">No materials available</MenuItem>
+                )}
+              </Select>
+            </FormControl>
+
+            {/* Quantity */}
+            <TextField
+              label="Quantity"
+              variant="outlined"
+              type="number"
+              value={quantity}
+              onChange={handleQuantityChange}
+              fullWidth
+              className="mb-4"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            onClick={handleAddRequirementSubmit}
+            className="py-2"
+          >
+            Submit
+          </Button>
+        </Box>
+      </Modal>
+
+
+      </div>
+    </div>
+  );
+};
+
+export default Organization;
