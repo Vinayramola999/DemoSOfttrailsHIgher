@@ -1,27 +1,49 @@
-import React, { useState, useEffect, useRef } from "react";
-import Select from "react-select";
-
 import {
   FaEdit,
   FaTrash,
   FaTimes,
   FaSave,
-  FaEye,
-  FaFilter,
-  FaUserShield,
-  FaShieldAlt,
   FaHistory,
 } from "react-icons/fa";
-import { FaHome, FaSignOutAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import RolesAddModal from "./RolesAddModal";
-import ProfileDropdown from "../../ProfileDropdown";
 import MessageModal from "../ApprovalAuthority/MessageModal";
 import DeleteConfirmModal from "../Components/DeleteConfirmModal";
-import { DMS_BASE, JAVA_BASE, ASSET_NODE_BASE, UCS_BASE, MAIN_BASE, WORKFLOW_BASE } from "../../config/apiBase";
-import NotificationSelector from "../Components/NotificationSelector";
+import { JAVA_BASE, ASSET_NODE_BASE, MAIN_BASE, WORKFLOW_BASE } from "../../config/apiBase";
 import LoaderModal from "../Components/Loader";
+
+const DEFAULT_PREDEFINED_FIELDS = [
+  { fieldname: "Asset Name", assetDataType: "String", isNullable: false, isUnique: false },
+  { fieldname: "Purchase Date", assetDataType: "Date", isNullable: false, isUnique: false },
+  { fieldname: "Original Cost", assetDataType: "Number", isNullable: false, isUnique: false },
+  { fieldname: "Scrap Value", assetDataType: "Number", isNullable: false, isUnique: false },
+  { fieldname: "Useful Life", assetDataType: "Number", isNullable: false, isUnique: false },
+  { fieldname: "Unit Of Measure", assetDataType: "String", isNullable: false, isUnique: false },
+];
+
+const cleanFields = (fields) => {
+  return fields
+    .map((f) => ({
+      ...f,
+      fieldname: f.fieldname?.trim() || null,
+      assetDataType: f.assetDataType?.trim() || null,
+    }))
+    .filter((f) => f.fieldname !== null && f.assetDataType !== null);
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  }).format(date);
+};
+
+
+
 const Category = () => {
   const [categoryData, setCategoryData] = useState({
     categoryName: "",
@@ -35,17 +57,12 @@ const Category = () => {
     stages: "Preview",
   });
   const [isFiltersVisible, setIsFiltersVisible] = useState(false); // State to toggle the visibility of filters
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [showAssetApprovalModal, setShowAssetApprovalModal] = useState(false);
-  const [showAssetAdditionModal, setShowAssetAdditionModal] = useState(false);
 
   const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectAll, setSelectAll] = useState(false); // State for Select All check
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
   const [editCategoryId, setEditCategoryId] = useState(null);
   const [existingFields, setExistingFields] = useState([]);
-  const [userDetails, setUserDetails] = useState({});
   const [newFields, setNewFields] = useState([
     {
       fieldname: "",
@@ -55,39 +72,29 @@ const Category = () => {
     },
   ]);
   const [roles, setRoles] = useState([]);
-  const [selectedRole, setSelectedRole] = useState("");
-  const [selectedRoles, setSelectedRoles] = useState("");
-  const [selectedMappedRoles, setSelectedMappedRoles] = useState("");
-  const [selectedWorkflow, setSelectedWorkflow] = useState("");
   const [workflows, setWorkflows] = useState([]);
-  const [error, setError] = useState(null);
-
   const [selectedApprovalRole, setSelectedApprovalRole] = useState("");
-  const filteredCategories = categories.filter((category) =>
+
+  const filteredCategories = useMemo(() => categories.filter((category) =>
     category.categoriesname?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ), [categories, searchTerm]);
 
   const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const [isTempModalOpen, setIsTempModalOpen] = useState(false);
   const modalRef = useRef(null);
-  const [categoryFields, setCategoryFields] = useState([]);
   const [updatedOn, setUpdatedOn] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [assetToDelete, setAssetToDelete] = useState(null);
   const [isCategoryEditable, setIsCategoryEditable] = useState(false);
 
-  const [users, setUsers] = useState({});
-  const [isUsersLoading, setIsUsersLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false); // To manage modal visibility
-  const [isModalsOpen, setIsModalsOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState(""); // Store the message to show in the modal
   const [modalType, setModalType] = useState("success");
   const [isOpen, setIsOpen] = useState(false);
   const [categoryId, setCategoryId] = useState("");
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [approvalModalMessage, setApprovalModalMessage] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedRoleType, setSelectedRoleType] = useState(null);
+
   const [statusFilter, setStatusFilter] = useState("");
   const [isAssestEdit, setIsAssetedit] = useState(false);
   const [message, setMessage] = useState("");
@@ -95,8 +102,6 @@ const Category = () => {
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [resubmittedLogs, setResubmittedLogs] = useState([]);
   const [isResubmittedModalOpen, setIsResubmittedModalOpen] = useState(false);
-  const [isNotificationSelectorOpen, setIsNotificationSelectorOpen] = useState(false);
-  const [pendingNotificationUsers, setPendingNotificationUsers] = useState([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [stagesFilter, setStagesFilter] = useState("");
@@ -105,19 +110,20 @@ const Category = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 25;
 
-  const filteredMovable = filteredCategories.filter(
+  const filteredMovable = useMemo(() => filteredCategories.filter(
     (category) => category.categoriesType === "Movable"
-  );
-  const sortedMovable = [...filteredMovable].sort((a, b) => {
+  ), [filteredCategories]);
+
+  const sortedMovable = useMemo(() => [...filteredMovable].sort((a, b) => {
     return new Date(b.createdAt) - new Date(a.createdAt);
-  });
+  }), [filteredMovable]);
 
-  const totalPages = Math.ceil(filteredMovable.length / rowsPerPage);
+  const totalPages = useMemo(() => Math.ceil(filteredMovable.length / rowsPerPage), [filteredMovable.length, rowsPerPage]);
 
-  const paginatedData = sortedMovable.slice(
+  const paginatedData = useMemo(() => sortedMovable.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
-  );
+  ), [sortedMovable, currentPage, rowsPerPage]);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -151,7 +157,7 @@ const Category = () => {
       axios
         .get(`${MAIN_BASE}role`, {
           headers: {
-            Authorization: `Bearer ${token}`, // add token here
+            Authorization: `Bearer ${token}`,
           },
         })
         .then((response) => {
@@ -174,9 +180,9 @@ const Category = () => {
           `${WORKFLOW_BASE}uniworkflow/workflow/get-modules/module`,
           {
             params: {
-              module_name: "Asset Management", // 👈 send module name
-              sub_module_name: "Movable",      // 👈 send sub module name
-            },// query parameter
+              module_name: "Asset Management",
+              sub_module_name: "Movable",
+            },
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -203,7 +209,7 @@ const Category = () => {
     try {
       const response = await axios.get(`${JAVA_BASE}api/categories/all`, {
         headers: {
-          Authorization: `Bearer ${token}`, // add token here
+          Authorization: `Bearer ${token}`,
         },
       });
       console.log("API response:", response.data);
@@ -220,7 +226,7 @@ const Category = () => {
     startDate = "",
     endDate = ""
   ) => {
-    const token = sessionStorage.getItem("token"); // get token
+    const token = sessionStorage.getItem("token");
     try {
       let url = `${JAVA_BASE}categories?`;
       if (status) url += `status=${status}&`;
@@ -229,7 +235,7 @@ const Category = () => {
 
       const response = await axios.get(url, {
         headers: {
-          Authorization: `Bearer ${token}`, // add token here
+          Authorization: `Bearer ${token}`,
         },
       });
       console.log("Filtered API response:", response.data);
@@ -254,7 +260,7 @@ const Category = () => {
       const data = response.data || [];
 
       if (data.length === 0) {
-        // 🔥 नई category → Default predefined fields load करो
+
         setExistingFields(
           DEFAULT_PREDEFINED_FIELDS.map((f, i) => ({
             id: null,
@@ -263,7 +269,7 @@ const Category = () => {
           }))
         );
       } else {
-        // 🔥 Existing category → Backend से fields load करो
+
         setExistingFields(data);
       }
 
@@ -284,19 +290,10 @@ const Category = () => {
 
 
 
-  const closedModal = () => {
-    setSelectedCategory(null);
-    setSelectedRoleType(null);
-    setIsModalOpen(false);
-  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     let newValue = value;
-
-    // if (name === "categoryName") {
-    //   // Remove everything except letters, numbers, and hyphen
-    //   newValue = newValue.replace(/[^a-zA-Z0-9-]/g, ""); // ❌ no spaces at all
-    // }
 
     setCategoryData({ ...categoryData, [name]: newValue });
   };
@@ -350,55 +347,6 @@ const Category = () => {
 
 
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   if (categoryData.workflowname === "Select Workflow") {
-  //     setModalMessage("Please select a workflow.");
-  //     setModalType("error");
-  //     setIsModalOpen(true);
-  //     return;
-  //   }
-
-  //   const userId = sessionStorage.getItem("userId");
-
-  //   if (!userId) {
-  //     setModalMessage("User ID is not available.");
-  //     setModalType("error");
-  //     setIsModalOpen(true);
-  //     return;
-  //   }
-  //   try {
-  //     const newCategory = {
-  //       categoriesname: categoryData.categoryName,
-  //       createdBy: Number(userId),
-  //       categoriesType: "Movable",
-  //       workflowname: categoryData.workflowname,
-  //       status: "Draft",
-  //       stages: categoryData.stages || "Preview",
-  //     };
-  //     console.log("Submitting category: ", newCategory);
-
-  //     const response = await axios.post(
-  //       `${JAVA_BASE}api/categories/add",
-  //       newCategory
-  //     );
-  //     console.log(response);
-  //     setCategoryId(response.data.categoryId);
-  //     setUpdatedOn(new Date());
-  //     setCategories(
-  //       Array.isArray(response.data.categories) ? response.data.categories : []
-  //     );
-
-  //     resetForm();
-  //     setModalMessage("Asset Category added successfully!");
-  //     setModalType("success");
-  //     setIsModalOpen(true);
-  //   } catch (error) {
-  //     setModalMessage("Error adding category. Please try again.");
-  //     setModalType("error");
-  //   }
-  // };
-
   const resetForm = () => {
     setCategoryData({
       categoryName: "",
@@ -419,15 +367,12 @@ const Category = () => {
         isNullable: false,
       },
     ]);
-    setSelectedWorkflow("");
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✂️ Trim spaces from category name
     categoryData.categoryName = categoryData.categoryName.trim();
 
-    // 🚫 Validate category name input
     const invalidChars = /[^a-zA-Z0-9\s-]/;
 
     if (!categoryData.categoryName) {
@@ -476,7 +421,6 @@ const Category = () => {
         return;
       }
 
-      // ✅ Build new category object
       const newCategory = {
         categoriesname: categoryData.categoryName,
         createdBy: Number(userId),
@@ -520,71 +464,7 @@ const Category = () => {
   };
 
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
 
-  //   if (categoryData.workflowname === "Select Workflow") {
-  //     setMessage("Please select a workflow.");
-  //     setMessageType("error");
-  //     return;
-  //   }
-
-  //   const userId = sessionStorage.getItem("userId");
-
-  //   if (!userId) {
-  //     setMessage("User ID is not available.");
-  //     setMessageType("error");
-  //     return;
-  //   }
-
-  //   try {
-  //     // 🔍 Check for duplicate category name (case-insensitive now)
-  //     const isDuplicate = categories.some(
-  //       (cat) =>
-  //         cat.categoriesname.toLowerCase().trim() ===
-  //         categoryData.categoryName.toLowerCase().trim()
-  //     );
-
-  //     if (isDuplicate) {
-  //       setMessage("This category name already exists.");
-  //       setMessageType("error");
-  //       return;
-  //     }
-
-  //     const newCategory = {
-  //       categoriesname: categoryData.categoryName,
-  //       createdBy: Number(userId),
-  //       categoriesType: "Movable",
-  //       workflowname: categoryData.workflowname,
-  //       status: "Draft",
-  //       stages: categoryData.stages || "Preview",
-  //     };
-
-  //     console.log("Submitting category: ", newCategory);
-
-  //     const response = await axios.post(
-  //       `${JAVA_BASE}api/categories/add",
-  //       newCategory
-  //     );
-
-  //     setCategoryId(response.data.categoryId);
-  //     setUpdatedOn(new Date());
-
-  //     setCategories(
-  //       Array.isArray(response.data.categories)
-  //         ? response.data.categories
-  //         : []
-  //     );
-
-  //     resetForm();
-  //     setMessage("Asset Category added successfully!");
-  //     setMessageType("success");
-  //   } catch (error) {
-  //     setMessage("Error adding category. Please try again.");
-  //     setMessageType("error");
-  //   }
-  //    resetForm();
-  // };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -596,7 +476,7 @@ const Category = () => {
       return;
     }
 
-    const token = sessionStorage.getItem("token"); // get token
+    const token = sessionStorage.getItem("token");
 
     try {
       const newCategory = {
@@ -615,7 +495,7 @@ const Category = () => {
         newCategory,
         {
           headers: {
-            Authorization: `Bearer ${token}`, // add token here
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
@@ -652,7 +532,7 @@ const Category = () => {
   };
 
   const confirmDelete = async () => {
-    const token = sessionStorage.getItem("token"); // get token
+    const token = sessionStorage.getItem("token");
 
     try {
       if (assetToDelete) {
@@ -660,7 +540,7 @@ const Category = () => {
           `${JAVA_BASE}api/categories/id/${assetToDelete}`,
           {
             headers: {
-              Authorization: `Bearer ${token}`, // add token here
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
           }
@@ -668,35 +548,18 @@ const Category = () => {
 
         setCategories(
           categories.filter((category) => category.id !== assetToDelete)
-        ); // Update the categories list
-        setUpdatedOn((prev) => prev + 1); // Trigger a re-render or refresh if needed
+        );
+        setUpdatedOn((prev) => prev + 1);
       }
     } catch (error) {
       console.error("Error deleting category:", error);
     } finally {
-      setIsDeleteModalOpen(false); // Close the modal after the operation
-      setAssetToDelete(null); // Clear the asset to delete
+      setIsDeleteModalOpen(false);
+      setAssetToDelete(null);
     }
   };
 
-  const DEFAULT_PREDEFINED_FIELDS = [
-    { fieldname: "Asset Name", assetDataType: "String", isNullable: false, isUnique: false },
-    { fieldname: "Purchase Date", assetDataType: "Date", isNullable: false, isUnique: false },
-    { fieldname: "Original Cost", assetDataType: "Number", isNullable: false, isUnique: false },
-    { fieldname: "Scrap Value", assetDataType: "Number", isNullable: false, isUnique: false },
-    { fieldname: "Useful Life", assetDataType: "Number", isNullable: false, isUnique: false },
-    { fieldname: "Unit Of Measure", assetDataType: "String", isNullable: false, isUnique: false },
-  ];
 
-  const cleanFields = (fields) => {
-    return fields
-      .map(f => ({
-        ...f,
-        fieldname: f.fieldname?.trim() || null,
-        assetDataType: f.assetDataType?.trim() || null
-      }))
-      .filter(f => f.fieldname !== null && f.assetDataType !== null);
-  };
 
 
   const handleTemporarySave = async () => {
@@ -719,14 +582,12 @@ const Category = () => {
 
       setMessage("Category Saved Temporarily!");
       setMessageType("success");
-      // setIsTempModalOpen(true);
       closeModal();
 
     } catch (error) {
       console.error("TEMP SAVE ERROR:", error);
       setMessage("Something went wrong!");
       setMessageType("error");
-      // setIsTempModalOpen(true);
     }
   };
 
@@ -778,214 +639,20 @@ const Category = () => {
 
       setMessage("Category Submitted For Approval!");
       setMessageType("success");
-      // setIsApprovalModalOpen(true);
       closeModal();
 
     } catch (error) {
       console.error("APPROVAL ERROR:", error);
       setMessage("Something went wrong!");
       setMessageType("error");
-      // setIsApprovalModalOpen(true);
     }
   };
 
 
 
-
-
-
-  // const handleApproval = async () => {
-  //   const token = sessionStorage.getItem("token");
-
-  //   if (!token) {
-  //     console.error("Token missing in sessionStorage!");
-  //     setApprovalModalMessage("Authentication token missing. Please login again.");
-  //     setIsApprovalModalOpen(true);
-  //     return;
-  //   }
-
-  //   if (!editCategoryId) {
-  //     console.error("editCategoryId is invalid:", editCategoryId);
-  //     setApprovalModalMessage("Category ID is missing or invalid.");
-  //     setIsApprovalModalOpen(true);
-  //     return;
-  //   }
-
-  //   try {
-  //     // 🔹 Step 1: Prepare final payload (same as your new logic)
-  //     const payload = {
-  //       categoryName: selectedCategoryName?.trim(),
-  //       assets: [
-  //         ...cleanFields(existingFields),
-  //         ...cleanFields(newFields)
-  //       ],
-  //     };
-
-  //     // 🟢 TEMPORARY SAVE (same as earlier — NO LOADER)
-  //     const saveResponse = await axios.post(
-  //       `${JAVA_BASE}api/assets/insert/${selectedCategoryName}`,
-  //       payload,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     );
-
-  //     console.log("✅ Temporary save response:", saveResponse.data);
-
-  //     // 🟢 Step 2: Update category stage
-  //     const stageUpdateResponse = await axios.put(
-  //       `${ASSET_NODE_BASE}assets/stages/${editCategoryId}`,
-  //       { value: "SubmittedForApproval" },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     );
-
-  //     console.log("✅ Stage update response:", stageUpdateResponse.data);
-
-  //     // Update UI category state
-  //     setCategories((prev) =>
-  //       prev.map((cat) =>
-  //         cat.categoryId === editCategoryId
-  //           ? { ...cat, stages: "SubmittedForApproval" }
-  //           : cat
-  //       )
-  //     );
-  //      closeModal();
-  //     setUpdatedOn(new Date());
-
-  //     // 🟢 Step 3: Fetch workflow users
-  //     const userResponse = await axios.get(
-  //       `${JAVA_BASE}workflow/users-by-category/${editCategoryId}`,
-  //       { headers: { Authorization: `Bearer ${token}` } }
-  //     );
-
-  //     let users = Array.isArray(userResponse.data) ? userResponse.data : [];
-
-  //     // Filter users only for CategoryApproval
-  //     let categoryApprovalUsers = users.filter(
-  //       (entry) => entry.action_info?.action_name === "CategoryApproval"
-  //     );
-
-  //     // 🔹 Remove duplicate emails
-  //     const uniqueUsers = new Map();
-  //     categoryApprovalUsers.forEach((entry) => {
-  //       const email = entry?.user_info?.email;
-  //       if (email && !uniqueUsers.has(email)) {
-  //         uniqueUsers.set(email, entry);
-  //       }
-  //     });
-  //     categoryApprovalUsers = Array.from(uniqueUsers.values());
-
-  //     console.log("✅ Unique CategoryApproval users:", categoryApprovalUsers.length);
-
-  //     // 🟢 Open Notification Selector Modal
-  //     setPendingNotificationUsers(categoryApprovalUsers);
-  //     setIsNotificationSelectorOpen(true);
-
-  //   } catch (error) {
-  //     console.error("❌ Error during handleApproval:", error);
-
-  //     let errorMessage = "An error occurred. Please try again.";
-  //     if (error.response) {
-  //       errorMessage = error.response.data.message || errorMessage;
-  //     } else if (error.request) {
-  //       errorMessage = "No response from the server. Please check your network.";
-  //     } else {
-  //       errorMessage = error.message || errorMessage;
-  //     }
-
-  //     setApprovalModalMessage(errorMessage);
-  //     setIsApprovalModalOpen(true);
-  //   }
-  // };
-
-
-  // // 🟢 STEP 2: HANDLE NOTIFICATION CONFIRM (Loader Active + Close Modal First)
-  // const handleNotificationConfirm = async (selectedMethods) => {
-  //   const token = sessionStorage.getItem("token");
-  //   if (!token) return;
-
-  //   try {
-  //     // 🔒 Immediately close Notification Selector before showing loader
-  //     setIsNotificationSelectorOpen(false);
-
-  //     // ✅ Start Loader (after modal closes)
-  //     setLoaderText("Sending notifications...");
-  //     setIsLoading(true);
-
-  //     // Step 1: Fetch UCS module dynamically
-  //     const moduleResponse = await axios.get(`${UCS_BASE}api/modules`, {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-
-  //     // 🎯 Find exact module for Category Form Submission (EAM-CFS)
-  //     const targetModule = moduleResponse.data.find(
-  //       (mod) =>
-  //         mod.moduleName === "Category" &&
-  //         mod.subModuleName === "Form Submission" &&
-  //         mod.uniqueIdentifierName === "EAM-CFS"
-  //     );
-
-  //     if (!targetModule) {
-  //       throw new Error("Required UCS module (EAM-CFS) not found.");
-  //     }
-
-  //     console.log("📘 Target UCS Module:", targetModule);
-
-  //     // Step 2: Send UCS notifications
-  //     for (const entry of pendingNotificationUsers) {
-  //       const user = entry.user_info;
-
-  //       const payload = {
-  //         userid: user.id,
-  //         workflowid: entry.workflow_id,
-  //         workflowname: entry.workflow_name,
-  //         email: selectedMethods.includes("email") ? user.email : null,
-  //         phone_no: selectedMethods.includes("sms") ? user.phone_no : null,
-  //         moduleName: targetModule.moduleName,
-  //         subName: targetModule.subModuleName,
-  //         uniqueIdentifierName: targetModule.uniqueIdentifierName,
-  //         applicationName: targetModule.applicationName,
-  //         categoriesname: selectedCategoryName,
-  //         categoryId: editCategoryId,
-  //       };
-
-  //       // Clean null values
-  //       Object.keys(payload).forEach((key) => payload[key] === null && delete payload[key]);
-
-  //       const ucsResponse = await axios.post(`${UCS_BASE}ucs/send`, payload, {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       });
-
-  //       console.log(`📨 UCS sent to ${user.email || user.phone_no}:`, ucsResponse.data);
-  //     }
-
-  //     // ✅ Stop loader after all notifications done
-  //     setIsLoading(false);
-  //     setApprovalModalMessage("Asset Category submitted and notifications sent successfully!");
-  //     setIsApprovalModalOpen(true);
-  //     setIsCategoryEditable(false);
-  //   } catch (err) {
-  //     console.error("❌ Error sending UCS notifications:", err);
-  //     setIsLoading(false);
-  //     setApprovalModalMessage("Error sending notifications. Please try again.");
-  //     setIsApprovalModalOpen(true);
-  //   }
-  // };
-
-
-
-
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    const token = sessionStorage.getItem("token"); // Get token from sessionStorage
+    const token = sessionStorage.getItem("token");
 
     try {
       const updatedCategory = {
@@ -999,20 +666,20 @@ const Category = () => {
         }, {}),
       };
 
-      console.log("Updated Category Data:", updatedCategory); // Log data being submitted
+      console.log("Updated Category Data:", updatedCategory);
 
       const response = await axios.post(
         `${JAVA_BASE}api/temp/save`,
         updatedCategory,
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Add token here
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
       );
 
-      console.log("Response from Save:", response.data); // Log response from server
+      console.log("Response from Save:", response.data);
       closeModal();
       fetchCategories();
     } catch (error) {
@@ -1028,66 +695,17 @@ const Category = () => {
 
 
 
-  const handlePublish = async () => {
-    console.log("handle publish");
-    try {
-      // Construct the publish data
-      // console.log(newFields)
 
-      let updatedFieldsData = newFields.reduce((acc, field) => {
-        acc[field.fieldname] = `${field.assetDataType}${field.isNullable ? ",NULL" : ",NOT NULL"
-          }`;
-        return acc;
-      }, {});
-
-      for (let data of existingFields) {
-        updatedFieldsData[data.fieldname] = `${data.assetDataType}${data.isNullable ? ",NULL" : ",NOT NULL"
-          }`;
-      }
-
-      // updatedFieldsData["roles"] = [selectedRole];
-
-      const publishData = {
-        categoryName: selectedCategoryName,
-        // role:[selectedRole],
-        fields: updatedFieldsData,
-      };
-
-      console.log("Publishing Data:", publishData); // Log the data being sent
-
-      const response = await axios.post(
-        `${JAVA_BASE}api/tables/publish`,
-        publishData
-      );
-
-      console.log("Response from Publish:", response.data); // Log response for confirmation
-      closeModal();
-      fetchCategories(); // Fetch categories again to refresh the list
-      alert("Asset Category published successfully!");
-    } catch (error) {
-      console.log({
-        error,
-      });
-      if (error.response) {
-        console.error("Error response from server:", error.response.data);
-      } else if (error.request) {
-        console.error("No response received from server:", error.request);
-      } else {
-        console.error("Error in setting up request:", error.message);
-      }
-      alert("Failed to publish the Asset category. Please try again.");
-    }
-  };
 
   const openEditModal = async (category) => {
     setSelectedCategoryName(category.categoriesname);
     setEditCategoryId(category.categoryId);
     setIsEditCategoryModalOpen(true);
 
-    // Fetch correct fields for this category — NEW API
+    // Fetch correct fields for this category
     await fetchCategoryFields(category.categoriesname);
 
-    // New fields reset
+
     setNewFields([
       {
         fieldname: "",
@@ -1111,136 +729,32 @@ const Category = () => {
 
     ]);
   };
-  const workflowOptions = [
+  const workflowOptions = useMemo(() => [
     { value: "", label: "Select Workflow" },
     ...workflows.map((workflow) => ({
-      value: workflow.workflow_name, // updated key
-      label: workflow.workflow_name, // updated key
+      value: workflow.workflow_name,
+      label: workflow.workflow_name,
     })),
-  ];
+  ], [workflows]);
 
 
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-    }).format(date);
-  };
 
 
-  //TOKEN AND USERPROFILE  START
+
+
   const userId = sessionStorage.getItem("userId");
-  const [userData, setUserData] = useState("");
   const navigate = useNavigate();
-  const getToken = () => {
-    const token = sessionStorage.getItem("token");
-    return token;
-  };
-  const token = getToken();
+  const token = sessionStorage.getItem("token");
   console.log("Retrieved token:", token);
 
-  useEffect(() => {
-    const userId = sessionStorage.getItem("userId");
-    console.log("UserId:", userId);
-    if (userId) {
-      const fetchUserData = async () => {
-        try {
-          console.log("Fetching data for userId:", userId);
-          const response = await axios.get(
-            `${MAIN_BASE}users/id_user/${userId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          console.log("API Response:", response);
-          if (response.data) {
-            const user = response.data;
-            console.log("User:", user);
-            setUserData(user);
-          } else {
-            console.log("No user data found");
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        }
-      };
-      fetchUserData();
-    }
-  }, [token, userId]);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await axios.get(`${MAIN_BASE}users`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log("Users fetched:", response.data); // Check if users are fetched correctly
-        const usersMap = response.data.reduce((acc, user) => {
-          acc[user.id] = user.name; // Create a map of userId to user name
-          return acc;
-        }, {});
-        setUserDetails(usersMap); // Set user details by userId
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
 
-    if (token) {
-      fetchUsers();
-    }
-  }, [token]);
-
-  const handleLogout = () => {
-    sessionStorage.removeItem("token");
-    navigate("/");
-  };
   const handleCloseApprovalModal = () => {
     setIsApprovalModalOpen(false);
   };
 
-  const handleHome = () => {
-    navigate("/Cards");
-  };
-  //END
-  const handleViewRoles = async (category, roleType) => {
-    try {
-      // Log selected category and role type
-      console.log("Selected Category:", category);
-      console.log("Selected Role Type:", roleType);
 
-      // Fetch roles from API
-      const response = await fetch(
-        `${JAVA_BASE}api/roles/category/${category.categoryId}`
-      );
-      const roles = await response.json();
-
-      // Update selected category with roles
-      setSelectedCategory({ ...category, roles });
-      setSelectedRoleType(roleType);
-      setIsModalsOpen(true);
-    } catch (error) {
-      console.error("Error fetching roles:", error);
-    }
-  };
-
-  const renderRoles = (roles, action) => {
-    return roles
-      ? roles
-        .filter((item) => item.action === action)
-        .map((item) => item.groups)
-        .join(", ") || "No roles assigned"
-      : "No roles found";
-  };
-
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const toggleDropdown = () => {
-    setIsDropdownOpen((prev) => !prev);
-  };
   const handleResubmittedClick = async (categoryId) => {
     try {
       const response = await axios.get(`${ASSET_NODE_BASE}AMSlog`, {
@@ -1979,13 +1493,7 @@ const Category = () => {
                       Save As Draft
                     </button>
 
-                    {/* <button
-                      type="button"
-                      onClick={handlePublish}
-                      className="ml-3 rounded-full bg-green-600 text-white py-2 px-4 hover:bg-green-700"
-                    >
-                      Publish
-                    </button> */}
+
                     <button
                       type="button"
                       onClick={handleApproval}

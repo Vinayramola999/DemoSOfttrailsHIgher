@@ -19,7 +19,7 @@ import RolesAddModal from "./RolesAddModal";
 import ProfileDropdown from "../../ProfileDropdown";
 import MessageModal from "../ApprovalAuthority/MessageModal";
 import DeleteConfirmModal from "../Components/DeleteConfirmModal";
-import { DMS_BASE,JAVA_BASE, ASSET_NODE_BASE, UCS_BASE ,MAIN_BASE,WORKFLOW_BASE } from "../../config/apiBase";
+import { DMS_BASE, JAVA_BASE, ASSET_NODE_BASE, UCS_BASE, MAIN_BASE, WORKFLOW_BASE } from "../../config/apiBase";
 import NotificationSelector from "../Components/NotificationSelector";
 import LoaderModal from "../Components/Loader";
 const Category = () => {
@@ -27,7 +27,7 @@ const Category = () => {
     categoryName: "",
     categoryType: "Movable",
     workflowname: "Select Workflow",
-    approvalrole: "Approvers Role", 
+    approvalrole: "Approvers Role",
     createdBy: "userId ",
     role: "Select Role",
     AssetRole: "Select Role",
@@ -95,12 +95,12 @@ const Category = () => {
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [resubmittedLogs, setResubmittedLogs] = useState([]);
   const [isResubmittedModalOpen, setIsResubmittedModalOpen] = useState(false);
-   const [isNotificationSelectorOpen, setIsNotificationSelectorOpen] = useState(false);
+  const [isNotificationSelectorOpen, setIsNotificationSelectorOpen] = useState(false);
   const [pendingNotificationUsers, setPendingNotificationUsers] = useState([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [stagesFilter, setStagesFilter] = useState("");
- const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [loaderText, setLoaderText] = useState("Processing...");
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 25;
@@ -126,7 +126,6 @@ const Category = () => {
   // Fetch categories on component mount
   useEffect(() => {
     fetchCategories();
-    fetchCategoryFields();
   }, [updatedOn]);
 
   useEffect(() => {
@@ -145,116 +144,144 @@ const Category = () => {
     }
   }, [statusFilter, stagesFilter, startDate, endDate]); // Re-fetch when any filter changes
 
-useEffect(() => {
-  if ((isEditCategoryModalOpen, categories)) {
-    const token = sessionStorage.getItem("token"); // get token
+  useEffect(() => {
+    if ((isEditCategoryModalOpen, categories)) {
+      const token = sessionStorage.getItem("token"); // get token
 
-    axios
-      .get(`${MAIN_BASE}role`, {
+      axios
+        .get(`${MAIN_BASE}role`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // add token here
+          },
+        })
+        .then((response) => {
+          if (response && response.data) {
+            setRoles(response.data);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching roles:", error);
+        });
+    }
+  }, [isEditCategoryModalOpen, categories]);
+
+  useEffect(() => {
+    const fetchWorkflows = async () => {
+      const token = sessionStorage.getItem("token");
+
+      try {
+        const response = await axios.get(
+          `${WORKFLOW_BASE}uniworkflow/workflow/get-modules/module`,
+          {
+            params: {
+              module_name: "Asset Management", // 👈 send module name
+              sub_module_name: "Movable",      // 👈 send sub module name
+            },// query parameter
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response && response.data && Array.isArray(response.data.workflows)) {
+          setWorkflows(response.data.workflows);
+        } else {
+          console.warn("Unexpected response structure:", response.data);
+          setWorkflows([]);
+        }
+      } catch (error) {
+        console.error("Error fetching workflows:", error);
+        setWorkflows([]);
+      }
+    };
+
+    fetchWorkflows();
+  }, []);
+
+  const fetchCategories = async () => {
+    const token = sessionStorage.getItem("token"); // get token
+    try {
+      const response = await axios.get(`${JAVA_BASE}api/categories/all`, {
         headers: {
           Authorization: `Bearer ${token}`, // add token here
         },
-      })
-      .then((response) => {
-        if (response && response.data) {
-          setRoles(response.data);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching roles:", error);
       });
-  }
-}, [isEditCategoryModalOpen, categories]);
+      console.log("API response:", response.data);
+      setCategories(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategories([]);
+    }
+  };
 
-useEffect(() => {
-  const fetchWorkflows = async () => {
+  const fetchFilteredCategories = async (
+    status = "",
+    stages = "",
+    startDate = "",
+    endDate = ""
+  ) => {
+    const token = sessionStorage.getItem("token"); 
+    try {
+      let url = `${JAVA_BASE}categories?`;
+      if (status) url += `status=${status}&`;
+      if (stages) url += `stages=${stages}&`;
+      if (startDate && endDate) url += `&startDate=${startDate}&endDate=${endDate}`;
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`, 
+        },
+      });
+      console.log("Filtered API response:", response.data);
+      setCategories(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error("Error fetching filtered categories:", error);
+      setCategories([]);
+    }
+  };
+
+  const fetchCategoryFields = async (categoryName) => {
     const token = sessionStorage.getItem("token");
 
     try {
       const response = await axios.get(
-        `${WORKFLOW_BASE}uniworkflow/workflow/get-modules/module`,
+        `${JAVA_BASE}api/assets/find/${categoryName}`,
         {
-         params: {
-            module_name: "Asset Management", // 👈 send module name
-            sub_module_name: "Movable",      // 👈 send sub module name
-          },// query parameter
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (response && response.data && Array.isArray(response.data.workflows)) {
-        setWorkflows(response.data.workflows);
+      const data = response.data || [];
+
+      if (data.length === 0) {
+  
+        setExistingFields(
+          DEFAULT_PREDEFINED_FIELDS.map((f, i) => ({
+            id: null,
+            categoryName,
+            ...f
+          }))
+        );
       } else {
-        console.warn("Unexpected response structure:", response.data);
-        setWorkflows([]);
+      
+        setExistingFields(data);
       }
+
     } catch (error) {
-      console.error("Error fetching workflows:", error);
-      setWorkflows([]);
+      console.error("Error fetching fields:", error);
+
+      // Safety fallback → Default predefined fields
+      setExistingFields(
+        DEFAULT_PREDEFINED_FIELDS.map((f, i) => ({
+          id: null,
+          categoryName,
+          ...f
+        }))
+      );
     }
   };
 
-  fetchWorkflows();
-}, []);
 
-const fetchCategories = async () => {
-  const token = sessionStorage.getItem("token"); // get token
-  try {
-    const response = await axios.get(`${JAVA_BASE}api/categories/all`, {
-      headers: {
-        Authorization: `Bearer ${token}`, // add token here
-      },
-    });
-    console.log("API response:", response.data);
-    setCategories(Array.isArray(response.data) ? response.data : []);
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    setCategories([]);
-  }
-};
-
-const fetchFilteredCategories = async (
-  status = "",
-  stages = "",
-  startDate = "",
-  endDate = ""
-) => {
-  const token = sessionStorage.getItem("token"); // get token
-  try {
-    let url = `${JAVA_BASE}categories?`;
-    if (status) url += `status=${status}&`;
-    if (stages) url += `stages=${stages}&`;
-    if (startDate && endDate) url += `&startDate=${startDate}&endDate=${endDate}`;
-
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${token}`, // add token here
-      },
-    });
-    console.log("Filtered API response:", response.data);
-    setCategories(Array.isArray(response.data) ? response.data : []);
-  } catch (error) {
-    console.error("Error fetching filtered categories:", error);
-    setCategories([]);
-  }
-};
-
-const fetchCategoryFields = async () => {
-  const token = sessionStorage.getItem("token"); // get token
-  try {
-    const response = await axios.get(`${JAVA_BASE}api/assets/fetch`, {
-      headers: {
-        Authorization: `Bearer ${token}`, // add token here
-      },
-    });
-    console.log("response", response.data);
-    setExistingFields(response.data);
-  } catch (error) {
-    console.error("Error fetching categories fields:", error);
-  }
-};
 
 
   const closedModal = () => {
@@ -262,17 +289,17 @@ const fetchCategoryFields = async () => {
     setSelectedRoleType(null);
     setIsModalOpen(false);
   };
-const handleInputChange = (e) => {
-  const { name, value } = e.target;
-  let newValue = value;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    let newValue = value;
 
-  // if (name === "categoryName") {
-  //   // Remove everything except letters, numbers, and hyphen
-  //   newValue = newValue.replace(/[^a-zA-Z0-9-]/g, ""); // ❌ no spaces at all
-  // }
+    // if (name === "categoryName") {
+    //   // Remove everything except letters, numbers, and hyphen
+    //   newValue = newValue.replace(/[^a-zA-Z0-9-]/g, ""); // ❌ no spaces at all
+    // }
 
-  setCategoryData({ ...categoryData, [name]: newValue });
-};
+    setCategoryData({ ...categoryData, [name]: newValue });
+  };
 
 
   // Handle changes for existing fields
@@ -305,22 +332,22 @@ const handleInputChange = (e) => {
   const removeField = (index) => {
     setNewFields(newFields.filter((_, i) => i !== index));
   };
-const removeExistingField = async (id) => {
-  const token = sessionStorage.getItem("token"); // get token
-  try {
-    await axios.delete(`${JAVA_BASE}api/assets/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`, // add token here
-      },
-    });
+  const removeExistingField = async (id) => {
+    const token = sessionStorage.getItem("token");
 
-    // Refresh or update state
-    window.location.reload();
-    setUpdatedOn((prev) => prev + 1);
-  } catch (error) {
-    console.error("Error deleting category:", error);
-  }
-};
+    try {
+      await axios.delete(`${JAVA_BASE}api/assets/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Remove from state directly — NO REFRESH
+      setExistingFields(prev => prev.filter(f => f.id !== id));
+
+    } catch (error) {
+      console.log("Error deleting field:", error);
+    }
+  };
+
 
 
   // const handleSubmit = async (e) => {
@@ -394,103 +421,103 @@ const removeExistingField = async (id) => {
     ]);
     setSelectedWorkflow("");
   };
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // ✂️ Trim spaces from category name
-  categoryData.categoryName = categoryData.categoryName.trim();
+    // ✂️ Trim spaces from category name
+    categoryData.categoryName = categoryData.categoryName.trim();
 
-  // 🚫 Validate category name input
-  const invalidChars = /[^a-zA-Z0-9\s-]/;
+    // 🚫 Validate category name input
+    const invalidChars = /[^a-zA-Z0-9\s-]/;
 
-  if (!categoryData.categoryName) {
-    setModalMessage("Category name cannot be empty or only spaces.");
-    setModalType("error");
-    setIsModalOpen(true);
-    return;
-  }
-
-  if (invalidChars.test(categoryData.categoryName)) {
-    setModalMessage("Special characters are not allowed in category name.");
-    setModalType("error");
-    setIsModalOpen(true);
-    return;
-  }
-
-  if (categoryData.workflowname === "Select Workflow") {
-    setModalMessage("Please select a workflow.");
-    setModalType("error");
-    setIsModalOpen(true);
-    return;
-  }
-
-  const userId = sessionStorage.getItem("userId");
-  const token = sessionStorage.getItem("token");
-
-  if (!userId) {
-    setModalMessage("User ID is not available.");
-    setModalType("error");
-    setIsModalOpen(true);
-    return;
-  }
-
-  try {
-    // 🔍 Check for duplicate category name (case-insensitive)
-    const isDuplicate = categories.some(
-      (cat) =>
-        cat.categoriesname.toLowerCase().trim() ===
-        categoryData.categoryName.toLowerCase().trim()
-    );
-
-    if (isDuplicate) {
-      setModalMessage("This category name already exists. Please choose another.");
+    if (!categoryData.categoryName) {
+      setModalMessage("Category name cannot be empty or only spaces.");
       setModalType("error");
       setIsModalOpen(true);
       return;
     }
 
-    // ✅ Build new category object
-    const newCategory = {
-      categoriesname: categoryData.categoryName,
-      createdBy: Number(userId),
-      categoriesType: "Movable",
-      workflowname: categoryData.workflowname,
-      status: "Draft",
-      stages: categoryData.stages || "Preview",
-    };
+    if (invalidChars.test(categoryData.categoryName)) {
+      setModalMessage("Special characters are not allowed in category name.");
+      setModalType("error");
+      setIsModalOpen(true);
+      return;
+    }
 
-    console.log("Submitting category: ", newCategory);
+    if (categoryData.workflowname === "Select Workflow") {
+      setModalMessage("Please select a workflow.");
+      setModalType("error");
+      setIsModalOpen(true);
+      return;
+    }
 
-    const response = await axios.post(
-      `${JAVA_BASE}api/categories/add`,
-      newCategory,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+    const userId = sessionStorage.getItem("userId");
+    const token = sessionStorage.getItem("token");
+
+    if (!userId) {
+      setModalMessage("User ID is not available.");
+      setModalType("error");
+      setIsModalOpen(true);
+      return;
+    }
+
+    try {
+      // 🔍 Check for duplicate category name (case-insensitive)
+      const isDuplicate = categories.some(
+        (cat) =>
+          cat.categoriesname.toLowerCase().trim() ===
+          categoryData.categoryName.toLowerCase().trim()
+      );
+
+      if (isDuplicate) {
+        setModalMessage("This category name already exists. Please choose another.");
+        setModalType("error");
+        setIsModalOpen(true);
+        return;
       }
-    );
 
-    setCategoryId(response.data.categoryId);
-    setUpdatedOn(new Date());
-    setCategories(
-      Array.isArray(response.data.categories)
-        ? response.data.categories
-        : []
-    );
+      // ✅ Build new category object
+      const newCategory = {
+        categoriesname: categoryData.categoryName,
+        createdBy: Number(userId),
+        categoriesType: "Movable",
+        workflowname: categoryData.workflowname,
+        status: "Draft",
+        stages: categoryData.stages || "Preview",
+      };
 
-    resetForm();
-    setModalMessage("Asset Category added successfully!");
-    setModalType("success");
-    setIsModalOpen(true);
-  } catch (error) {
-    console.error("Error adding category:", error);
-    setModalMessage("Error adding category. Please try again.");
-    setModalType("error");
-    setIsModalOpen(true);
-  }
-};
+      console.log("Submitting category: ", newCategory);
+
+      const response = await axios.post(
+        `${JAVA_BASE}api/categories/add`,
+        newCategory,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setCategoryId(response.data.categoryId);
+      setUpdatedOn(new Date());
+      setCategories(
+        Array.isArray(response.data.categories)
+          ? response.data.categories
+          : []
+      );
+
+      resetForm();
+      setModalMessage("Asset Category added successfully!");
+      setModalType("success");
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error adding category:", error);
+      setModalMessage("Error adding category. Please try again.");
+      setModalType("error");
+      setIsModalOpen(true);
+    }
+  };
 
 
   // const handleSubmit = async (e) => {
@@ -559,59 +586,59 @@ const handleSubmit = async (e) => {
   //    resetForm();
   // };
 
- const handleUpdate = async (e) => {
-  e.preventDefault();
+  const handleUpdate = async (e) => {
+    e.preventDefault();
 
-  if (categoryData.workflowname === "Select Workflow") {
-    setMessage("Please select a workflow.");
-    setMessageType("error");
-    setIsMessageModalOpen(true);
-    return;
-  }
+    if (categoryData.workflowname === "Select Workflow") {
+      setMessage("Please select a workflow.");
+      setMessageType("error");
+      setIsMessageModalOpen(true);
+      return;
+    }
 
-  const token = sessionStorage.getItem("token"); // get token
+    const token = sessionStorage.getItem("token"); // get token
 
-  try {
-    const newCategory = {
-      categoriesname: categoryData.categoryName,
-      createdBy: Number(userId),
-      categoriesType: "Movable",
-      workflowname: categoryData.workflowname,
-      status: categoryData.status,
-      stages: categoryData.stages,
-    };
+    try {
+      const newCategory = {
+        categoriesname: categoryData.categoryName,
+        createdBy: Number(userId),
+        categoriesType: "Movable",
+        workflowname: categoryData.workflowname,
+        status: categoryData.status,
+        stages: categoryData.stages,
+      };
 
-    console.log("Updating category: ", newCategory);
+      console.log("Updating category: ", newCategory);
 
-    const response = await axios.put(
-      `${JAVA_BASE}api/categories/id/${categoryData.categoryId}/user/${userId}`,
-      newCategory,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // add token here
-          "Content-Type": "application/json",
-        },
-      }
-    );
+      const response = await axios.put(
+        `${JAVA_BASE}api/categories/id/${categoryData.categoryId}/user/${userId}`,
+        newCategory,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // add token here
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-    setUpdatedOn(new Date());
-    setCategories(
-      Array.isArray(response.data.categories) ? response.data.categories : []
-    );
+      setUpdatedOn(new Date());
+      setCategories(
+        Array.isArray(response.data.categories) ? response.data.categories : []
+      );
 
-    resetForm();
+      resetForm();
 
-    setMessage("Category updated successfully!");
-    setMessageType("success");
-    setIsMessageModalOpen(true);
-    setIsCategoryEditable(false);
-  } catch (error) {
-    console.error("Error updating category:", error);
-    setMessage("Error updating category. Please try again.");
-    setMessageType("error");
-    setIsMessageModalOpen(true);
-  }
-};
+      setMessage("Category updated successfully!");
+      setMessageType("success");
+      setIsMessageModalOpen(true);
+      setIsCategoryEditable(false);
+    } catch (error) {
+      console.error("Error updating category:", error);
+      setMessage("Error updating category. Please try again.");
+      setMessageType("error");
+      setIsMessageModalOpen(true);
+    }
+  };
 
 
   const cancelDelete = () => {
@@ -624,381 +651,380 @@ const handleSubmit = async (e) => {
     setIsDeleteModalOpen(true); // Open the modal
   };
 
-const confirmDelete = async () => {
-  const token = sessionStorage.getItem("token"); // get token
+  const confirmDelete = async () => {
+    const token = sessionStorage.getItem("token"); // get token
 
-  try {
-    if (assetToDelete) {
-      await axios.delete(
-        `${JAVA_BASE}api/categories/id/${assetToDelete}`,
+    try {
+      if (assetToDelete) {
+        await axios.delete(
+          `${JAVA_BASE}api/categories/id/${assetToDelete}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // add token here
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        setCategories(
+          categories.filter((category) => category.id !== assetToDelete)
+        ); // Update the categories list
+        setUpdatedOn((prev) => prev + 1); // Trigger a re-render or refresh if needed
+      }
+    } catch (error) {
+      console.error("Error deleting category:", error);
+    } finally {
+      setIsDeleteModalOpen(false); // Close the modal after the operation
+      setAssetToDelete(null); // Clear the asset to delete
+    }
+  };
+
+  const DEFAULT_PREDEFINED_FIELDS = [
+    { fieldname: "Asset Name", assetDataType: "String", isNullable: false, isUnique: false },
+    { fieldname: "Purchase Date", assetDataType: "Date", isNullable: false, isUnique: false },
+    { fieldname: "Original Cost", assetDataType: "Number", isNullable: false, isUnique: false },
+    { fieldname: "Scrap Value", assetDataType: "Number", isNullable: false, isUnique: false },
+    { fieldname: "Useful Life", assetDataType: "Number", isNullable: false, isUnique: false },
+    { fieldname: "Unit Of Measure", assetDataType: "String", isNullable: false, isUnique: false },
+  ];
+
+  const cleanFields = (fields) => {
+    return fields
+      .map(f => ({
+        ...f,
+        fieldname: f.fieldname?.trim() || null,
+        assetDataType: f.assetDataType?.trim() || null
+      }))
+      .filter(f => f.fieldname !== null && f.assetDataType !== null);
+  };
+
+
+  const handleTemporarySave = async () => {
+    const token = sessionStorage.getItem("token");
+
+    const payload = {
+      categoryName: selectedCategoryName?.trim(),
+      assets: [
+        ...cleanFields(existingFields),
+        ...cleanFields(newFields)
+      ]
+    };
+
+    try {
+      const response = await axios.post(
+        `${JAVA_BASE}api/assets/insert/${selectedCategoryName}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setMessage("Category Saved Temporarily!");
+      setMessageType("success");
+      // setIsTempModalOpen(true);
+      closeModal();
+
+    } catch (error) {
+      console.error("TEMP SAVE ERROR:", error);
+      setMessage("Something went wrong!");
+      setMessageType("error");
+      // setIsTempModalOpen(true);
+    }
+  };
+
+
+
+
+
+  const handleApproval = async () => {
+    const token = sessionStorage.getItem("token");
+
+    const payload = {
+      categoryName: selectedCategoryName?.trim(),
+      assets: [
+        ...cleanFields(existingFields),
+        ...cleanFields(newFields)
+      ]
+    };
+
+    try {
+      const saveResponse = await axios.post(
+        `${JAVA_BASE}api/assets/insert/${selectedCategoryName}`,
+        payload,
         {
           headers: {
-            Authorization: `Bearer ${token}`, // add token here
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      const stageResponse = await axios.put(
+        `${ASSET_NODE_BASE}assets/stages/${editCategoryId}`,
+        { value: "SubmittedForApproval" },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      setCategories(prev =>
+        prev.map(category =>
+          category.categoryId === editCategoryId
+            ? { ...category, stages: "SubmittedForApproval" }
+            : category
+        )
+      );
+
+      setMessage("Category Submitted For Approval!");
+      setMessageType("success");
+      // setIsApprovalModalOpen(true);
+      closeModal();
+
+    } catch (error) {
+      console.error("APPROVAL ERROR:", error);
+      setMessage("Something went wrong!");
+      setMessageType("error");
+      // setIsApprovalModalOpen(true);
+    }
+  };
+
+
+
+
+
+
+  // const handleApproval = async () => {
+  //   const token = sessionStorage.getItem("token");
+
+  //   if (!token) {
+  //     console.error("Token missing in sessionStorage!");
+  //     setApprovalModalMessage("Authentication token missing. Please login again.");
+  //     setIsApprovalModalOpen(true);
+  //     return;
+  //   }
+
+  //   if (!editCategoryId) {
+  //     console.error("editCategoryId is invalid:", editCategoryId);
+  //     setApprovalModalMessage("Category ID is missing or invalid.");
+  //     setIsApprovalModalOpen(true);
+  //     return;
+  //   }
+
+  //   try {
+  //     // 🔹 Step 1: Prepare final payload (same as your new logic)
+  //     const payload = {
+  //       categoryName: selectedCategoryName?.trim(),
+  //       assets: [
+  //         ...cleanFields(existingFields),
+  //         ...cleanFields(newFields)
+  //       ],
+  //     };
+
+  //     // 🟢 TEMPORARY SAVE (same as earlier — NO LOADER)
+  //     const saveResponse = await axios.post(
+  //       `${JAVA_BASE}api/assets/insert/${selectedCategoryName}`,
+  //       payload,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+
+  //     console.log("✅ Temporary save response:", saveResponse.data);
+
+  //     // 🟢 Step 2: Update category stage
+  //     const stageUpdateResponse = await axios.put(
+  //       `${ASSET_NODE_BASE}assets/stages/${editCategoryId}`,
+  //       { value: "SubmittedForApproval" },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+
+  //     console.log("✅ Stage update response:", stageUpdateResponse.data);
+
+  //     // Update UI category state
+  //     setCategories((prev) =>
+  //       prev.map((cat) =>
+  //         cat.categoryId === editCategoryId
+  //           ? { ...cat, stages: "SubmittedForApproval" }
+  //           : cat
+  //       )
+  //     );
+  //      closeModal();
+  //     setUpdatedOn(new Date());
+
+  //     // 🟢 Step 3: Fetch workflow users
+  //     const userResponse = await axios.get(
+  //       `${JAVA_BASE}workflow/users-by-category/${editCategoryId}`,
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+
+  //     let users = Array.isArray(userResponse.data) ? userResponse.data : [];
+
+  //     // Filter users only for CategoryApproval
+  //     let categoryApprovalUsers = users.filter(
+  //       (entry) => entry.action_info?.action_name === "CategoryApproval"
+  //     );
+
+  //     // 🔹 Remove duplicate emails
+  //     const uniqueUsers = new Map();
+  //     categoryApprovalUsers.forEach((entry) => {
+  //       const email = entry?.user_info?.email;
+  //       if (email && !uniqueUsers.has(email)) {
+  //         uniqueUsers.set(email, entry);
+  //       }
+  //     });
+  //     categoryApprovalUsers = Array.from(uniqueUsers.values());
+
+  //     console.log("✅ Unique CategoryApproval users:", categoryApprovalUsers.length);
+
+  //     // 🟢 Open Notification Selector Modal
+  //     setPendingNotificationUsers(categoryApprovalUsers);
+  //     setIsNotificationSelectorOpen(true);
+
+  //   } catch (error) {
+  //     console.error("❌ Error during handleApproval:", error);
+
+  //     let errorMessage = "An error occurred. Please try again.";
+  //     if (error.response) {
+  //       errorMessage = error.response.data.message || errorMessage;
+  //     } else if (error.request) {
+  //       errorMessage = "No response from the server. Please check your network.";
+  //     } else {
+  //       errorMessage = error.message || errorMessage;
+  //     }
+
+  //     setApprovalModalMessage(errorMessage);
+  //     setIsApprovalModalOpen(true);
+  //   }
+  // };
+
+
+  // // 🟢 STEP 2: HANDLE NOTIFICATION CONFIRM (Loader Active + Close Modal First)
+  // const handleNotificationConfirm = async (selectedMethods) => {
+  //   const token = sessionStorage.getItem("token");
+  //   if (!token) return;
+
+  //   try {
+  //     // 🔒 Immediately close Notification Selector before showing loader
+  //     setIsNotificationSelectorOpen(false);
+
+  //     // ✅ Start Loader (after modal closes)
+  //     setLoaderText("Sending notifications...");
+  //     setIsLoading(true);
+
+  //     // Step 1: Fetch UCS module dynamically
+  //     const moduleResponse = await axios.get(`${UCS_BASE}api/modules`, {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+
+  //     // 🎯 Find exact module for Category Form Submission (EAM-CFS)
+  //     const targetModule = moduleResponse.data.find(
+  //       (mod) =>
+  //         mod.moduleName === "Category" &&
+  //         mod.subModuleName === "Form Submission" &&
+  //         mod.uniqueIdentifierName === "EAM-CFS"
+  //     );
+
+  //     if (!targetModule) {
+  //       throw new Error("Required UCS module (EAM-CFS) not found.");
+  //     }
+
+  //     console.log("📘 Target UCS Module:", targetModule);
+
+  //     // Step 2: Send UCS notifications
+  //     for (const entry of pendingNotificationUsers) {
+  //       const user = entry.user_info;
+
+  //       const payload = {
+  //         userid: user.id,
+  //         workflowid: entry.workflow_id,
+  //         workflowname: entry.workflow_name,
+  //         email: selectedMethods.includes("email") ? user.email : null,
+  //         phone_no: selectedMethods.includes("sms") ? user.phone_no : null,
+  //         moduleName: targetModule.moduleName,
+  //         subName: targetModule.subModuleName,
+  //         uniqueIdentifierName: targetModule.uniqueIdentifierName,
+  //         applicationName: targetModule.applicationName,
+  //         categoriesname: selectedCategoryName,
+  //         categoryId: editCategoryId,
+  //       };
+
+  //       // Clean null values
+  //       Object.keys(payload).forEach((key) => payload[key] === null && delete payload[key]);
+
+  //       const ucsResponse = await axios.post(`${UCS_BASE}ucs/send`, payload, {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       });
+
+  //       console.log(`📨 UCS sent to ${user.email || user.phone_no}:`, ucsResponse.data);
+  //     }
+
+  //     // ✅ Stop loader after all notifications done
+  //     setIsLoading(false);
+  //     setApprovalModalMessage("Asset Category submitted and notifications sent successfully!");
+  //     setIsApprovalModalOpen(true);
+  //     setIsCategoryEditable(false);
+  //   } catch (err) {
+  //     console.error("❌ Error sending UCS notifications:", err);
+  //     setIsLoading(false);
+  //     setApprovalModalMessage("Error sending notifications. Please try again.");
+  //     setIsApprovalModalOpen(true);
+  //   }
+  // };
+
+
+
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    const token = sessionStorage.getItem("token"); // Get token from sessionStorage
+
+    try {
+      const updatedCategory = {
+        categoriesname: selectedCategoryName,
+        fields: newFields.reduce((acc, field) => {
+          acc[field.fieldname] =
+            field.assetDataType +
+            (field.isUnique ? ", UNIQUE" : "") +
+            (field.isNullable ? ", NULL" : "");
+          return acc;
+        }, {}),
+      };
+
+      console.log("Updated Category Data:", updatedCategory); // Log data being submitted
+
+      const response = await axios.post(
+        `${JAVA_BASE}api/temp/save`,
+        updatedCategory,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Add token here
             "Content-Type": "application/json",
           },
         }
       );
 
-      setCategories(
-        categories.filter((category) => category.id !== assetToDelete)
-      ); // Update the categories list
-      setUpdatedOn((prev) => prev + 1); // Trigger a re-render or refresh if needed
-    }
-  } catch (error) {
-    console.error("Error deleting category:", error);
-  } finally {
-    setIsDeleteModalOpen(false); // Close the modal after the operation
-    setAssetToDelete(null); // Clear the asset to delete
-  }
-};
-
-
-const handleTemporarySave = async (category) => {
-  const token = sessionStorage.getItem("token"); // get token
-
-  try {
-    // Construct the temporary data in the correct format
-    const temporaryData = {
-      categoryName: selectedCategoryName, // Assuming this is already set correctly
-      assets: newFields.map((field) => ({
-        fieldname: field.fieldname,
-        assetDataType: field.assetDataType,
-        isNullable: field.isNullable,
-        isUnique: field.isUnique,
-        // role: field.role || [selectedRole], // Assign roles from the field or selectedRole if not present
-      })),
-    };
-
-    console.log("Temporary Save Data:", temporaryData); // Log the data being sent
-
-    const response = await axios.post(
-      `${JAVA_BASE}api/assets/insert`,
-      temporaryData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // add token here
-          "Content-Type": "application/json",
-        },
+      console.log("Response from Save:", response.data); // Log response from server
+      closeModal();
+      fetchCategories();
+    } catch (error) {
+      if (error.response) {
+        console.error("Error response from server:", error.response.data);
+      } else if (error.request) {
+        console.error("No response received from server:", error.request);
+      } else {
+        console.error("Error in setting up request:", error.message);
       }
-    );
-
-    console.log("Response from Temporary Save:", response.data); // Log response for confirmation
-    setIsTempModalOpen(true);
-    console.log("Category temporarily saved:", temporaryData);
-  } catch (error) {
-    if (error.response) {
-      console.error("Error response from server:", error.response.data);
-    } else if (error.request) {
-      console.error("No response received from server:", error.request);
-    } else {
-      console.error("Error in setting up request:", error.message);
     }
-  }
-};
-
-
-
-const handleApproval = async () => {
-  const token = sessionStorage.getItem("token"); // Get token
-
-  try {
-    const temporaryData = {
-      categoryName: selectedCategoryName,
-      assets: newFields.map((field) => ({
-        fieldname: field.fieldname,
-        assetDataType: field.assetDataType,
-        isNullable: field.isNullable,
-        isUnique: field.isUnique,
-      })),
-    };
-
-    console.log("Preparing to send temporary data:", temporaryData);
-
-    // Send a POST request to save the temporary data
-    const saveResponse = await axios.post(
-      `${JAVA_BASE}api/assets/insert`,
-      temporaryData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // Add token here
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    console.log("Temporary save successful. Response:", saveResponse.data);
-
-    // Update the category's stage to 'SubmittedForApproval' via API
-    const stageUpdateResponse = await axios.put(
-    `${ASSET_NODE_BASE}assets/stages/${editCategoryId}`,
-      { value: "SubmittedForApproval" },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // Add token here
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    console.log(
-      "Stage update to 'SubmittedForApproval' successful. Response:",
-      stageUpdateResponse.data
-    );
-
-    // Update the local state to reflect the new stage
-    setCategories((prevCategories) =>
-      prevCategories.map((category) =>
-        category.id === editCategoryId
-          ? { ...category, stage: "SubmittedForApproval" }
-          : category
-      )
-    );
-
-    setUpdatedOn(new Date());
-
-    // Show success modal for approval
-    setApprovalModalMessage(
-      "Asset Category successfully submitted for approval!"
-    );
-    setIsApprovalModalOpen(true);
-
-    // Close other modals
-    setIsCategoryEditable(false);
-  } catch (error) {
-    let errorMessage = "An error occurred. Please try again.";
-    if (error.response) {
-      errorMessage = error.response.data.message || errorMessage;
-    } else if (error.request) {
-      errorMessage =
-        "No response from the server. Please check your network.";
-    } else {
-      errorMessage = error.message || errorMessage;
-    }
-
-    console.error("Error:", errorMessage);
-
-    // Show error modal for approval
-    setApprovalModalMessage(errorMessage);
-    setIsApprovalModalOpen(true);
-  }
-};
-
-
-
-
-// const handleApproval = async () => {
-//   const token = sessionStorage.getItem("token");
-
-//   if (!token) {
-//     console.error("Token missing in sessionStorage!");
-//     setApprovalModalMessage("Authentication token missing. Please login again.");
-//     setIsApprovalModalOpen(true);
-//     return;
-//   }
-
-//   if (!editCategoryId) {
-//     console.error("editCategoryId is invalid:", editCategoryId);
-//     setApprovalModalMessage("Category ID is missing or invalid.");
-//     setIsApprovalModalOpen(true);
-//     return;
-//   }
-
-//   try {
-//     // Step 1: Save temporary data (NO LOADER)
-//     const temporaryData = {
-//       categoryName: selectedCategoryName,
-//       assets: newFields.map((field) => ({
-//         fieldname: field.fieldname,
-//         assetDataType: field.assetDataType,
-//         isNullable: field.isNullable,
-//         isUnique: field.isUnique,
-//       })),
-//     };
-
-//     const saveResponse = await axios.post(`${JAVA_BASE}api/assets/insert`, temporaryData, {
-//       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-//     });
-
-//     console.log("✅ Temporary save response:", saveResponse.data);
-
-//     // Step 2: Update category stage
-//     const stageUpdateResponse = await axios.put(
-//       `${ASSET_NODE_BASE}assets/stages/${editCategoryId}`,
-//       { value: "SubmittedForApproval" },
-//       { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
-//     );
-
-//     console.log("✅ Stage update response:", stageUpdateResponse.data);
-
-//     // Update local state
-//     setCategories((prev) =>
-//       prev.map((cat) =>
-//         cat.id === editCategoryId ? { ...cat, stage: "SubmittedForApproval" } : cat
-//       )
-//     );
-//     setUpdatedOn(new Date());
-
-//     // Step 3: Fetch workflow users (NO LOADER)
-//     const userResponse = await axios.get(
-//       `${JAVA_BASE}workflow/users-by-category/${editCategoryId}`,
-//       { headers: { Authorization: `Bearer ${token}` } }
-//     );
-
-//     const users = Array.isArray(userResponse.data) ? userResponse.data : [];
-//     let categoryApprovalUsers = users.filter(
-//       (entry) => entry.action_info?.action_name === "CategoryApproval"
-//     );
-
-//     // Remove duplicates
-//     const uniqueUsersMap = new Map();
-//     categoryApprovalUsers.forEach((entry) => {
-//       const email = entry?.user_info?.email;
-//       if (email && !uniqueUsersMap.has(email)) {
-//         uniqueUsersMap.set(email, entry);
-//       }
-//     });
-//     categoryApprovalUsers = Array.from(uniqueUsersMap.values());
-
-//     console.log("✅ Unique CategoryApproval users:", categoryApprovalUsers.length);
-
-//     // ✅ Open Notification Selector modal (No Loader yet)
-//     setPendingNotificationUsers(categoryApprovalUsers);
-//     setIsNotificationSelectorOpen(true);
-//   } catch (error) {
-//     console.error("❌ Error during handleApproval:", error);
-
-//     let errorMessage = "An error occurred. Please try again.";
-//     if (error.response) {
-//       errorMessage = error.response.data.message || errorMessage;
-//     } else if (error.request) {
-//       errorMessage = "No response from the server. Please check your network.";
-//     } else {
-//       errorMessage = error.message || errorMessage;
-//     }
-
-//     setApprovalModalMessage(errorMessage);
-//     setIsApprovalModalOpen(true);
-//   }
-// };
-
-// // 🟢 STEP 2: HANDLE NOTIFICATION CONFIRM (Loader Active + Close Modal First)
-// const handleNotificationConfirm = async (selectedMethods) => {
-//   const token = sessionStorage.getItem("token");
-//   if (!token) return;
-
-//   try {
-//     // 🔒 Immediately close Notification Selector before showing loader
-//     setIsNotificationSelectorOpen(false);
-
-//     // ✅ Start Loader (after modal closes)
-//     setLoaderText("Sending notifications...");
-//     setIsLoading(true);
-
-//     // Step 1: Fetch UCS module dynamically
-//     const moduleResponse = await axios.get(`${UCS_BASE}api/modules`, {
-//       headers: { Authorization: `Bearer ${token}` },
-//     });
-
-//     // 🎯 Find exact module for Category Form Submission (EAM-CFS)
-//     const targetModule = moduleResponse.data.find(
-//       (mod) =>
-//         mod.moduleName === "Category" &&
-//         mod.subModuleName === "Form Submission" &&
-//         mod.uniqueIdentifierName === "EAM-CFS"
-//     );
-
-//     if (!targetModule) {
-//       throw new Error("Required UCS module (EAM-CFS) not found.");
-//     }
-
-//     console.log("📘 Target UCS Module:", targetModule);
-
-//     // Step 2: Send UCS notifications
-//     for (const entry of pendingNotificationUsers) {
-//       const user = entry.user_info;
-
-//       const payload = {
-//         userid: user.id,
-//         workflowid: entry.workflow_id,
-//         workflowname: entry.workflow_name,
-//         email: selectedMethods.includes("email") ? user.email : null,
-//         phone_no: selectedMethods.includes("sms") ? user.phone_no : null,
-//         moduleName: targetModule.moduleName,
-//         subName: targetModule.subModuleName,
-//         uniqueIdentifierName: targetModule.uniqueIdentifierName,
-//         applicationName: targetModule.applicationName,
-//         categoriesname: selectedCategoryName,
-//         categoryId: editCategoryId,
-//       };
-
-//       // Clean null values
-//       Object.keys(payload).forEach((key) => payload[key] === null && delete payload[key]);
-
-//       const ucsResponse = await axios.post(`${UCS_BASE}ucs/send`, payload, {
-//         headers: { Authorization: `Bearer ${token}` },
-//       });
-
-//       console.log(`📨 UCS sent to ${user.email || user.phone_no}:`, ucsResponse.data);
-//     }
-
-//     // ✅ Stop loader after all notifications done
-//     setIsLoading(false);
-//     setApprovalModalMessage("Asset Category submitted and notifications sent successfully!");
-//     setIsApprovalModalOpen(true);
-//     setIsCategoryEditable(false);
-//   } catch (err) {
-//     console.error("❌ Error sending UCS notifications:", err);
-//     setIsLoading(false);
-//     setApprovalModalMessage("Error sending notifications. Please try again.");
-//     setIsApprovalModalOpen(true);
-//   }
-// };
-
-
-
-
-const handleEditSubmit = async (e) => {
-  e.preventDefault();
-  const token = sessionStorage.getItem("token"); // Get token from sessionStorage
-
-  try {
-    const updatedCategory = {
-      categoriesname: selectedCategoryName,
-      fields: newFields.reduce((acc, field) => {
-        acc[field.fieldname] =
-          field.assetDataType +
-          (field.isUnique ? ", UNIQUE" : "") +
-          (field.isNullable ? ", NULL" : "");
-        return acc;
-      }, {}),
-    };
-
-    console.log("Updated Category Data:", updatedCategory); // Log data being submitted
-
-    const response = await axios.post(
-      `${JAVA_BASE}api/temp/save`,
-      updatedCategory,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // Add token here
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    console.log("Response from Save:", response.data); // Log response from server
-    closeModal();
-    fetchCategories();
-  } catch (error) {
-    if (error.response) {
-      console.error("Error response from server:", error.response.data);
-    } else if (error.request) {
-      console.error("No response received from server:", error.request);
-    } else {
-      console.error("Error in setting up request:", error.message);
-    }
-  }
-};
+  };
 
 
 
@@ -1009,16 +1035,14 @@ const handleEditSubmit = async (e) => {
       // console.log(newFields)
 
       let updatedFieldsData = newFields.reduce((acc, field) => {
-        acc[field.fieldname] = `${field.assetDataType}${
-          field.isNullable ? ",NULL" : ",NOT NULL"
-        }`;
+        acc[field.fieldname] = `${field.assetDataType}${field.isNullable ? ",NULL" : ",NOT NULL"
+          }`;
         return acc;
       }, {});
 
       for (let data of existingFields) {
-        updatedFieldsData[data.fieldname] = `${data.assetDataType}${
-          data.isNullable ? ",NULL" : ",NOT NULL"
-        }`;
+        updatedFieldsData[data.fieldname] = `${data.assetDataType}${data.isNullable ? ",NULL" : ",NOT NULL"
+          }`;
       }
 
       // updatedFieldsData["roles"] = [selectedRole];
@@ -1055,77 +1079,25 @@ const handleEditSubmit = async (e) => {
     }
   };
 
-  const openEditModal = (category) => {
+  const openEditModal = async (category) => {
     setSelectedCategoryName(category.categoriesname);
     setEditCategoryId(category.categoryId);
     setIsEditCategoryModalOpen(true);
 
-    const filterCategoryFields = existingFields.filter((c) => {
-      return c.categoryName === category.categoriesname;
-    });
+    // Fetch correct fields for this category — NEW API
+    await fetchCategoryFields(category.categoriesname);
 
-    setExistingFields(
-      filterCategoryFields.length
-        ? filterCategoryFields.map((c) => ({
-            id: c.id,
-            fieldname: c.fieldname,
-            assetDataType: c.assetDataType,
-            isUnique: c.isUnique,
-            isNullable: c.isNullable,
-          }))
-        : []
-    );
-
-    setNewFields(
-      !filterCategoryFields.length
-        ? [
-            {
-              fieldname: "Asset Name",
-              assetDataType: "String",
-              isUnique: false,
-              isNullable: false,
-            },
-            {
-              fieldname: "Purchase Date",
-              assetDataType: "Date",
-              isUnique: false,
-              isNullable: false,
-            },
-            {
-              fieldname: "Original Cost",
-              assetDataType: "Number",
-              isUnique: false,
-              isNullable: false,
-            },
-            {
-              fieldname: "Scrap Value",
-              assetDataType: "Number",
-              isUnique: false,
-              isNullable: false,
-            },
-            {
-              fieldname: "Useful Life",
-              assetDataType: "Number",
-              isUnique: false,
-              isNullable: false,
-            },
-            {
-              fieldname: "Unit Of Measure",
-              assetDataType: "String",
-              isUnique: false,
-              isNullable: false,
-            },
-          ]
-        : [
-            {
-              fieldname: "",
-              assetDataType: "String",
-              isUnique: false,
-              isNullable: false,
-            },
-          ]
-    ); // Reset new fields
+    // New fields reset
+    setNewFields([
+      {
+        fieldname: "",
+        assetDataType: "String",
+        isUnique: false,
+        isNullable: false,
+      }
+    ]);
   };
+
 
   const closeModal = () => {
     setIsEditCategoryModalOpen(false);
@@ -1136,23 +1108,19 @@ const handleEditSubmit = async (e) => {
         isUnique: false,
         isNullable: false,
       },
-      
+
     ]);
   };
- const workflowOptions = [
-  { value: "", label: "Select Workflow" },
-  ...workflows.map((workflow) => ({
-    value: workflow.workflow_name, // updated key
-    label: workflow.workflow_name, // updated key
-  })),
-];
+  const workflowOptions = [
+    { value: "", label: "Select Workflow" },
+    ...workflows.map((workflow) => ({
+      value: workflow.workflow_name, // updated key
+      label: workflow.workflow_name, // updated key
+    })),
+  ];
 
 
-  const handleClickOutside = (event) => {
-    if (modalRef.current && !modalRef.current.contains(event.target)) {
-      closeModal();
-    }
-  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
@@ -1162,16 +1130,6 @@ const handleEditSubmit = async (e) => {
     }).format(date);
   };
 
-  useEffect(() => {
-    if (isEditCategoryModalOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isEditCategoryModalOpen]);
 
   //TOKEN AND USERPROFILE  START
   const userId = sessionStorage.getItem("userId");
@@ -1273,9 +1231,9 @@ const handleEditSubmit = async (e) => {
   const renderRoles = (roles, action) => {
     return roles
       ? roles
-          .filter((item) => item.action === action)
-          .map((item) => item.groups)
-          .join(", ") || "No roles assigned"
+        .filter((item) => item.action === action)
+        .map((item) => item.groups)
+        .join(", ") || "No roles assigned"
       : "No roles found";
   };
 
@@ -1313,109 +1271,109 @@ const handleEditSubmit = async (e) => {
         />
         <div className="w-full">
           <div className=" p-2 ">
-        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-5 mb-6">
-  {/* Asset Category Name */}
-<div className="flex flex-col gap-1 w-full md:w-[200px]">
-  <label className="text-[#555252] font-semibold">Asset Category Name</label>
-  <input
-    type="text"
-    name="categoryName"
-    value={categoryData.categoryName}
-    onChange={handleInputChange}
-    className="p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-    required
-  />
-  {/[^\w\s-]/.test(categoryData.categoryName) && (
-    <span className="text-red-500 text-sm">
-      Only letters, numbers, and hyphens are allowed.
-    </span>
-  )}
-</div>
+            <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-5 mb-6">
+              {/* Asset Category Name */}
+              <div className="flex flex-col gap-1 w-full md:w-[200px]">
+                <label className="text-[#555252] font-semibold">Asset Category Name</label>
+                <input
+                  type="text"
+                  name="categoryName"
+                  value={categoryData.categoryName}
+                  onChange={handleInputChange}
+                  className="p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                {/[^\w\s-]/.test(categoryData.categoryName) && (
+                  <span className="text-red-500 text-sm">
+                    Only letters, numbers, and hyphens are allowed.
+                  </span>
+                )}
+              </div>
 
-  {/* Asset Category Type */}
-  <div className="flex flex-col gap-1 w-full md:w-[200px]">
-    <label className="text-[#555252] font-semibold">Asset Category Type</label>
-    <input
-      type="text"
-      name="categoryType"
-      value="Movable"
-      readOnly
-      className="p-2 w-full border rounded-md focus:outline-none bg-[#F0F0F0] text-gray-700"
-    />
-  </div>
+              {/* Asset Category Type */}
+              <div className="flex flex-col gap-1 w-full md:w-[200px]">
+                <label className="text-[#555252] font-semibold">Asset Category Type</label>
+                <input
+                  type="text"
+                  name="categoryType"
+                  value="Movable"
+                  readOnly
+                  className="p-2 w-full border rounded-md focus:outline-none bg-[#F0F0F0] text-gray-700"
+                />
+              </div>
 
-  {/* Workflow Dropdown */}
-  <div className="flex flex-col gap-1 w-full md:w-[250px]">
-    <label className="text-[#555252] font-semibold">Approval Workflow</label>
-    <Select
-      options={workflowOptions}
-      value={
-        categoryData.workflowname
-          ? workflowOptions.find(
-              (option) => option.value === categoryData.workflowname
-            )
-          : null
-      }
-      onChange={(selectedOption) =>
-        handleInputChange({
-          target: {
-            name: "workflowname",
-            value: selectedOption?.value || "",
-          },
-        })
-      }
-      className="react-select-container"
-      classNamePrefix="react-select"
-      placeholder="Select Approval Workflow"
-      isSearchable
-      styles={{
-        control: (base) => ({
-          ...base,
-          borderRadius: '0.375rem', // md rounded
-          minHeight: '38px',
-          boxShadow: 'none',
-          borderColor: '#d1d5db',
-          '&:hover': { borderColor: '#3b82f6' },
-        }),
-      }}
-    />
-  </div>
+              {/* Workflow Dropdown */}
+              <div className="flex flex-col gap-1 w-full md:w-[250px]">
+                <label className="text-[#555252] font-semibold">Approval Workflow</label>
+                <Select
+                  options={workflowOptions}
+                  value={
+                    categoryData.workflowname
+                      ? workflowOptions.find(
+                        (option) => option.value === categoryData.workflowname
+                      )
+                      : null
+                  }
+                  onChange={(selectedOption) =>
+                    handleInputChange({
+                      target: {
+                        name: "workflowname",
+                        value: selectedOption?.value || "",
+                      },
+                    })
+                  }
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  placeholder="Select Approval Workflow"
+                  isSearchable
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      borderRadius: '0.375rem', // md rounded
+                      minHeight: '38px',
+                      boxShadow: 'none',
+                      borderColor: '#d1d5db',
+                      '&:hover': { borderColor: '#3b82f6' },
+                    }),
+                  }}
+                />
+              </div>
 
-  {/* Submit Button - right next to workflow */}
-  <div className="flex items-end">
-    <button
-      type="submit"
-      className="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700 transition"
-    >
-      Submit
-    </button>
-  </div>
+              {/* Submit Button - right next to workflow */}
+              <div className="flex items-end">
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700 transition"
+                >
+                  Submit
+                </button>
+              </div>
 
-  {/* Search Input at the end */}
-  <div className="relative ml-auto">
-    <input
-      type="text"
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      placeholder="Search..."
-      className="pl-9 pr-3 py-2 border rounded-md w-[230px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="absolute left-3 top-2.5 w-5 h-5 text-gray-400"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M21 21l-4.35-4.35m1.15-5.4a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"
-      />
-    </svg>
-  </div>
-</form>
+              {/* Search Input at the end */}
+              <div className="relative ml-auto">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search..."
+                  className="pl-9 pr-3 py-2 border rounded-md w-[230px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="absolute left-3 top-2.5 w-5 h-5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-4.35-4.35m1.15-5.4a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"
+                  />
+                </svg>
+              </div>
+            </form>
 
             {/* Filter Section */}
             {isFiltersVisible && (
@@ -1518,9 +1476,8 @@ const handleEditSubmit = async (e) => {
                       paginatedData.map((category, index) => (
                         <tr
                           key={category.categoryId}
-                          className={`${
-                            index % 2 === 0 ? "bg-blue-50" : "bg-white"
-                          }`}
+                          className={`${index % 2 === 0 ? "bg-blue-50" : "bg-white"
+                            }`}
                         >
                           <td className="px-5 py-3 text-center ">
                             {(currentPage - 1) * rowsPerPage + index + 1}
@@ -1613,14 +1570,17 @@ const handleEditSubmit = async (e) => {
                               }}
                             >
                               <FaEdit color="green" />
-                              
+
                             </button>
-                            <button
-                              onClick={() => handleDelete(category.categoryId)}
-                              className="text-red-500 hover:underline text-md"
-                            >
-                              <FaTrash />
-                            </button>
+                            {category.stages !== "Approved" && (
+                              <button
+                                onClick={() => handleDelete(category.categoryId)}
+                                className="text-red-500 hover:underline text-md"
+                              >
+                                <FaTrash />
+                              </button>
+                            )}
+
                             {category.stages === "Resubmitted" && (
                               <button
                                 onClick={() =>
@@ -1724,7 +1684,7 @@ const handleEditSubmit = async (e) => {
             </div>
           )}
 
-        
+
           {isCategoryEditable && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 z-50">
               <div className="bg-white rounded-lg shadow-lg w-10/12 sm:w-3/4 md:w-1/2 lg:w-1/3 p-4 sm:p-6 overflow-y-auto scale-90 sm:scale-100 animate-fadeIn max-h-[90vh]">
@@ -1765,31 +1725,31 @@ const handleEditSubmit = async (e) => {
                   </div>
 
                   {/* Workflow Dropdown */}
-                <div className="flex flex-col gap-2 w-full md:w-[250px]">
-  <label className="text-[#555252] font-semibold">Approval Workflow</label>
-  <Select
-    options={workflowOptions}
-    value={
-      categoryData.workflowname
-        ? workflowOptions.find(
-            (option) => option.value === categoryData.workflowname
-          )
-        : null
-    }
-    onChange={(selectedOption) =>
-      handleInputChange({
-        target: {
-          name: "workflowname",
-          value: selectedOption?.value || "",
-        },
-      })
-    }
-    className="react-select-container"
-    classNamePrefix="react-select"
-    placeholder="Select Approval Workflow"
-    isSearchable
-  />
-</div>
+                  <div className="flex flex-col gap-2 w-full md:w-[250px]">
+                    <label className="text-[#555252] font-semibold">Approval Workflow</label>
+                    <Select
+                      options={workflowOptions}
+                      value={
+                        categoryData.workflowname
+                          ? workflowOptions.find(
+                            (option) => option.value === categoryData.workflowname
+                          )
+                          : null
+                      }
+                      onChange={(selectedOption) =>
+                        handleInputChange({
+                          target: {
+                            name: "workflowname",
+                            value: selectedOption?.value || "",
+                          },
+                        })
+                      }
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                      placeholder="Select Approval Workflow"
+                      isSearchable
+                    />
+                  </div>
 
                 </form>
 
@@ -1819,8 +1779,14 @@ const handleEditSubmit = async (e) => {
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 z-50">
               <div
                 ref={modalRef}
-                className="bg-white rounded-lg p-6 shadow-lg w-11/12 md:w-3/4 lg:w-1/3 xl:w-1/2"
+                className="relative bg-white rounded-lg p-6 shadow-lg w-11/12 md:w-3/4 lg:w-1/3 xl:w-1/2"
               >
+                <button
+                  onClick={closeModal}
+                  className="absolute top-3 right-3 text-red-600 hover:text-red-800 text-2xl font-bold"
+                >
+                  <FaTimes />
+                </button>
                 <h2 className="text-lg font-bold mb-4">Create Form</h2>
                 {/* Notification Note */}
                 <div className="bg-yellow-100 text-yellow-800 p-4 rounded-lg mb-6">
@@ -1858,130 +1824,142 @@ const handleEditSubmit = async (e) => {
                   <div className="flex flex-col gap-2 max-h-60 overflow-y-auto border p-4 rounded-lg ">
                     <label className="text-[#555252] font-semibold">Form Fields</label>
                     {console.log({ existingFields })}
-                    {existingFields.map((field, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-4 flex-wrap"
-                      >
+                    {existingFields.map((field, index) => {
+                      const isPredefined = [
+                        "Asset Name",
+                        "Purchase Date",
+                        "Original Cost",
+                        "Scrap Value",
+                        "Useful Life",
+                        "Unit Of Measure"
+                      ].includes(field.fieldname);
+
+                      return (
+                        <div key={index} className="flex items-center gap-4 flex-wrap">
+
+                          {/* Field Name */}
+                          <input
+                            type="text"
+                            name="fieldname"
+                            value={field.fieldname}
+                            onChange={(e) => handleExistingFieldChange(index, e)}
+                            disabled={isPredefined}        // 👈 ONLY predefined non-editable
+                            className={`p-2 border rounded-lg flex-1 ${isPredefined ? "bg-gray-200 cursor-not-allowed" : ""
+                              }`}
+                          />
+
+                          {/* Data Type */}
+                          <select
+                            name="assetDataType"
+                            value={field.assetDataType}
+                            onChange={(e) => handleExistingFieldChange(index, e)}
+                            disabled={isPredefined}         // 👈 ONLY predefined lock
+                            className={`p-2 border rounded-lg ${isPredefined ? "bg-gray-200 cursor-not-allowed" : ""
+                              }`}
+                          >
+                            <option value="String">Alpha Numeric</option>
+                            <option value="Integer">Whole Number</option>
+                            <option value="Number">Decimal Number</option>
+                            <option value="Boolean">Yes/No</option>
+                            <option value="Date">Date</option>
+                            <option value="Json">Upload File</option>
+                          </select>
+
+                          {/* Not Null Checkbox */}
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              name="isNullable"
+                              checked={field.isNullable}
+                              onChange={(e) => handleExistingFieldChange(index, e)}
+                              disabled={isPredefined}      // 👈 Lock only predefined
+                            />
+                            Not Null
+                          </label>
+
+                          {/* Unique Checkbox */}
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              name="isUnique"
+                              checked={field.isUnique}
+                              onChange={(e) => handleExistingFieldChange(index, e)}
+                              disabled={isPredefined}
+                            />
+                            Unique
+                          </label>
+
+                          {/* DELETE BUTTON — Only if not predefined */}
+                          {!isPredefined && (
+                            <button
+                              type="button"
+                              onClick={() => removeExistingField(field.id)}
+                              className="text-red-500 hover:underline"
+                            >
+                              <FaTrash />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+
+
+                    {newFields.map((field, index) => (
+                      <div key={index} className="flex items-center gap-4 flex-wrap">
+
                         <input
                           type="text"
                           name="fieldname"
                           value={field.fieldname}
-                          onChange={(e) => handleExistingFieldChange(index, e)}
-                          placeholder="Field Name"
-                          className="p-2 border rounded-lg flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          onChange={(e) => handleNewFieldChange(index, e)}
+                          className="p-2 border rounded-lg flex-1"
                         />
+
                         <select
                           name="assetDataType"
                           value={field.assetDataType}
-                          onChange={(e) => handleExistingFieldChange(index, e)}
-                          className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          onChange={(e) => handleNewFieldChange(index, e)}
+                          className="p-2 border rounded-lg"
                         >
                           <option value="String">Alpha Numeric</option>
                           <option value="Integer">Whole Number</option>
                           <option value="Number">Decimal Number</option>
-                          <option value="Boolean">Yes\No</option>
-
+                          <option value="Boolean">Yes/No</option>
                           <option value="Date">Date</option>
                           <option value="Json">Upload File</option>
                         </select>
+
                         <label className="flex items-center">
                           <input
                             type="checkbox"
                             name="isNullable"
                             checked={field.isNullable}
-                            onChange={(e) =>
-                              handleExistingFieldChange(index, e)
-                            }
-                          />{" "}
+                            onChange={(e) => handleNewFieldChange(index, e)}
+                          />
                           Not Null
                         </label>
+
                         <label className="flex items-center">
                           <input
                             type="checkbox"
                             name="isUnique"
                             checked={field.isUnique}
-                            onChange={(e) =>
-                              handleExistingFieldChange(index, e)
-                            }
-                          />{" "}
+                            onChange={(e) => handleNewFieldChange(index, e)}
+                          />
                           Unique
                         </label>
-                        {![
-                          "Asset Name",
-                          "Purchase Date",
-                          "Original Cost",
-                          "Scrap Value",
-                          "Useful Life",
-                          "Unit Of Measure",
-                        ].includes(field.fieldname) && (
-                          <button
-                            type="button"
-                            onClick={() => removeExistingField(field.id)}
-                            className="text-red-500 hover:underline"
-                          >
-                            <FaTrash />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    {newFields.map((field, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-4 flex-wrap"
-                      >
-                        <input
-                          type="text"
-                          required
-                          name="fieldname"
-                          value={field.fieldname}
-                          onChange={(e) => handleNewFieldChange(index, e)}
-                          placeholder="Field Name"
-                          className="p-2 border rounded-lg flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <select
-                          name="assetDataType"
-                          value={field.assetDataType}
-                          onChange={(e) => handleNewFieldChange(index, e)}
-                          className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+
+                        <button
+                          type="button"
+                          onClick={() => removeField(index)}
+                          className="text-red-500 hover:underline"
                         >
-                          <option value="String">Alpha Numeric</option>
-                          <option value="Integer">Whole Number</option>
-                          <option value="Number">Decimal Number </option>
-                          <option value="Boolean">Yes\No</option>
+                          <FaTrash />
+                        </button>
 
-                          <option value="Date">Date</option>
-                          <option value="Json">Upload File</option>
-                        </select>
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            name="isNullable"
-                            checked={field.isNullable}
-                            onChange={(e) => handleNewFieldChange(index, e)}
-                          />{" "}
-                          Not Null
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            name="isUnique"
-                            checked={field.isUnique}
-                            onChange={(e) => handleNewFieldChange(index, e)}
-                          />{" "}
-                          Unique
-                        </label>
-                        {![].includes(field.fieldname) && (
-                          <button
-                            type="button"
-                            onClick={() => removeField(index)}
-                            className="text-red-500 hover:underline"
-                          >
-                            <FaTrash />
-                          </button>
-                        )}
                       </div>
                     ))}
+
                   </div>
 
                   <div className="my-4 flex justify-between flex-wrap">
@@ -2072,9 +2050,8 @@ const handleEditSubmit = async (e) => {
                 {/* Modal Icon */}
                 <div className="modal-icon mt-4">
                   <div
-                    className={`w-16 h-16 mx-auto flex items-center justify-center rounded-full ${
-                      modalType === "error" ? "bg-red-600" : "bg-blue-600"
-                    }`}
+                    className={`w-16 h-16 mx-auto flex items-center justify-center rounded-full ${modalType === "error" ? "bg-red-600" : "bg-blue-600"
+                      }`}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -2104,9 +2081,8 @@ const handleEditSubmit = async (e) => {
 
                 {/* Modal Header */}
                 <h2
-                  className={`font-inter text-2xl font-bold mt-4 ${
-                    modalType === "error" ? "text-red-600" : "text-blue-600"
-                  }`}
+                  className={`font-inter text-2xl font-bold mt-4 ${modalType === "error" ? "text-red-600" : "text-blue-600"
+                    }`}
                 >
                   {modalType === "error" ? "Error" : "Success"}
                 </h2>
@@ -2121,11 +2097,10 @@ const handleEditSubmit = async (e) => {
 
                 {/* Modal Footer */}
                 <button
-                  className={`px-3 font-medium text-lg py-2 rounded-md transition duration-300 text-white ${
-                    modalType === "error"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-blue-600 hover:bg-blue-700"
-                  }`}
+                  className={`px-3 font-medium text-lg py-2 rounded-md transition duration-300 text-white ${modalType === "error"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-blue-600 hover:bg-blue-700"
+                    }`}
                   onClick={() => {
                     if (modalType === "error") {
                       setIsModalOpen(false);
@@ -2161,13 +2136,13 @@ const handleEditSubmit = async (e) => {
           )}
         </div>
       </div>
-       <LoaderModal isVisible={isLoading} text={loaderText} />
+      <LoaderModal isVisible={isLoading} text={loaderText} />
       <MessageModal
         message={message}
         type={messageType}
         setMessage={setMessage}
       />
-       {/* Notification Selector Modal */}
+      {/* Notification Selector Modal */}
       {/* <NotificationSelector
         open={isNotificationSelectorOpen}
         onClose={() => setIsNotificationSelectorOpen(false)}
