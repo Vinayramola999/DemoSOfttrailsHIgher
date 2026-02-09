@@ -88,7 +88,7 @@ const Category = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedRoleType, setSelectedRoleType] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 25;
+  const rowsPerPage = 10;
 
   const filteredRawMaterials = filteredCategories.filter(
     (category) => category.categoriesType === "RawMaterials"
