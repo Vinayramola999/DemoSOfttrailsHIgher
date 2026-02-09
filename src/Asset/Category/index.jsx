@@ -1,3 +1,5 @@
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import Select from "react-select";
 import {
   FaEdit,
   FaTrash,
@@ -56,7 +58,7 @@ const Category = () => {
     status: "Draft",
     stages: "Preview",
   });
-  const [isFiltersVisible, setIsFiltersVisible] = useState(false); // State to toggle the visibility of filters
+  const [isFiltersVisible, setIsFiltersVisible] = useState(false);
 
   const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -108,7 +110,7 @@ const Category = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loaderText, setLoaderText] = useState("Processing...");
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 25;
+  const rowsPerPage = 10;
 
   const filteredMovable = useMemo(() => filteredCategories.filter(
     (category) => category.categoriesType === "Movable"
