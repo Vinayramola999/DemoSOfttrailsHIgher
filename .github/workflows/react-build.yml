@@ -1,0 +1,37 @@
+name: React Production Build (CRA)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build React App
+    runs-on: ubuntu-latest
+
+    env:
+      GENERATE_SOURCEMAP: false
+      CI: false
+      NODE_OPTIONS: --max_old_space_size=6144   # 🔥 MAIN FIX
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build
+          path: build
+          compression-level: 0
