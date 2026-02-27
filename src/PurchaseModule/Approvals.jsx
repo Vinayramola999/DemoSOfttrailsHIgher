@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { FaSearch } from "react-icons/fa";
 import IndentApprovals from "./IndentApprovals";
+import RfpApprovals from "./RfpApprovals";
 import Select from "react-select";
 import PopupModal from "./PopupModal";
 import DownloadTableButtons from "./components/Downloadpdfexcel";
@@ -26,9 +27,9 @@ const Approvals = () => {
   });
 
   const tabs = [
-    { id: "allRequests", label: "All Requests" },
+    { id: "allRequests", label: "All Indent Requests" },
     { id: "indent", label: "Approved Indent" },
-    // { id: "allocation", label: "Allocation" },
+    { id: "RFP", label: "All RFP Requests" },
     { id: "paymentStatus", label: "Payment Status" },
   ];
 
@@ -47,12 +48,8 @@ const Approvals = () => {
   const columns = [
     { header: "S. No.", accessor: "sno" },
     { header: "User Id", accessor: "user_id" },
+    { header: "Indent ID", accessor: "indent_id" },
     { header: "Department", accessor: "department" },
-    { header: "Request", accessor: "asset_name" },
-    { header: "Request for", accessor: "request_for" },
-    { header: "Quantity", accessor: "quantity" },
-    { header: "UOM", accessor: "uom" },
-    { header: "Budget", accessor: "budget" },
     { header: "Status", accessor: "status" },
   ];
 
@@ -337,15 +334,9 @@ const Approvals = () => {
   const exportData = filteredData.map((item, idx) => ({
     sno: idx + 1,
     user_id: item.user_id,
+    indent_id: item.indent_id || item.id || "-",
     department:
       departments.find((b) => b.dept_id === item.dept_id)?.dept_name || "N/A",
-    asset_name: item.asset_name,
-    request_for: item.request_for,
-    quantity: item.quantity,
-    uom: item.uom,
-    budget:
-      item.budget ||
-      budgetOptions.find((b) => b.id === item.budget_id)?.budget_name || "N/A",
     status: item.status,
   }));
   return (
@@ -563,6 +554,12 @@ const Approvals = () => {
               <div>
                 {" "}
                 <IndentApprovals />{" "}
+              </div>
+            )}
+            {activeTab === "RFP" && (
+              <div>
+                {" "}
+                <RfpApprovals />{" "}
               </div>
             )}
             {activeTab === "allocation" && <div>Allocation Content</div>}

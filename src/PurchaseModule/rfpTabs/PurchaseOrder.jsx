@@ -20,12 +20,11 @@ const PurchaseOrder = () => {
   const token = getToken();
   const columns = [
     { header: "S. No.", accessor: "sno" },
-    { header: "PO no.", accessor: "po_no." },
-    { header: "PO Recieved.", accessor: "po_received" },
+    { header: "PO No.", accessor: "po_no" },
+    { header: "Quotation ID", accessor: "quotation_id" },
     { header: "Date", accessor: "date" },
-    { header: "Delivery Status", accessor: "delivery_status" },
     { header: "Delivery Date", accessor: "delivery_date" },
-    { header: "Payment", accessor: "payment" },
+    { header: "Delivery Status", accessor: "delivery_status" },
   ];
   // Fetch API data
   const fetchData = async () => {
@@ -125,17 +124,23 @@ const PurchaseOrder = () => {
 
   const exportData = filteredData.map((row, idx) => ({
     sno: idx + 1,
-    quotation_date: row.quotation_date
-      ? new Date(row.quotation_date).toLocaleDateString("en-IN", {
+    po_no: row.po_id || "--",
+    quotation_id: row.quotation_id || "--",
+    date: row.created_at
+      ? new Date(row.created_at).toLocaleDateString("en-IN", {
           day: "2-digit",
           month: "short",
           year: "numeric",
         })
       : "--",
-    quotation_id: row.quotation_id || "--",
-    rfp_id: row.rfp_id || "--",
-    vendor_name: row.vendor_name || "--",
-    status: row.status || "--",
+    delivery_date: row.delivery_date
+      ? new Date(row.delivery_date).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : "--",
+    delivery_status: row.status || "--",
   }));
 
   return (
@@ -189,7 +194,7 @@ const PurchaseOrder = () => {
           <DownloadTableButtons
             data={exportData}
             columns={columns}
-            fileName="Quotations"
+            fileName="Purchase_Orders"
           />
         </div>
       </div>

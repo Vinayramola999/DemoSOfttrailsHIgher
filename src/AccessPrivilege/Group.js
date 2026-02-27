@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import Excel from "../assests/excel.png";
 import Select from "react-select";
 import useFetchEmails from "../NewComponents/useFetchEmails";
+import { MAIN_API_BASE } from "../config/apiBase";
 
 const UpdateAccess = () => {
   const [roles, setRoles] = useState([]);
@@ -21,7 +22,7 @@ const UpdateAccess = () => {
     if (userId) {
       try {
         const accessResponse = await axios.get(
-          `https://devdemo.softtrails.net/access/access/${userId}`,
+          `${MAIN_API_BASE}/access/access/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -58,8 +59,7 @@ const UpdateAccess = () => {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await axios.get(
-          "https://devdemo.softtrails.net/role",
+        const response = await axios.get(`${MAIN_API_BASE}/role`,
           {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -109,8 +109,7 @@ const UpdateAccess = () => {
       api_access: selectedRolesArray.length > 0 ? selectedRolesArray : [], // Can be empty
     };
     try {
-      const response = await axios.put(
-        "https://devdemo.softtrails.net/access/update_access",
+      const response = await axios.put(`${MAIN_API_BASE}/access/update_access`,
         payload,
         {
           headers: {
@@ -176,7 +175,7 @@ const UpdateAccess = () => {
     const token = sessionStorage.getItem("token"); // get token from sessionStorage
     if (!token) return;
 
-    fetch("https://devdemo.softtrails.net/role", {
+    fetch(`${MAIN_API_BASE}/role`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -196,7 +195,7 @@ const UpdateAccess = () => {
     const token = sessionStorage.getItem("token"); // get token from sessionStorage
     if (!token) return;
 
-    fetch("https://devdemo.softtrails.net/users", {
+    fetch(`${MAIN_API_BASE}/users`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -276,8 +275,7 @@ const UpdateAccess = () => {
       };
 
       // Fetch users assigned to the role
-      const res = await fetch(
-        `https://devdemo.softtrails.net/access/role-users?role=${roleName}`,
+      const res = await fetch(`${MAIN_API_BASE}/access/role-users?role=${roleName}`,
         {
           headers,
         }
@@ -286,8 +284,7 @@ const UpdateAccess = () => {
       setAssignedUserIds1(data.users || []);
 
       // Fetch all users
-      const userRes = await fetch(
-        `https://devdemo.softtrails.net/users`,
+      const userRes = await fetch(`${MAIN_API_BASE}/users`,
         {
           headers,
         }

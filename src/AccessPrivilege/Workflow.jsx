@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import Select from "react-select";
 import React, { useState } from "react";
 import useFetchEmails from "../NewComponents/useFetchEmails";
+import { MAIN_API_BASE } from "../config/apiBase";
 Modal.setAppElement("#root");
 
 const UpdateAccess = () => {
@@ -18,16 +19,13 @@ const UpdateAccess = () => {
         setSelectedEmail(userId);
         if (userId) {
             try {
-                // Fetch API access
-                const response = await axios.get(`https://devdemo.softtrails.net/access/access/${userId}`,
+                const response = await axios.get(`${MAIN_API_BASE}/access/access/${userId}`,
                     { headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}`, }, }
                 );
-
                 const filteredAccess = response.data.filter(
                     (access) => access.user_id === parseInt(userId)
                 );
                 const apiAccessNames = filteredAccess.map((access) => access.api_name);
-
                 setApiAccess(apiAccessNames);
                 setIsWorkflowChecked(apiAccessNames.includes("WF"));
                 setHasAmsAccess(apiAccessNames.includes("update_access"));
@@ -76,12 +74,11 @@ const UpdateAccess = () => {
         const selectedApiAccess = [];
         if (isWorkflowChecked) selectedApiAccess.push("WF");
         try {
-            const response = await axios.put(
-                "https://devdemo.softtrails.net/access/update_access",
+            const response = await axios.put(`${MAIN_API_BASE}/access/update_access`,
                 {
                     user_id: selectedEmail,
                     module: selectedModule,
-                    api_access: selectedApiAccess.length ? selectedApiAccess : [], // Ensure empty value for unchecked UCS
+                    api_access: selectedApiAccess.length ? selectedApiAccess : [], 
                 },
                 {
                     headers: {

@@ -31,7 +31,7 @@ const AddPurchaseWorkflow = () => {
   const fetchWorkflows = async () => {
     try {
       const response = await axios.get(
-        "https://devdemo.softtrails.net/budget-workflow/workflows"
+        "http://devdemo.softtrails.net/budget-workflow/workflows"
       );
       setWorkflows(response.data);
     } catch (error) {
@@ -55,7 +55,7 @@ const AddPurchaseWorkflow = () => {
   const fetchBudgets = async () => {
     try {
       const response = await axios.get(
-        "https://devdemo.softtrails.net/budget/get-budget"
+        "http://devdemo.softtrails.net/budget/get-budget"
       );
       setBudgets(response.data);
     } catch (error) {
@@ -79,7 +79,7 @@ const AddPurchaseWorkflow = () => {
 
     try {
       const response = await axios.post(
-        "https://devdemo.softtrails.net/budget-workflow/workflows ",
+        "http://devdemo.softtrails.net/budget-workflow/workflows ",
         payload
       );
       console.log("Workflow saved:", response.data);
@@ -115,7 +115,7 @@ const AddPurchaseWorkflow = () => {
     ];
 
     axios
-      .put("https://devdemo.softtrails.net/budget-workflow/group", payload)
+      .put("http://devdemo.softtrails.net/budget-workflow/group", payload)
       .then((response) => {
         Swal.fire("Success", "Data submitted successfully!", "success");
         setIndentRequest([]);
@@ -164,7 +164,7 @@ const AddPurchaseWorkflow = () => {
 
     try {
       await axios.post(
-        "https://devdemo.softtrails.net/budget-workflow/user",
+        "http://devdemo.softtrails.net/budget-workflow/user",
         payload
       );
 
@@ -205,7 +205,7 @@ const AddPurchaseWorkflow = () => {
     // Fetch assigned users with their internal ID
     axios
       .get(
-        `https://devdemo.softtrails.net/budget-workflow/user/${workflow.workflowid}`
+        `http://devdemo.softtrails.net/budget-workflow/user/${workflow.workflowid}`
       )
       .then((res) => {
         const userEntries = res.data; // contains id, userid, etc.
@@ -235,7 +235,7 @@ const AddPurchaseWorkflow = () => {
     // Fetch associated groups and setup approver/request
     axios
       .get(
-        `https://devdemo.softtrails.net/budget-workflow/group/${workflow.workflowid}`
+        `http://devdemo.softtrails.net/budget-workflow/group/${workflow.workflowid}`
       )
       .then((res) => {
         const groups = res.data;
@@ -296,7 +296,7 @@ const AddPurchaseWorkflow = () => {
 
     try {
       await axios.delete(
-        `https://devdemo.softtrails.net/budget-workflow/user/${removedUser.id}`
+        `http://devdemo.softtrails.net/budget-workflow/user/${removedUser.id}`
       );
 
       const updatedUsers = [...editData.users];
@@ -353,7 +353,7 @@ const AddPurchaseWorkflow = () => {
 
   useEffect(() => {
     axios
-      .get("https://devdemo.softtrails.net/users")
+      .get("http://devdemo.softtrails.net/users")
       .then((response) => {
         setUsers(response.data);
         setAvailableUsers(response.data);
@@ -371,7 +371,7 @@ const AddPurchaseWorkflow = () => {
 
   useEffect(() => {
     axios
-      .get("https://devdemo.softtrails.net/role")
+      .get("http://devdemo.softtrails.net/role")
       .then((response) => setRoles(response.data))
       .catch((error) => console.error("Error fetching roles:", error));
   }, []);
@@ -383,7 +383,7 @@ const AddPurchaseWorkflow = () => {
     if (availableUsers.length > 0 && !hasFetchedUsersRef.current) {
       const workflowid = 1;
       axios
-        .get(`https://devdemo.softtrails.net/budget-workflow/user/${workflowid}`)
+        .get(`http://devdemo.softtrails.net/budget-workflow/user/${workflowid}`)
         .then((response) => {
           const enrichedUsers = response.data.map((entry) => {
             const matchedUser = availableUsers.find(

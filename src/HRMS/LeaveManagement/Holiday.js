@@ -1,16 +1,15 @@
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
+import {DeleteIcon} from "../../NewComponents/ReactIcons";
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import axios from 'axios';
-import excel from '../../assests/excel.png';
 import pdf from '../../assests/folder.png';
 import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
 import AddButton from "../../NewComponents/AddButton";
 import { FaPlus } from "react-icons/fa";
 import DeleteConfirmModal from "../../NewComponents/DeleteConfirmModal"
+import { HRMS_API_BASE ,MAIN_API_BASE} from "../../config/apiBase";
 
 const Holiday = () => {
     const [isHolidayPopupOpen, setIsHolidayPopupOpen] = useState(false);
@@ -25,70 +24,41 @@ const Holiday = () => {
         description: '',
     });
 
-    // const fetchHolidayData = async () => {
-    //     try {
-    //         const token = sessionStorage.getItem('token');
-    //         const response = await axios.get('https://devdemo.softtrails.net/yrset/holidays', {
-    //             headers: {
-    //                 'Authorization': `Bearer ${token}`
-    //             }
-    //         });
-
-    //         // Sorting the holidays data by date in ascending order
-    //         const sortedHolidays = response.data.sort((a, b) => {
-    //             const dateA = new Date(a.holiday_date);
-    //             const dateB = new Date(b.holiday_date);
-
-    //             // Compare the dates
-    //             return dateA - dateB; // Ascending order (earliest to latest)
-    //         });
-
-    //         setHolidays(sortedHolidays);
-    //     } catch (error) {
-    //         setApiError('An error occurred while fetching holidays.');
-    //     }
-    // };
-
     const fetchHolidayData = async () => {
-    try {
-        const token = sessionStorage.getItem('token');
+        try {
+            const token = sessionStorage.getItem('token');
 
-        const response = await axios.get(
-            'https://devdemo.softtrails.net/yrset/holidays',
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
+            const response = await axios.get(`${HRMS_API_BASE}/yrset/holidays`,
+                { headers: { Authorization: `Bearer ${token}`, }, }
+            );
 
-        // 1️⃣ Sort holidays by date (ascending)
-        const sortedHolidays = [...response.data].sort((a, b) => {
-            return new Date(a.holiday_date) - new Date(b.holiday_date);
-        });
+            // 1️⃣ Sort holidays by date (ascending)
+            const sortedHolidays = [...response.data].sort((a, b) => {
+                return new Date(a.holiday_date) - new Date(b.holiday_date);
+            });
 
-        // 2️⃣ Extract unique years (latest first)
-        const years = [
-            ...new Set(
-                sortedHolidays.map(h =>
-                    new Date(h.holiday_date).getFullYear()
-                )
-            ),
-        ].sort((a, b) => b - a);
+            // 2️⃣ Extract unique years (latest first)
+            const years = [
+                ...new Set(
+                    sortedHolidays.map(h =>
+                        new Date(h.holiday_date).getFullYear()
+                    )
+                ),
+            ].sort((a, b) => b - a);
 
-        // 3️⃣ Save years list
-        setAvailableYears(years);
+            // 3️⃣ Save years list
+            setAvailableYears(years);
 
-        // 4️⃣ Auto-select latest year (only once)
-        setSelectedYear(prevYear =>
-            prevYear ? prevYear : years.length ? years[0] : null
-        );
+            // 4️⃣ Auto-select latest year (only once)
+            setSelectedYear(prevYear =>
+                prevYear ? prevYear : years.length ? years[0] : null
+            );
 
-        // 5️⃣ Save holidays
-        setHolidays(sortedHolidays);
-    } catch (error) {
-        setApiError('An error occurred while fetching holidays.');
-    }
+            // 5️⃣ Save holidays
+            setHolidays(sortedHolidays);
+        } catch (error) {
+            setApiError('An error occurred while fetching holidays.');
+        }
     };
 
     useEffect(() => {
@@ -114,7 +84,7 @@ const Holiday = () => {
         setApiError(null);
         try {
             const token = sessionStorage.getItem('token');
-            const response = await axios.post('https://devdemo.softtrails.net/yrset/holidays', [holidayFormData], {
+            const response = await axios.post(`${HRMS_API_BASE}/yrset/holidays`, [holidayFormData], {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -132,23 +102,23 @@ const Holiday = () => {
                 description: '',
             });
             fetchHolidayData();
-        }catch (error) {
-    if (error.response && error.response.data) {
-        Swal.fire({
-            icon: 'error',
-            title: error.response.data.error || 'Error',
-            text: error.response.data.message || 'Something went wrong',
-            confirmButtonText: 'Okay'
-        });
-    } else {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'An error occurred while adding the holiday.',
-            confirmButtonText: 'Okay'
-        });
-    }
-}
+        } catch (error) {
+            if (error.response && error.response.data) {
+                Swal.fire({
+                    icon: 'error',
+                    title: error.response.data.error || 'Error',
+                    text: error.response.data.message || 'Something went wrong',
+                    confirmButtonText: 'Okay'
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while adding the holiday.',
+                    confirmButtonText: 'Okay'
+                });
+            }
+        }
     };
 
     const handleCancel = () => {
@@ -173,7 +143,7 @@ const Holiday = () => {
                     return;
                 }
                 // Make the API call
-                const response = await axios.get(`https://devdemo.softtrails.net/access/access/${userId}`, {
+                const response = await axios.get(`${MAIN_API_BASE}/access/access/${userId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
@@ -207,39 +177,38 @@ const Holiday = () => {
     }, []);
 
     /************************************************/
-    // Generate PDF function
-    const downloadPDF = () => {
+    // Generate PDF function (generic) - accepts a list of holidays
+    const downloadPDF = (items = [], fileName = 'HolidaysList.pdf') => {
         const doc = new jsPDF();
-        doc.text("Holiday List", 20, 10);
+        doc.text('Holiday List', 20, 10);
         doc.autoTable({
             head: [['S.no.', 'Holiday Name', 'Holiday Date']],
-            body: holidays.map((holiday, index) => {
+            body: (items || []).map((holiday, index) => {
                 const formattedDate = new Date(holiday.holiday_date).toLocaleDateString('en-GB', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
                     weekday: 'long',
                 });
-                return [
-                    index + 1,
-                    holiday.holiday_name,
-                    formattedDate,
-                ];
+                return [index + 1, holiday.holiday_name, formattedDate];
             }),
         });
-        doc.save('HolidaysList.pdf');
+        doc.save(fileName);
     };
-    // Generate Excel function
-    const downloadExcel = () => {
-        const worksheet = XLSX.utils.json_to_sheet(holidays.map((holiday, index) => ({
-            "S.no.": index + 1,
-            "Holiday Name": holiday.holiday_name,
-            "Holiday Date": holiday.holiday_date,
-        })));
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Holidays");
-        XLSX.writeFile(workbook, 'HolidaysList.xlsx');
+
+    // Handlers for filtered / all downloads
+    const handleDownloadFiltered = () => {
+        const items = filteredHolidays && filteredHolidays.length ? filteredHolidays : holidays;
+        const yearPart = selectedYear ? `_${selectedYear}` : '';
+        downloadPDF(items, `HolidaysList_Filtered${yearPart}.pdf`);
     };
+
+    const handleDownloadAll = () => {
+        downloadPDF(holidays, 'HolidaysList_All.pdf');
+    };
+
+    // PDF menu state
+    const [showPdfMenu, setShowPdfMenu] = useState(false);
 
     //PAGIANTION START
     const [currentPage, setCurrentPage] = useState(1);
@@ -255,42 +224,27 @@ const Holiday = () => {
         setCurrentPage(pageNumber);
     };
 
-    // useEffect(() => {
-    //     const filtered = holidays.filter((holiday) => {
-    //         const matchesName =
-    //             searchTerm === '' ||
-    //             holiday.holiday_name.toLowerCase().includes(searchTerm.toLowerCase());
-    //         const matchesMonth =
-    //             selectedMonth === '' ||
-    //             new Date(holiday.holiday_date).getMonth() + 1 === parseInt(selectedMonth);
-
-    //         return matchesName && matchesMonth;
-    //     });
-    //     setFilteredHolidays(filtered); // Set filtered holidays
-    // }, [searchTerm, selectedMonth, holidays]);
-
     useEffect(() => {
-    const filtered = holidays.filter((holiday) => {
-        const holidayYear = new Date(holiday.holiday_date).getFullYear();
+        const filtered = holidays.filter((holiday) => {
+            const holidayYear = new Date(holiday.holiday_date).getFullYear();
 
-        const matchesYear =
-            !selectedYear || holidayYear === selectedYear;
+            const matchesYear =
+                !selectedYear || holidayYear === selectedYear;
 
-        const matchesName =
-            searchTerm === '' ||
-            holiday.holiday_name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesName =
+                searchTerm === '' ||
+                holiday.holiday_name.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesMonth =
-            selectedMonth === '' ||
-            new Date(holiday.holiday_date).getMonth() + 1 === parseInt(selectedMonth);
+            const matchesMonth =
+                selectedMonth === '' ||
+                new Date(holiday.holiday_date).getMonth() + 1 === parseInt(selectedMonth);
 
-        return matchesYear && matchesName && matchesMonth;
-    });
+            return matchesYear && matchesName && matchesMonth;
+        });
 
-    setFilteredHolidays(filtered);
-    setCurrentPage(1);
-}, [searchTerm, selectedMonth, holidays, selectedYear]);
-
+        setFilteredHolidays(filtered);
+        setCurrentPage(1);
+    }, [searchTerm, selectedMonth, holidays, selectedYear]);
 
     useEffect(() => {
         const indexOfLastItem = currentPage * itemsPerPage;
@@ -305,12 +259,11 @@ const Holiday = () => {
 
     const handleDelete = async () => {
         if (!selectedHoliday) return;
-
         setIsDeleting(true);
         try {
             const token = sessionStorage.getItem('token');
 
-            await axios.delete('https://devdemo.softtrails.net/yrset/holidays', {
+            await axios.delete(`${HRMS_API_BASE}/yrset/holidays`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -319,8 +272,6 @@ const Holiday = () => {
                     holiday_date: selectedHoliday.holiday_date,
                 },
             });
-
-            // Close modal and refresh list
             setIsDeletePopupOpen(false);
             setSelectedHoliday(null);
             fetchHolidayData(); // Refresh table
@@ -331,7 +282,6 @@ const Holiday = () => {
             setIsDeleting(false);
         }
     };
-    
 
     return (
         <div className="w-full ">
@@ -339,18 +289,8 @@ const Holiday = () => {
                 {hasAMSAccessAdd && (<AddButton onClick={() => setIsHolidayPopupOpen(true)} icon={FaPlus}> Add Holiday</AddButton>)}
 
                 <div className="flex items-center justify-center gap-4">
-                    <input
-                        type="text"
-                        placeholder="Search by Holiday Name"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="border rounded-md px-3 py-2"
-                    />
-                    <select
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(e.target.value)}
-                        className="border rounded-md px-3 py-2"
-                    >
+                    <input type="text" placeholder="Search by Holiday Name" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="border rounded-md px-3 py-2" />
+                    <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="border rounded-md px-3 py-2" >
                         <option value="">Filter by Month</option>
                         {Array.from({ length: 12 }, (_, i) => (
                             <option key={i} value={i + 1}>
@@ -358,26 +298,22 @@ const Holiday = () => {
                             </option>
                         ))}
                     </select>
-                    <select
-                        value={selectedYear || ''}
-                        onChange={(e) => setSelectedYear(Number(e.target.value))}
-                        className="border rounded-md px-3 py-2"
-                    >
+                    <select value={selectedYear || ''} onChange={(e) => setSelectedYear(Number(e.target.value))} className="border rounded-md px-3 py-2" >
                         <option value="">Select Year</option>
-                        {availableYears.map(year => (
-        <option key={year} value={year}>{year}</option>
-    ))}
-</select>
-
+                        {availableYears.map(year => (<option key={year} value={year}>{year}</option>))}
+                    </select>
                 </div>
 
-                <div className="flex items-center gap-2 mr-5">
-                    <button onClick={downloadPDF} className="text-red-600 hover:text-red-800">
+                <div className="relative flex items-center gap-2 mr-5">
+                    <button onClick={() => setShowPdfMenu(!showPdfMenu)} aria-haspopup="true" aria-expanded={showPdfMenu} title="Download PDF" className="text-red-600 hover:text-red-800 flex items-center">
                         <img src={pdf} alt="PDF" className="w-8 h-8" />
                     </button>
-                    <button onClick={downloadExcel} className="text-green-600 hover:text-green-800">
-                        <img src={excel} alt="Excel" className="w-8 h-8" />
-                    </button>
+                    {showPdfMenu && (
+                        <div className="absolute right-0 mt-10 w-44 bg-white border rounded shadow-lg z-50">
+                            <button onClick={() => { handleDownloadAll(); setShowPdfMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100">All Holidays</button>
+                            <button onClick={() => { handleDownloadFiltered(); setShowPdfMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100">Filtered Holidays</button>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -387,38 +323,16 @@ const Holiday = () => {
                         <h2 className="text-xl font-semibold mb-4">Create Holiday</h2>
                         <form onSubmit={handleHolidaySubmit}>
                             <div className="mb-4">
-                                <label htmlFor="holiday_name" className="block font-medium">Holiday Name
-                                    <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    name="holiday_name"
-                                    value={holidayFormData.holiday_name}
-                                    onChange={handleHolidayChange}
-                                    className="w-full border border-gray-300 p-2 rounded"
-                                    required
-                                />
+                                <label htmlFor="holiday_name" className="block font-medium">Holiday Name <span className="text-red-500">*</span> </label>
+                                <input type="text" name="holiday_name" value={holidayFormData.holiday_name} onChange={handleHolidayChange} className="w-full border border-gray-300 p-2 rounded" required />
                             </div>
                             <div className="mb-4">
-                                <label htmlFor="holiday_date" className="block font-medium">Holiday Date
-                                    <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="date"
-                                    name="holiday_date"
-                                    value={holidayFormData.holiday_date}
-                                    onChange={handleHolidayChange}
-                                    className="w-full border border-gray-300 p-2 rounded"
-                                    required
-                                />
+                                <label htmlFor="holiday_date" className="block font-medium">Holiday Date <span className="text-red-500">*</span> </label>
+                                <input type="date" name="holiday_date" value={holidayFormData.holiday_date} onChange={handleHolidayChange} className="w-full border border-gray-300 p-2 rounded" required />
                             </div>
                             {apiError && <p className="text-red-500 mt-2">{apiError}</p>}
                             <div className="flex justify-end">
-                                <button type="button"
-                                    onClick={() => {
-                                        handleCancel();
-                                    }}
-                                    className="bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2">Cancel</button>
+                                <button type="button" onClick={() => { handleCancel(); }} className="bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2">Cancel</button>
                                 <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">Add </button>
                             </div>
                         </form>
@@ -426,12 +340,11 @@ const Holiday = () => {
                 </div>
             )}
 
-            {/* Delete */}
             <DeleteConfirmModal
                 open={isDeletePopupOpen}
                 title="Delete Holiday?"
                 message={`Are you sure you want to delete "${selectedHoliday?.holiday_name}"?`}
-                onCancel={() => {setIsDeletePopupOpen(false);setSelectedHoliday(null);}}
+                onCancel={() => { setIsDeletePopupOpen(false); setSelectedHoliday(null); }}
                 onConfirm={handleDelete}
                 loading={isDeleting}
             />
@@ -439,7 +352,6 @@ const Holiday = () => {
             {/* Table */}
             {hasAMSAccessView && (
                 <div className="h-[75vh] sm:h-[60vh] md:h-[70vh] rounded-lg flex flex-col">
-                    {/* Scrollable table section */}
                     <div className="flex-1 overflow-auto scrollbar-hide bg-white rounded-lg">
                         <table className="min-w-full table-auto border-collapse text-sm">
                             <thead className="text-[14px] font-medium bg-white sticky top-0" style={{ boxShadow: "0 2px 0 black" }}>
@@ -447,21 +359,15 @@ const Holiday = () => {
                                     <th className="p-5 text-left text-black">S.No</th>
                                     <th className="p-5 text-left text-black">Holiday Name</th>
                                     <th className="p-5 text-left text-black">Holiday Date</th>
-                                    {hasAMSAccessDelete && (
-                                        <th className="p-5 text-left text-black">Action</th>
-                                    )}
+                                    {hasAMSAccessDelete && (<th className="p-5 text-left text-black">Action</th>)}
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr><td colSpan="7" className="h-3 bg-white"></td></tr>
                                 {currentItems.map((holiday, index) => (
                                     <tr key={index} className={`${(index + 1) % 2 === 0 ? 'bg-white' : 'bg-tableblue'}`}>
-                                        <td className="px-5 py-4 text-left text-[14px] text-black">
-                                            {(currentPage - 1) * itemsPerPage + index + 1}
-                                        </td>
-                                        <td className="px-5 py-4 text-left text-[14px] text-black">
-                                            {holiday.holiday_name}
-                                        </td>
+                                        <td className="px-5 py-4 text-left text-[14px] text-black"> {(currentPage - 1) * itemsPerPage + index + 1} </td>
+                                        <td className="px-5 py-4 text-left text-[14px] text-black"> {holiday.holiday_name} </td>
                                         <td className="px-5 py-4 text-left text-[14px] text-black">
                                             {new Date(holiday.holiday_date).toLocaleDateString('en-GB', {
                                                 weekday: 'long',
@@ -470,49 +376,22 @@ const Holiday = () => {
                                                 year: 'numeric',
                                             }).replace(/(\w+),?\s(\d{2})\s(\w+)\s(\d{4})/, '$1 | $2 $3 $4')}
                                         </td>
-                                        <td className="px-5 py-4 text-left flex gap-2">
-                                            
-                                            {hasAMSAccessDelete && (
-                                                <button
-                                                    className="text-red-500 hover:text-red-700 mr-2"
-                                                    onClick={() => {
-                                                        setSelectedHoliday(holiday); 
-                                                        setIsDeletePopupOpen(true);  
-                                                    }}
-                                                >
-                                                    <FontAwesomeIcon icon={faTrash} />
-                                                </button>
-                                            )}
-
-                                        </td>
+                                        {hasAMSAccessDelete && (
+                                            <td className="px-5 py-4 text-left flex gap-2">
+                                                <button className="text-red-500 hover:text-red-700 mr-2" onClick={() => { setSelectedHoliday(holiday); setIsDeletePopupOpen(true); }} > <DeleteIcon /> </button>
+                                            </td>
+                                        )}
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                    {/* Sticky pagination at bottom of the fixed-height container */}
                     <div className="sticky bottom-0 left-0 w-full flex justify-center items-center flex-wrap gap-2 px-4 py-2 z-10 bg-lightgray">
-                        <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            &lt;
-                        </button>
-
+                        <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed" > &lt; </button>
                         <span className="px-3 py-1 bg-blue-600 text-white rounded">{currentPage}</span>
                         <span>of</span>
-                        <span className="px-3 py-1 border border-blue-500 text-blue-600 rounded">
-                            {totalPages}
-                        </span>
-
-                        <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                            className="px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            &gt;
-                        </button>
+                        <span className="px-3 py-1 border border-blue-500 text-blue-600 rounded">{totalPages}</span>
+                        <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed" > &gt; </button>
                     </div>
                 </div>
             )}

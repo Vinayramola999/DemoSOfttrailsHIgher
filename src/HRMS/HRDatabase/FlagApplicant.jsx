@@ -5,7 +5,8 @@ import { saveAs } from "file-saver";
 import excel from '../../assests/excel.png';
 import folder from '../../assests/folder.png';
 import { DeleteIcon } from "../../NewComponents/ReactIcons";
-import DeleteConfirmModal from "../../NewComponents/DeleteConfirmModal"; // ✅ modal
+import DeleteConfirmModal from "../../NewComponents/DeleteConfirmModal"; 
+import { HRMS_API_BASE } from "../../config/apiBase";
 
 const FlagApplicant = () => {
     const [data, setData] = useState([]);
@@ -33,7 +34,7 @@ const FlagApplicant = () => {
     const fetchData = async () => {
         const token = sessionStorage.getItem("token");
         try {
-            const response = await axios.get("https://devdemo.softtrails.net/resume/flagged", {
+            const response = await axios.get(`${HRMS_API_BASE}/resume/flagged`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -75,7 +76,7 @@ const FlagApplicant = () => {
     const handleConfirm = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`https://devdemo.softtrails.net/resume/flagged/${deleteId}`, {
+            const res = await fetch(`${HRMS_API_BASE}/resume/flagged/${deleteId}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -86,7 +87,7 @@ const FlagApplicant = () => {
                 const errorText = await res.text();
                 throw new Error(errorText || "Failed to delete");
             }
-            const updatedRes = await fetch("https://devdemo.softtrails.net/resume/flagged", {
+            const updatedRes = await fetch(`${HRMS_API_BASE}/resume/flagged`, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem("token")}`,
                 },
@@ -217,29 +218,28 @@ const FlagApplicant = () => {
         saveAs(blob, `Flagged_Candidates_${new Date().toISOString().slice(0, 10)}.xlsx`);
     };
 
-    const handlePreview = async (id) => {
-        try {
-            const res = await fetch(
-                `https://devdemo.softtrails.net/resume/flagged/resume/${id}`,
-                {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-                    },
-                }
-            );
+    // const handlePreview = async (id) => {
+    //     try {
+    //         const res = await fetch(`${HRMS_API_BASE}/resume/flagged/resume/${id}`,
+    //             {
+    //                 method: "GET",
+    //                 headers: {
+    //                     Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+    //                 },
+    //             }
+    //         );
 
-            if (!res.ok) {
-                throw new Error(`Failed to fetch resume: ${res.status}`);
-            }
+    //         if (!res.ok) {
+    //             throw new Error(`Failed to fetch resume: ${res.status}`);
+    //         }
 
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            window.open(url, "_blank");
-        } catch (err) {
-            console.error("Error previewing resume:", err);
-        }
-    };
+    //         const blob = await res.blob();
+    //         const url = URL.createObjectURL(blob);
+    //         window.open(url, "_blank");
+    //     } catch (err) {
+    //         console.error("Error previewing resume:", err);
+    //     }
+    // };
 
     return (
         <div>

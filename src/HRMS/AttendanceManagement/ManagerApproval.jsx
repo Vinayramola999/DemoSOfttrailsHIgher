@@ -251,7 +251,7 @@ export default function AttendanceTable() {
                     className="text-xl font-bold"
                   >
                     ⋮
-                  </button>
+                  </button> 
                   {/* Dropdown for bulk actions */}
                   {menuOpenIndex === "header" && (
                     <div className="absolute z-50 mt-2 right-0 w-36 bg-white shadow-md rounded-md">

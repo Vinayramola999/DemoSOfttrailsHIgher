@@ -7,6 +7,7 @@ import GenerateGrnModal from "./GenerateGrnModal";
 import API from "../../config/api";
 import GrnTemplate from "./GrnTemplate";
 import PopupModal from "../PopupModal";
+import DownloadTableButtons from "../components/Downloadpdfexcel";
 const Grn = () => {
   const [rfps, setRfps] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,56 +52,56 @@ const Grn = () => {
     fetchGrnData(); // refresh table
   };
 
-  const handleDownloadPdf = async () => {
-    if (!grnRef.current) return;
-    try {
-      const canvas = await html2canvas(grnRef.current, { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      // calculate image height in mm to keep ratio
-      const imgProps = pdf.getImageProperties(imgData);
-      const imgWidthMm = pdfWidth;
-      const imgHeightMm = (imgProps.height * imgWidthMm) / imgProps.width;
-
-      if (imgHeightMm <= pdfHeight) {
-        pdf.addImage(imgData, "PNG", 0, 0, imgWidthMm, imgHeightMm);
-      } else {
-        // If content is taller than a single page, split into pages
-        let remainingHeight = imgHeightMm;
-        let position = 0;
-        const pageCanvasHeight = (canvas.height * (pdfHeight / imgHeightMm));
-        // Create temporary canvas slices
-        const pageCount = Math.ceil(imgHeightMm / pdfHeight);
-        for (let i = 0; i < pageCount; i++) {
+   const handleDownloadPdf = async () => {
+      if (!grnRef.current) return;
+      try {
+        const canvas = await html2canvas(grnRef.current, { scale: 2, useCORS: true });
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF("p", "mm", "a4");
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+  
+        // calculate image height in mm to keep ratio
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgWidthMm = pdfWidth;
+        const imgHeightMm = (imgProps.height * imgWidthMm) / imgProps.width;
+  
+        if (imgHeightMm <= pdfHeight) {
+          pdf.addImage(imgData, "PNG", 0, 0, imgWidthMm, imgHeightMm);
+        } else {
+          // If content is taller than a single page, split into pages
+          let remainingHeight = imgHeightMm;
+          let position = 0;
+          const pageCanvasHeight = (canvas.height * (pdfHeight / imgHeightMm));
+          // Create temporary canvas slices
+          const pageCount = Math.ceil(imgHeightMm / pdfHeight);
+          for (let i = 0; i < pageCount; i++) {
           const tmpCanvas = document.createElement("canvas");
-          tmpCanvas.width = canvas.width;
-          tmpCanvas.height = Math.floor(canvas.height / pageCount);
-          const ctx = tmpCanvas.getContext("2d");
-          ctx.drawImage(
-            canvas,
-            0,
-            i * tmpCanvas.height,
-            canvas.width,
-            tmpCanvas.height,
-            0,
-            0,
-            canvas.width,
-            tmpCanvas.height
-          );
-          const tmpImg = tmpCanvas.toDataURL("image/png");
-          if (i > 0) pdf.addPage();
-          pdf.addImage(tmpImg, "PNG", 0, 0, imgWidthMm, (tmpCanvas.height * imgWidthMm) / tmpCanvas.width);
+           tmpCanvas.width = canvas.width;
+            tmpCanvas.height = Math.floor(canvas.height / pageCount);
+            const ctx = tmpCanvas.getContext("2d");
+            ctx.drawImage(
+              canvas,
+              0,
+              i * tmpCanvas.height,
+              canvas.width,
+              tmpCanvas.height,
+              0,
+              0,
+              canvas.width,
+              tmpCanvas.height
+            );
+            const tmpImg = tmpCanvas.toDataURL("image/png");
+            if (i > 0) pdf.addPage();
+            pdf.addImage(tmpImg, "PNG", 0, 0, imgWidthMm, (tmpCanvas.height * imgWidthMm) / tmpCanvas.width);
+          }
         }
+  
+        pdf.save(`${viewGrn?.grn_id || "GRN"}.pdf`);
+      } catch (err) {
+        console.error("PDF export error:", err);
       }
-
-      pdf.save(`${viewGrn?.grn_id || "GRN"}.pdf`);
-    } catch (err) {
-      console.error("PDF export error:", err);
-    }
-  };
+    };
 
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
@@ -135,6 +136,24 @@ const Grn = () => {
   );
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
+  const columns = [
+    { header: "S. No.", accessor: "sno" },
+    { header: "GRN ID", accessor: "grn_id" },
+    { header: "PO ID", accessor: "po_id" },
+    { header: "Delivery Date", accessor: "delivery_date" },
+    { header: "Status", accessor: "status" },
+  ];
+
+  const exportData = filtered.map((item, idx) => ({
+    sno: idx + 1,
+    grn_id: item.grn_id || "--",
+    po_id: item.po_id || "--",
+    delivery_date: item.delivery_date
+      ? new Date(item.delivery_date).toLocaleDateString("en-GB")
+      : "--",
+    status: item.qc_grn || "--",
+  }));
+
   // ✅ Modal handlers
   const handleGenerateClick = (item = null) => {
     setSelectedPo(item);
@@ -146,7 +165,7 @@ const Grn = () => {
       setLoading(true);
       const token = sessionStorage.getItem("token");
       const res = await axios.get(
-        `https://devdemo.softtrails.net/purchase/grn/one_grn/${item.grn_id}`,
+        `${API.API_BASE}/purchase/grn/one_grn/${item.grn_id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -169,7 +188,7 @@ const Grn = () => {
   };
 
   const handleModalGenerate = (payload) => {
-
+  
     setViewGrn(payload);
   };
 
@@ -177,10 +196,15 @@ const Grn = () => {
     <div className="flex h-screen bg-gray-50">
       <div className="flex-1 overflow-auto">
         <main className="p-6 md:p-6">
-          <div className="mb-6">
+          <div className="mb-6 flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-800">
               Goods Received Note
             </h1>
+            <DownloadTableButtons
+              data={exportData}
+              columns={columns}
+              fileName="GRN_Report"
+            />
           </div>
         </main>
 
@@ -196,6 +220,7 @@ const Grn = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
+             
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 onClick={() => handleGenerateClick()}
@@ -233,13 +258,13 @@ const Grn = () => {
                     <td className="px-4 py-3">
                       {item.delivery_date
                         ? new Date(item.delivery_date).toLocaleDateString(
-                          "en-GB"
-                        )
+                            "en-GB"
+                          )
                         : "N/A"}
                     </td>
                     <td className="px-4 py-3">
                       <span className="bg-orange-100 text-gray-800 px-2 py-1 rounded-full text-xs font-semibold">
-                        {item.qc_grn || "--"}
+                        {item.status || "--"}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-blue-600">
@@ -276,8 +301,9 @@ const Grn = () => {
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-blue-600 text-white" : ""
-                    }`}
+                  className={`px-3 py-1 border rounded ${
+                    currentPage === i + 1 ? "bg-blue-600 text-white" : ""
+                  }`}
                 >
                   {i + 1}
                 </button>
@@ -318,12 +344,12 @@ const Grn = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white w-[90%] max-w-3xl p-4 rounded-lg overflow-auto">
             <div className="flex justify-end gap-2 mb-2">
-              <button className="px-3 py-1 border rounded" onClick={() => setViewGrn(null)}>Close</button>
-              <button className="px-3 py-1 bg-red-600 text-white rounded" onClick={handleDownloadPdf}> PDF</button>
-            </div>
-            <div ref={grnRef}>
-              <GrnTemplate grn={viewGrn} />
-            </div>
+            <button className="px-3 py-1 border rounded" onClick={() => setViewGrn(null)}>Close</button>
+            <button className="px-3 py-1 bg-red-600 text-white rounded" onClick={handleDownloadPdf}> PDF</button>
+          </div>
+          <div ref={grnRef}>
+            <GrnTemplate grn={viewGrn} />
+          </div>
           </div>
         </div>
       )}

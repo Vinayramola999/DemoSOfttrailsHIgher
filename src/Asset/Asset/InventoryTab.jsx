@@ -3,7 +3,7 @@ import axios from "axios";
 import React, { useState, useEffect } from "react";
 import { FaHome } from "react-icons/fa";
 //
-import ProfileDropdown from "../../ProfileDropdown";
+//import ProfileDropdown from "../../ProfileDropdown";
 import { useNavigate } from "react-router-dom";
 import Index from "./index";
 import Inventory from "./Inventory";
@@ -11,7 +11,7 @@ import Mapped from "./Mapped";
 import Damaged from "./Damaged";
 import Repair from "./Repair";
 import Discard from "./Discard";
-import { DMS_BASE,JAVA_BASE, ASSET_NODE_BASE, UCS_BASE ,MAIN_BASE } from "../../config/apiBase"
+import { DMS_BASE, JAVA_BASE, ASSET_NODE_BASE, UCS_BASE, MAIN_BASE } from "../../config/apiBase"
 const Tabs = () => {
   const [userData, setUserData] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -97,42 +97,38 @@ const Tabs = () => {
         <Box>
           <div className="flex justify-left font-bold  mt-3 border-gray-300">
             <button
-              className={`px-6 py-2 text-14px font-bold relative focus:outline-none transition duration-300 rounded-t-md ${
-                tabValue === 0
+              className={`px-6 py-2 text-14px font-bold relative focus:outline-none transition duration-300 rounded-t-md ${tabValue === 0
                   ? "bg-white text-blue-600 border-l border-t border-r border-gray-300"
                   : "bg-gray-200 text-gray-600"
-              }`}
+                }`}
               onClick={() => setTabValue(0)}
             >
               Inventory
             </button>
             <button
-              className={`px-6 py-2 text-14px font- relative focus:outline-none transition duration-300 rounded-t-md ${
-                tabValue === 1
+              className={`px-6 py-2 text-14px font- relative focus:outline-none transition duration-300 rounded-t-md ${tabValue === 1
                   ? "bg-white text-blue-600 border-l border-t border-r border-gray-300"
                   : "bg-gray-200 text-gray-600"
-              }`}
+                }`}
               onClick={() => setTabValue(1)}
             >
               Allocated Asset
             </button>
             <button
-              className={`px-6 py-2 text-14px font-bold relative focus:outline-none transition duration-300 rounded-t-md ${
-                tabValue === 2
+              className={`px-6 py-2 text-14px font-bold relative focus:outline-none transition duration-300 rounded-t-md ${tabValue === 2
                   ? "bg-white text-blue-600 border-l border-t border-r border-gray-300"
                   : "bg-gray-200 text-gray-600"
-              }`}
+                }`}
               onClick={() => setTabValue(2)}
             >
               Damaged Asset
             </button>
 
             <button
-              className={`px-6 py-2 text-14px font-bold relative focus:outline-none transition duration-300 rounded-t-md ${
-                tabValue === 3
+              className={`px-6 py-2 text-14px font-bold relative focus:outline-none transition duration-300 rounded-t-md ${tabValue === 3
                   ? "bg-white text-blue-600 border-l border-t border-r border-gray-300"
                   : "bg-gray-200 text-gray-600"
-              }`}
+                }`}
               onClick={() => setTabValue(3)}
             >
               Repair Asset
@@ -171,7 +167,7 @@ const Tabs = () => {
                 <Repair />
               </div>
             )}
-             {/* {tabValue === 4 && (
+            {/* {tabValue === 4 && (
               <div>
                 <Discard />
               </div>

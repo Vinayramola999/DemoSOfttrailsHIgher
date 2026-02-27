@@ -1,7 +1,6 @@
 import axios from "axios";
 import React, { useState, useEffect, useRef } from "react";
 import API from "../config/api";
-import ProfileDropdown from "../ProfileDropdown";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import RaiseRequest from "./RaiseRequest";

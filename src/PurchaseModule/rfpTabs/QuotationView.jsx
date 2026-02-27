@@ -9,44 +9,44 @@ const QuotationView = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [shortlistLoading, setShortlistLoading] = useState(false);
-  const [showPopupModal, setShowPopupModal] = useState(false);
-  const [popupModalProps, setPopupModalProps] = useState({ type: "success", message: "" });
+ const [shortlistLoading, setShortlistLoading] = useState(false);
+ const [showPopupModal, setShowPopupModal] = useState(false);
+ const [popupModalProps, setPopupModalProps] = useState({ type: "success", message: "" });
+ 
+ const handleShortlist = async () => {
+   if (!data) return;
+   // prevent double submit
+   if (shortlistLoading) return;
+   setShortlistLoading(true);
+   try {
+     const payload = {
+       rfp_id: data.rfp_id || data.rfpId || rfpId,
+       quotation_id: data.quotation_id || data.quotationId || quotationNo,
+       vendor_id: data.vendor_id ?? data.vendorId ?? data.vendor_id ?? data.vendor_id,
+       status: "Shortlisted",
+     };
+     const url = `http://devdemo.softtrails.net/purchase/supplier_quotation/shortlist`;
+     const res = await axios.patch(url, payload, {
+       headers: { Authorization: token ? `Bearer ${token}` : "" },
+     });
 
-  const handleShortlist = async () => {
-    if (!data) return;
-    // prevent double submit
-    if (shortlistLoading) return;
-    setShortlistLoading(true);
-    try {
-      const payload = {
-        rfp_id: data.rfp_id || data.rfpId || rfpId,
-        quotation_id: data.quotation_id || data.quotationId || quotationNo,
-        vendor_id: data.vendor_id ?? data.vendorId ?? data.vendor_id ?? data.vendor_id,
-        status: "Shortlisted",
-      };
-      const url = `https://devdemo.softtrails.net/purchase/supplier_quotation/shortlist`;
-      const res = await axios.patch(url, payload, {
-        headers: { Authorization: token ? `Bearer ${token}` : "" },
-      });
+     // update local state so UI reflects new status
+     setData((d) => ({ ...(d || {}), status: "Shortlisted" }));
 
-      // update local state so UI reflects new status
-      setData((d) => ({ ...(d || {}), status: "Shortlisted" }));
-
-      setPopupModalProps({
-        type: "success",
-        message: res.data?.message || "Quotation shortlisted successfully",
-      });
-      setShowPopupModal(true);
-    } catch (err) {
-      const msg = err.response?.data?.message || err.message || "Failed to shortlist";
-      setPopupModalProps({ type: "error", message: msg });
-      setShowPopupModal(true);
-    } finally {
-      setShortlistLoading(false);
-    }
-  };
-  // ...existing code...
+     setPopupModalProps({
+       type: "success",
+       message: res.data?.message || "Quotation shortlisted successfully",
+     });
+     setShowPopupModal(true);
+   } catch (err) {
+     const msg = err.response?.data?.message || err.message || "Failed to shortlist";
+     setPopupModalProps({ type: "error", message: msg });
+     setShowPopupModal(true);
+   } finally {
+     setShortlistLoading(false);
+   }
+ };
+// ...existing code...
   useEffect(() => {
     const fetchQuotation = async () => {
       if (!quotationId) return setLoading(false);
@@ -317,7 +317,7 @@ const QuotationView = () => {
           </button>
           <div>
             <div className="text-xs text-gray-600">
-              Vendor ID  &nbsp;
+              Vendor ID  &nbsp;  
               {vendor || "Vendor Name"} &nbsp; &gt; &nbsp;{" "}
               {data.contact_person || data.vendor_contact_name || ""} &nbsp;
               &gt; &nbsp;
@@ -397,8 +397,8 @@ const QuotationView = () => {
                       {it.unit_price
                         ? `₹${Number(it.unit_price).toLocaleString()}`
                         : it.price
-                          ? `₹${it.price}`
-                          : "--"}
+                        ? `₹${it.price}`
+                        : "--"}
                     </td>
                     <td className="p-3 text-center">
                       {it.tax_percentage ?? it.tax ?? "--"}
@@ -407,8 +407,8 @@ const QuotationView = () => {
                       {it.total_amount
                         ? `₹${Number(it.total_amount).toLocaleString()}`
                         : it.amount
-                          ? `₹${it.amount}`
-                          : "--"}
+                        ? `₹${it.amount}`
+                        : "--"}
                     </td>
                   </tr>
                 ))
@@ -469,7 +469,7 @@ const QuotationView = () => {
           </div>
         </div>
       </div>
-      {showPopupModal && (
+       {showPopupModal && (
         <PopupModal
           type={popupModalProps.type}
           message={popupModalProps.message}

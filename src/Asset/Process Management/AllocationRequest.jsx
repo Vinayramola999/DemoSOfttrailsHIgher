@@ -3,10 +3,10 @@ import axios from "axios";
 import { FaClipboardCheck, FaEye } from "react-icons/fa";
 import { Button, Modal, Box } from "@mui/material";
 import { FaHome } from "react-icons/fa";
-import ProfileDropdown from "../../ProfileDropdown";
+//import ProfileDropdown from "../../ProfileDropdown";
 import { useNavigate } from "react-router-dom";
 import { useMemo } from "react";
-import { DMS_BASE,JAVA_BASE, ASSET_NODE_BASE, UCS_BASE ,MAIN_BASE } from "../../config/apiBase"
+import { DMS_BASE, JAVA_BASE, ASSET_NODE_BASE, UCS_BASE, MAIN_BASE } from "../../config/apiBase"
 const Organization = () => {
   const [userData, setUserData] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -50,39 +50,39 @@ const Organization = () => {
   const filteredData = projectData.filter((row) => row.status !== "Draft");
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
-useEffect(() => {
-  if (allocationType === "location") {
-    const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
+  useEffect(() => {
+    if (allocationType === "location") {
+      const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
 
-    axios
-      .get(`${MAIN_BASE}loc`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // ✅ Token pass
-        },
-      })
-      .then((res) => {
-        setLocationDetails(res.data);
-      })
-      .catch((err) => console.error("Failed to fetch locations", err));
-  }
-}, [allocationType]);
+      axios
+        .get(`${MAIN_BASE}loc`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ Token pass
+          },
+        })
+        .then((res) => {
+          setLocationDetails(res.data);
+        })
+        .catch((err) => console.error("Failed to fetch locations", err));
+    }
+  }, [allocationType]);
 
-useEffect(() => {
-  if (selectedLocation) {
-    const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
+  useEffect(() => {
+    if (selectedLocation) {
+      const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
 
-    axios
-      .get(`${MAIN_BASE}sloc/${selectedLocation}`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // ✅ Token pass
-        },
-      })
-      .then((res) => {
-        setSubLocations(res.data);
-      })
-      .catch((err) => console.error("Failed to fetch sub-locations", err));
-  }
-}, [selectedLocation]);
+      axios
+        .get(`${MAIN_BASE}sloc/${selectedLocation}`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ Token pass
+          },
+        })
+        .then((res) => {
+          setSubLocations(res.data);
+        })
+        .catch((err) => console.error("Failed to fetch sub-locations", err));
+    }
+  }, [selectedLocation]);
 
   const handleHome = () => {
     navigate("/Cards");
@@ -118,7 +118,7 @@ useEffect(() => {
     const fetchUserData = async () => {
       try {
         const response = await axios.get(
-        `${MAIN_BASE}users/id_user/${userId}`,
+          `${MAIN_BASE}users/id_user/${userId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -135,71 +135,71 @@ useEffect(() => {
   }, [userId, token]);
 
   // Fetch Categories on Component Mount
-useEffect(() => {
-  const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
+  useEffect(() => {
+    const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
 
-  axios
-    .get(`${JAVA_BASE}api/categories/rawmaterials`, {
-      headers: {
-        Authorization: `Bearer ${token}`, // ✅ Token pass
-      },
-    })
-    .then((response) => {
-      setCategories(response.data); // Assuming response.data contains the category list
-    })
-    .catch((error) => {
-      console.error("Error fetching categories:", error);
-    });
-}, []);
-useEffect(() => {
-  fetchProjects();
-}, []);
-
-const fetchProjects = async () => {
-  try {
-    const token = sessionStorage.getItem("token");
-
-    const response = await axios.get(
-      `${JAVA_BASE}api/fine-goods/all`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    setProjects(response.data);
-    setProjectData(response.data);
-  } catch (error) {
-    console.error("Error fetching projects:", error);
-  }
-};
-
-
-useEffect(() => {
-  const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
-
-  if (selectedCategory) {
     axios
-      .post(
-       `${ASSET_NODE_BASE}getColumnTypesAndData`,
-        { categoryName: selectedCategory },
-        {
-           params: {
-          type:"Raw material"
-         },
-          headers: {
-            Authorization: `Bearer ${token}`, // ✅ Token pass
-          },
-        }
-      )
+      .get(`${JAVA_BASE}api/categories/rawmaterials`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ Token pass
+        },
+      })
       .then((response) => {
-        setMaterials(response.data); // Material list
+        setCategories(response.data); // Assuming response.data contains the category list
       })
       .catch((error) => {
-        console.error("Error fetching materials:", error);
+        console.error("Error fetching categories:", error);
       });
-  }
-}, [selectedCategory]);
+  }, []);
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+
+      const response = await axios.get(
+        `${JAVA_BASE}api/fine-goods/all`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setProjects(response.data);
+      setProjectData(response.data);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    }
+  };
+
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
+
+    if (selectedCategory) {
+      axios
+        .post(
+          `${ASSET_NODE_BASE}getColumnTypesAndData`,
+          { categoryName: selectedCategory },
+          {
+            params: {
+              type: "Raw material"
+            },
+            headers: {
+              Authorization: `Bearer ${token}`, // ✅ Token pass
+            },
+          }
+        )
+        .then((response) => {
+          setMaterials(response.data); // Material list
+        })
+        .catch((error) => {
+          console.error("Error fetching materials:", error);
+        });
+    }
+  }, [selectedCategory]);
 
 
   useEffect(() => {
@@ -301,268 +301,265 @@ useEffect(() => {
     setSelectedRow(null);
     setAllocationType("");
   };
-const handleConfirmPartial = async (confirmValue) => {
-  const { allocatedBy, allocatedTo, capitalizedType, selectedRequestId } =
-    partialConfirmModal.data;
+  const handleConfirmPartial = async (confirmValue) => {
+    const { allocatedBy, allocatedTo, capitalizedType, selectedRequestId } =
+      partialConfirmModal.data;
 
-  const url = `${JAVA_BASE}api/allocation/allocate/partial/${selectedRequestId}?allocatedBy=${allocatedBy}&allocatedTo=${allocatedTo}&allocationType=${capitalizedType}&confirmPartial=${confirmValue}`;
+    const url = `${JAVA_BASE}api/allocation/allocate/partial/${selectedRequestId}?allocatedBy=${allocatedBy}&allocatedTo=${allocatedTo}&allocationType=${capitalizedType}&confirmPartial=${confirmValue}`;
 
-  const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
+    const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
 
-  try {
-    await axios.post(url, null, {
-      headers: {
-        Authorization: `Bearer ${token}`, // ✅ Token pass
-      },
-    });
-
-    alert(
-      confirmValue
-        ? "Partial allocation completed successfully."
-        : "Partial allocation declined."
-    );
-    setPartialConfirmModal({ open: false, data: null });
-    fetchProjects(); 
-    handleCloseModal();
-  } catch (error) {
-    console.error("Partial allocation failed:", error);
-    alert("Failed to complete the partial allocation.");
-  }
-};
-
-const handleSubmitAllocation = async () => {
-  const allocatedBy = parseInt(sessionStorage.getItem("userId"), 10);
-  let allocatedTo = null;
-
-  if (allocationType === "project") {
-    allocatedTo = parseInt(selectedProjectId, 10);
-    if (!allocatedTo || isNaN(allocatedTo)) {
-      alert("Please select a valid project.");
-      return;
-    }
-  } else if (allocationType === "location") {
-    allocatedTo = parseInt(selectedSubLocation, 10);
-    if (!allocatedTo || isNaN(allocatedTo)) {
-      alert("Please select a valid sub-location.");
-      return;
-    }
-  } else {
-    alert("Please select an allocation type.");
-    return;
-  }
-
-  if (!allocatedBy || isNaN(allocatedBy) || !selectedRequestId) {
-    alert("Missing user ID or request ID.");
-    return;
-  }
-
-  const capitalizedType =
-    allocationType.charAt(0).toUpperCase() + allocationType.slice(1);
-
-  const apiUrl = `${JAVA_BASE}api/allocation/allocate/${selectedRequestId}?allocatedBy=${allocatedBy}&allocatedTo=${allocatedTo}&allocationType=${capitalizedType}`;
-
-  const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
-
-  try {
-    const res = await axios.post(apiUrl, null, {
-      headers: {
-        Authorization: `Bearer ${token}`, // ✅ Token attach
-      },
-    });
-
-    const message = res?.data?.message || res?.data;
-
-    if (
-      typeof message === "string" &&
-      message.includes(
-        "Insufficient quantity available. Please confirm partial allocation"
-      )
-    ) {
-      // Open partial confirmation modal
-      setPartialConfirmModal({
-        open: true,
-        data: {
-          allocatedBy,
-          allocatedTo,
-          capitalizedType,
-          selectedRequestId,
+    try {
+      await axios.post(url, null, {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ Token pass
         },
       });
-    } else {
-      alert(`${capitalizedType} allocated successfully!`);
-      fetchProjects(); 
+
+      alert(
+        confirmValue
+          ? "Partial allocation completed successfully."
+          : "Partial allocation declined."
+      );
+      setPartialConfirmModal({ open: false, data: null });
+      fetchProjects();
       handleCloseModal();
+    } catch (error) {
+      console.error("Partial allocation failed:", error);
+      alert("Failed to complete the partial allocation.");
     }
-  } catch (error) {
-    console.error("Error allocating:", error);
-    alert("Something went wrong while allocating.");
-  }
-};
+  };
+
+  const handleSubmitAllocation = async () => {
+    const allocatedBy = parseInt(sessionStorage.getItem("userId"), 10);
+    let allocatedTo = null;
+
+    if (allocationType === "project") {
+      allocatedTo = parseInt(selectedProjectId, 10);
+      if (!allocatedTo || isNaN(allocatedTo)) {
+        alert("Please select a valid project.");
+        return;
+      }
+    } else if (allocationType === "location") {
+      allocatedTo = parseInt(selectedSubLocation, 10);
+      if (!allocatedTo || isNaN(allocatedTo)) {
+        alert("Please select a valid sub-location.");
+        return;
+      }
+    } else {
+      alert("Please select an allocation type.");
+      return;
+    }
+
+    if (!allocatedBy || isNaN(allocatedBy) || !selectedRequestId) {
+      alert("Missing user ID or request ID.");
+      return;
+    }
+
+    const capitalizedType =
+      allocationType.charAt(0).toUpperCase() + allocationType.slice(1);
+
+    const apiUrl = `${JAVA_BASE}api/allocation/allocate/${selectedRequestId}?allocatedBy=${allocatedBy}&allocatedTo=${allocatedTo}&allocationType=${capitalizedType}`;
+
+    const token = sessionStorage.getItem("token"); // 🔑 Token nikal lo
+
+    try {
+      const res = await axios.post(apiUrl, null, {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ Token attach
+        },
+      });
+
+      const message = res?.data?.message || res?.data;
+
+      if (
+        typeof message === "string" &&
+        message.includes(
+          "Insufficient quantity available. Please confirm partial allocation"
+        )
+      ) {
+        // Open partial confirmation modal
+        setPartialConfirmModal({
+          open: true,
+          data: {
+            allocatedBy,
+            allocatedTo,
+            capitalizedType,
+            selectedRequestId,
+          },
+        });
+      } else {
+        alert(`${capitalizedType} allocated successfully!`);
+        fetchProjects();
+        handleCloseModal();
+      }
+    } catch (error) {
+      console.error("Error allocating:", error);
+      alert("Something went wrong while allocating.");
+    }
+  };
 
   return (
     <div className="flex">
-    <div className="flex flex-col p-2 w-full">
-  {/* Top Filters */}
-  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-    {/* Project Dropdown */}
-    <div>
-      <label
-        htmlFor="project-select"
-        className="block text-sm font-medium text-gray-700 mb-1"
-      >
-       
-      </label>
-      <select
-        id="project-select"
-        value={selectedProject}
-        onChange={handleProjectChange}
-        className="w-full p-2 border border-gray-300 rounded-md text-sm"
-      >
-        <option value="">Select Project</option>
-        {uniqueProjects.map((project) => (
-          <option key={project.project_Id} value={project.project_Id}>
-            {project.projectName}
-          </option>
-        ))}
-      </select>
-    </div>
+      <div className="flex flex-col p-2 w-full">
+        {/* Top Filters */}
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+          {/* Project Dropdown */}
+          <div>
+            <label
+              htmlFor="project-select"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
 
-    {/* Search Bar */}
-    <div>
-      <label
-        htmlFor="search-projects"
-        className="block text-sm font-medium text-gray-700 mb-1"
-      >
-       
-      </label>
-      <input
-        id="search-projects"
-        type="text"
-        placeholder="Search Projects"
-        value={searchQuery}
-        onChange={handleSearchChange}
-        className="w-full p-2 border border-gray-300 rounded-md text-sm"
-      />
-    </div>
-  </div>
+            </label>
+            <select
+              id="project-select"
+              value={selectedProject}
+              onChange={handleProjectChange}
+              className="w-full p-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="">Select Project</option>
+              {uniqueProjects.map((project) => (
+                <option key={project.project_Id} value={project.project_Id}>
+                  {project.projectName}
+                </option>
+              ))}
+            </select>
+          </div>
 
-  {/* Table Section */}
-  <div className="relative w-full p-4 border rounded-lg shadow-sm bg-white">
-    <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
-      <table className="min-w-full table-auto border-collapse ">
-        <thead className="sticky top-0 bg-white border-b-2 border-black text-[14px] font-bold text-gray-700">
-          <tr>
-            {[
-              "S.No",
-              "Project Name",
-              "Material Name",
-              "Status",
-              "Stages",
-              "Quantity",
-              "Action",
-            ].map((header) => (
-              <th key={header} className="p-4 text-center whitespace-nowrap">
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {filteredData.length > 0 ? (
-            filteredData
-              .slice(
-                (currentPage - 1) * rowsPerPage,
-                currentPage * rowsPerPage
-              )
-              .map((row, index) => (
-                <tr
-                  key={row.id || index}
-                  className={`transition-colors duration-300 hover:bg-blue-100 ${
-                    index % 2 === 0 ? "bg-white" : "bg-blue-50"
-                  }`}
-                >
-                  <td className="p-4 text-center">
-                    {(currentPage - 1) * rowsPerPage + index + 1}
-                  </td>
-                  <td className="p-4 text-center">{row.projectName}</td>
-                  <td className="p-4 text-center">{row.materialName}</td>
-                  <td className="p-4 text-center">
-                    <span
-                      className={`${
-                        statusColors[row.status] ||
-                        "bg-gray-200 text-gray-800"
-                      } px-2 py-1 rounded`}
-                    >
-                      {row.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    <span
-                      className={`${
-                        stageColors[row.stages] ||
-                        "bg-gray-200 text-gray-800"
-                      } px-2 py-1 rounded`}
-                    >
-                      {row.stages}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">{row.projectQuantity}</td>
-                  <td className="p-4 text-center">
-                    <button
-                      className="text-blue-600 hover:text-blue-800 text-lg"
-                      onClick={() => handleOpenModal(row)}
-                      title="Allocate Project"
-                    >
-                      <FaEye />
-                    </button>
-                  </td>
+          {/* Search Bar */}
+          <div>
+            <label
+              htmlFor="search-projects"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+
+            </label>
+            <input
+              id="search-projects"
+              type="text"
+              placeholder="Search Projects"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="w-full p-2 border border-gray-300 rounded-md text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Table Section */}
+        <div className="relative w-full p-4 border rounded-lg shadow-sm bg-white">
+          <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
+            <table className="min-w-full table-auto border-collapse ">
+              <thead className="sticky top-0 bg-white border-b-2 border-black text-[14px] font-bold text-gray-700">
+                <tr>
+                  {[
+                    "S.No",
+                    "Project Name",
+                    "Material Name",
+                    "Status",
+                    "Stages",
+                    "Quantity",
+                    "Action",
+                  ].map((header) => (
+                    <th key={header} className="p-4 text-center whitespace-nowrap">
+                      {header}
+                    </th>
+                  ))}
                 </tr>
-              ))
-          ) : (
-            <tr>
-              <td colSpan={7} className="text-center p-4 text-gray-500">
-                No data available
-              </td>
-            </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredData.length > 0 ? (
+                  filteredData
+                    .slice(
+                      (currentPage - 1) * rowsPerPage,
+                      currentPage * rowsPerPage
+                    )
+                    .map((row, index) => (
+                      <tr
+                        key={row.id || index}
+                        className={`transition-colors duration-300 hover:bg-blue-100 ${index % 2 === 0 ? "bg-white" : "bg-blue-50"
+                          }`}
+                      >
+                        <td className="p-4 text-center">
+                          {(currentPage - 1) * rowsPerPage + index + 1}
+                        </td>
+                        <td className="p-4 text-center">{row.projectName}</td>
+                        <td className="p-4 text-center">{row.materialName}</td>
+                        <td className="p-4 text-center">
+                          <span
+                            className={`${statusColors[row.status] ||
+                              "bg-gray-200 text-gray-800"
+                              } px-2 py-1 rounded`}
+                          >
+                            {row.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span
+                            className={`${stageColors[row.stages] ||
+                              "bg-gray-200 text-gray-800"
+                              } px-2 py-1 rounded`}
+                          >
+                            {row.stages}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">{row.projectQuantity}</td>
+                        <td className="p-4 text-center">
+                          <button
+                            className="text-blue-600 hover:text-blue-800 text-lg"
+                            onClick={() => handleOpenModal(row)}
+                            title="Allocate Project"
+                          >
+                            <FaEye />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="text-center p-4 text-gray-500">
+                      No data available
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="sticky bottom-0 bg-white flex justify-center items-center gap-2 p-3 border-t border-gray-300">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+              >
+                &lt;
+              </button>
+
+              <span className="px-3 py-1 rounded bg-blue-600 text-white text-sm">
+                {currentPage}
+              </span>
+
+              <span className="text-sm font-medium">of</span>
+
+              <span className="px-3 py-1 rounded border border-blue-500 text-blue-600 text-sm">
+                {totalPages}
+              </span>
+
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+              >
+                &gt;
+              </button>
+            </div>
           )}
-        </tbody>
-      </table>
-    </div>
-
-    {/* Pagination */}
-    {totalPages > 1 && (
-      <div className="sticky bottom-0 bg-white flex justify-center items-center gap-2 p-3 border-t border-gray-300">
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm disabled:bg-gray-100 disabled:text-gray-400"
-        >
-          &lt;
-        </button>
-
-        <span className="px-3 py-1 rounded bg-blue-600 text-white text-sm">
-          {currentPage}
-        </span>
-
-        <span className="text-sm font-medium">of</span>
-
-        <span className="px-3 py-1 rounded border border-blue-500 text-blue-600 text-sm">
-          {totalPages}
-        </span>
-
-        <button
-          onClick={() =>
-            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-          }
-          disabled={currentPage === totalPages}
-          className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm disabled:bg-gray-100 disabled:text-gray-400"
-        >
-          &gt;
-        </button>
+        </div>
       </div>
-    )}
-  </div>
-</div>
 
 
       {/* Modal for Allocation */}
@@ -579,21 +576,19 @@ const handleSubmitAllocation = async () => {
           {/* Toggle Buttons */}
           <div className="flex justify-center gap-3 mb-6">
             <button
-              className={`px-4 py-2 rounded-md text-sm font-medium border transition-all duration-200 ${
-                allocationType === "project"
+              className={`px-4 py-2 rounded-md text-sm font-medium border transition-all duration-200 ${allocationType === "project"
                   ? "bg-indigo-600 text-white border-indigo-600"
                   : "bg-white text-indigo-600 border-indigo-300 hover:bg-indigo-50"
-              }`}
+                }`}
               onClick={() => setAllocationType("project")}
             >
               Project
             </button>
             <button
-              className={`px-4 py-2 rounded-md text-sm font-medium border transition-all duration-200 ${
-                allocationType === "location"
+              className={`px-4 py-2 rounded-md text-sm font-medium border transition-all duration-200 ${allocationType === "location"
                   ? "bg-pink-600 text-white border-pink-600"
                   : "bg-white text-pink-600 border-pink-300 hover:bg-pink-50"
-              }`}
+                }`}
               onClick={() => setAllocationType("location")}
             >
               Location

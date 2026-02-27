@@ -1,10 +1,10 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import React, { useState, useEffect } from 'react';
+import {DeleteIcon} from '../../NewComponents/ReactIcons';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import AddButton from '../../NewComponents/AddButton';
 import { FaPlus } from "react-icons/fa";
+import {HRMS_API_BASE} from '../../config/apiBase';
 
 const CalenderLeave = () => {
     const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -22,7 +22,7 @@ const CalenderLeave = () => {
     const fetchYearData = async () => {
         try {
             const token = sessionStorage.getItem('token');
-            const response = await axios.get('https://devdemo.softtrails.net/yrset/year', {
+            const response = await axios.get(`${HRMS_API_BASE}/yrset/year`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 }
@@ -69,7 +69,7 @@ const CalenderLeave = () => {
         setApiError(null);
         try {
             const token = sessionStorage.getItem('token');
-            const response = await axios.post('https://devdemo.softtrails.net/yrset/year', formData, {
+            const response = await axios.post(`${HRMS_API_BASE}/yrset/year`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 }
@@ -110,7 +110,7 @@ const CalenderLeave = () => {
     const handleDelete = async (id) => {
         try {
             const token = sessionStorage.getItem('token');
-            await axios.delete(`https://devdemo.softtrails.net/yrset/year/${id}`, {
+            await axios.delete(`${HRMS_API_BASE}/yrset/year/${id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 }
@@ -150,7 +150,7 @@ const CalenderLeave = () => {
 
     const handleYearChange = (event) => {
         setSelectedYear(event.target.value);
-        setCurrentPage(1); // Reset to the first page after filtering
+        setCurrentPage(1); 
     };
     /********************END****************/
     return (
@@ -158,19 +158,10 @@ const CalenderLeave = () => {
             <div className="mb-4 flex flex-wrap items-center gap-4 mt-2">
                 <AddButton onClick={handleAddButtonClick} icon={FaPlus}>Add Year Type</AddButton>
                 <div className="flex flex-wrap items-center gap-2 sm:ml-4">
-                    <label htmlFor="yearFilter" className="text-gray-700">
-                        Filter by Year:
-                    </label>
-                    <select
-                        id="yearFilter"
-                        value={selectedYear}
-                        onChange={handleYearChange}
-                        className="border p-2 rounded w-full sm:w-auto"
-                    >
+                    <label htmlFor="yearFilter" className="text-gray-700"> Filter by Year: </label>
+                    <select id="yearFilter" value={selectedYear} onChange={handleYearChange} className="border p-2 rounded w-full sm:w-auto" >
                         {years.map(year => (
-                            <option key={year} value={year}>
-                                {year}
-                            </option>
+                            <option key={year} value={year}> {year} </option>
                         ))}
                     </select>
                 </div>
@@ -178,7 +169,6 @@ const CalenderLeave = () => {
 
             {/*********************TABLE*********************/}
             <div className="h-[75vh] sm:h-[60vh] md:h-[70vh] rounded-lg flex flex-col">
-                {/* Scrollable table section */}
                 <div className="flex-1 overflow-auto scrollbar-hide bg-white rounded-lg">
                     <table className="min-w-full table-auto border-collapse text-sm">
                         <thead className="text-[14px] font-medium bg-white sticky top-0" style={{ boxShadow: "0 2px 0 black" }}>
@@ -201,12 +191,7 @@ const CalenderLeave = () => {
                                     <td className="px-5 py-4 text-left text-[14px] text-black">{new Date(item.end_date).toLocaleDateString("en-GB")}</td>
                                     <td className="px-5 py-4 text-left text-[14px] text-black">{item.description || "NA"}</td>
                                     <td className="px-5 py-4 text-left flex gap-2">
-                                        <button
-                                            className="text-red-500 hover:text-red-700 mr-2"
-                                            onClick={() => confirmDelete(item.id)}
-                                        >
-                                            <FontAwesomeIcon icon={faTrash} />
-                                        </button>
+                                        <button className="text-red-500 hover:text-red-700 mr-2" onClick={() => confirmDelete(item.id)} > <DeleteIcon /> </button>
                                     </td>
                                 </tr>
                             ))}
@@ -215,34 +200,13 @@ const CalenderLeave = () => {
                 </div>
                 {/* Sticky pagination at bottom of the fixed-height container */}
                 <div className="sticky bottom-0 left-0 w-full flex justify-center items-center flex-wrap gap-2 px-4 py-2 z-10 bg-lightgray">
-                    <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        &lt;
-                    </button>
-
+                    <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed" > &lt; </button>
                     <span className="px-3 py-1 bg-blue-600 text-white rounded">{currentPage}</span>
                     <span>of</span>
-                    <span className="px-3 py-1 border border-blue-500 text-blue-600 rounded">
-                        {totalPages}
-                    </span>
-
-                    <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        &gt;
-                    </button>
+                    <span className="px-3 py-1 border border-blue-500 text-blue-600 rounded">{totalPages}</span>
+                    <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed" > &gt; </button>
                 </div>
             </div>
-
-
-
-
-
 
             {isPopupOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -252,54 +216,24 @@ const CalenderLeave = () => {
                         <form onSubmit={handleYearSubmit}>
                             <div className="mb-4">
                                 <label htmlFor="year_type" className="block font-medium ">Year Type<span className='text-red-500'>*</span></label>
-                                <select
-                                    name="year_type"
-                                    value={formData.year_type}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-300 p-2 rounded"
-                                    required
-                                >
+                                <select name="year_type" value={formData.year_type} onChange={handleInputChange} className="w-full border border-gray-300 p-2 rounded" required >
                                     <option value="">Select Year Type</option>
                                     <option value="calendar">Calendar</option>
                                     <option value="financial">Financial</option>
                                 </select>
                             </div>
                             <div className="mb-4">
-                                <label htmlFor="start_date" className="block font-medium">
-                                    Start Date<span className='text-red-500'>*</span>
-                                </label>
-                                <input
-                                    type="date"
-                                    name="start_date"
-                                    value={formData.start_date}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-300 p-2 rounded"
-                                    required
-                                />
+                                <label htmlFor="start_date" className="block font-medium"> Start Date<span className='text-red-500'>*</span> </label>
+                                <input type="date" name="start_date" value={formData.start_date} onChange={handleInputChange} className="w-full border border-gray-300 p-2 rounded" required />
                             </div>
                             <div className="mb-4">
-                                <label htmlFor="end_date" className="block font-medium">
-                                    End Date<span className='text-red-500'>*</span>
-                                </label>
-                                <input
-                                    type="date"
-                                    name="end_date"
-                                    value={formData.end_date}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-300 p-2 rounded"
-                                    required
-                                />
+                                <label htmlFor="end_date" className="block font-medium"> End Date<span className='text-red-500'>*</span> </label>
+                                <input type="date" name="end_date" value={formData.end_date} onChange={handleInputChange} className="w-full border border-gray-300 p-2 rounded" required />
                             </div>
 
                             <div className="mb-4">
                                 <label htmlFor="description" className="block font-medium">Description</label>
-                                <textarea
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-300 p-2 rounded"
-                                    rows="3"
-                                ></textarea>
+                                <textarea name="description" value={formData.description} onChange={handleInputChange} className="w-full border border-gray-300 p-2 rounded" rows="3" ></textarea>
                             </div>
                             <div className="flex justify-between">
                                 <button type="button" onClick={handleCancel} className="bg-gray-300 px-4 py-2 rounded">Cancel</button>
@@ -316,23 +250,12 @@ const CalenderLeave = () => {
                         <h2 className="text-xl font-semibold mb-4">Confirm Deletion</h2>
                         <p>Are you sure you want to delete this year setting?</p>
                         <div className="flex justify-between mt-4">
-                            <button
-                                onClick={() => setDeleteConfirm({ show: false, id: null })}
-                                className="bg-gray-300 px-4 py-2 rounded"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => handleDelete(deleteConfirm.id)}
-                                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                            >
-                                Delete
-                            </button>
+                            <button onClick={() => setDeleteConfirm({ show: false, id: null })} className="bg-gray-300 px-4 py-2 rounded" > Cancel </button>
+                            <button onClick={() => handleDelete(deleteConfirm.id)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600" > Delete </button>
                         </div>
                     </div>
                 </div>
             )}
-
         </div>
     );
 };

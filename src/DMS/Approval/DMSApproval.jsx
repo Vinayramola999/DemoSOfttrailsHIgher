@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Approval from "./Approval";
+import {MAIN_API_BASE} from "../../config/apiBase";
 
 const DmsApproval = () => {
   const [userData, setUserData] = useState(null);
@@ -17,7 +18,7 @@ const DmsApproval = () => {
     }
     try {
       const response = await axios.post(
-        "https://devdemo.softtrails.net/users/verify-token",
+        `${MAIN_API_BASE}/users/verify-token`,
         {
           token: token,
         }
@@ -40,7 +41,7 @@ const DmsApproval = () => {
         try {
           console.log("Fetching data for userId:", userId);
           const response = await axios.get(
-            `https://devdemo.softtrails.net/users/id_user/${userId}`,
+            `${MAIN_API_BASE}/users/id_user/${userId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

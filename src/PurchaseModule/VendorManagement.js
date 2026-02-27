@@ -9,6 +9,7 @@ import TextField from "@mui/material/TextField";
 import Select from "react-select";
 import DownloadTableButtons from "./components/Downloadpdfexcel";
 import PopupModal from "./PopupModal";
+import TableComponent from "./components/TableComponent";
 import API from "../config/api";
 
 const VendorManagement = () => {
@@ -46,6 +47,8 @@ const VendorManagement = () => {
   const token = getToken();
   const [showModal, setShowModal] = useState(false);
   const [modalProps, setModalProps] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 8;
   const columns = [
     { header: "S. No.", accessor: "sno" },
     { header: "Vendor", accessor: "supplier_name" },
@@ -1322,67 +1325,76 @@ const VendorManagement = () => {
         </div>
         {/* Table */}
         <div
-          className="overflow-x-auto rounded-lg shadow bg-white p-4"
-          style={{ maxHeight: 400, overflowY: "auto", minWidth: 900 }}
+          className="rounded-lg shadow bg-white p-4"
+          style={{ minWidth: 900 }}
         >
-          {" "}
-          <table className="w-full bg-white rounded-lg border-collapse">
-            <thead className="border-b-2 border-black  bg-white z-10">
-              <tr className="border-b-2 border-gray-200 text-black text-left">
-                <th className="p-2">S. No.</th>
-                <th className="p-2">Vendor</th>
-                <th className="p-2">Email</th>
-                <th className="p-2">Phone no.</th>
-                <th className="p-2">Workflow</th>
-                <th className="p-2">Stage</th>
-                <th className="p-2">Status</th>
-                <th className="p-2">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSuppliers.map((vendor, index) => (
-                <tr key={vendor.id} className="odd:bg-blue-50">
-                  <td className="p-2">{index + 1}</td>
-                  <td
-                    className="p-2 text-blue-600 font-semibold cursor-pointer hover:underline"
-                    onClick={() => handleVendorClick(vendor)}
-                  >
-                    {vendor.supplier_name}
-                  </td>
+          {(() => {
+            const totalPages = Math.ceil(filteredSuppliers.length / rowsPerPage);
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = startIndex + rowsPerPage;
+            const paginatedData = filteredSuppliers.slice(startIndex, endIndex);
 
-                  <td className="p-2">{vendor.email_id}</td>
-                  <td className="p-2">{vendor.landline_num}</td>
-                  <td className="p-2">{getWorkflowName(vendor.workflow_id)}</td>
-                  <td className="p-2 text-green-600">{vendor.current_stage}</td>
-                  <td className="p-2">{vendor.status}</td>
-                  <td className="p-2 flex items-center justify-center gap-3">
-                    <FaEdit
-                      className="text-custome-blue cursor-pointer"
-                      onClick={() => {
-                        setSelectedVendor(vendor);
-                        setEditPopup(true);
-                      }}
-                    />
-                    <FaTrash
-                      className="text-red-500 cursor-pointer"
-                      onClick={() => handleDeleteClick(vendor)}
-                    />
-                    <FaRegIdCard
-                      className="text-gray-700 cursor-pointer"
-                      onClick={() => {
-                        setSelectedVendor(vendor);
-                        setContactData((prev) => ({
-                          ...prev,
-                          supplier_id: vendor?.id || "",
-                        }));
-                        setShowContactPopup(true);
-                      }}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            return (
+              <TableComponent
+                columns={[
+                  { header: "S. No.", accessor: "sno" },
+                  { header: "Vendor", accessor: "supplier_name" },
+                  { header: "Email", accessor: "email_id" },
+                  { header: "Phone no.", accessor: "landline_num" },
+                  { header: "Workflow", accessor: "workflow" },
+                  { header: "Stage", accessor: "current_stage" },
+                  { header: "Status", accessor: "status" },
+                  { header: "Action", accessor: "action" },
+                ]}
+                data={paginatedData.map((vendor, index) => ({
+                  sno: startIndex + index + 1,
+                  supplier_name: (
+                    <span
+                      className="text-blue-600 font-semibold cursor-pointer hover:underline"
+                      onClick={() => handleVendorClick(vendor)}
+                    >
+                      {vendor.supplier_name}
+                    </span>
+                  ),
+                  email_id: vendor.email_id,
+                  landline_num: vendor.landline_num,
+                  workflow: getWorkflowName(vendor.workflow_id),
+                  current_stage: vendor.current_stage,
+                  status: vendor.status,
+                  action: (
+                    <div className="flex items-center justify-center gap-3">
+                      <FaEdit
+                        className="text-blue-600 cursor-pointer hover:text-blue-800"
+                        title="Edit"
+                        onClick={() => {
+                          setSelectedVendor(vendor);
+                          setEditPopup(true);
+                        }}
+                      />
+                      <FaTrash
+                        className="text-red-500 cursor-pointer hover:text-red-700"
+                        title="Delete"
+                        onClick={() => handleDeleteClick(vendor)}
+                      />
+                      <FaRegIdCard
+                        className="text-gray-700 cursor-pointer hover:text-gray-900"
+                        title="Contacts"
+                        onClick={() => {
+                          setSelectedVendor(vendor);
+                          setContactData((prev) => ({
+                            ...prev,
+                            supplier_id: vendor?.id || "",
+                          }));
+                          setShowContactPopup(true);
+                        }}
+                      />
+                    </div>
+                  ),
+                  id: vendor.id,
+                }))}
+              />
+            );
+          })()}
         </div>
         {showVendorPopup && selectedVendor && (
           <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
@@ -2368,14 +2380,32 @@ const VendorManagement = () => {
         )}
 
         {/* Pagination */}
-        <div className="flex justify-center items-center gap-2 mt-4">
-          <button className="px-2 py-1 border rounded-md">{"<"}</button>
-          <button className="bg-custome-blue text-white px-3 py-1 rounded-md">
-            1
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <button
+            className="px-3 py-2 border rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            {"<"}
           </button>
-          <span>of</span>
-          <button className="border px-3 py-1 rounded-md">1</button>
-          <button className="px-2 py-1 border rounded-md">{">"}</button>
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-md font-semibold">
+            {currentPage}
+          </button>
+          <span className="text-gray-600 font-medium">of</span>
+          <button className="border px-4 py-2 rounded-md bg-white font-semibold">
+            {Math.ceil(filteredSuppliers.length / rowsPerPage) || 1}
+          </button>
+          <button
+            className="px-3 py-2 border rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+            onClick={() =>
+              setCurrentPage((prev) =>
+                Math.min(prev + 1, Math.ceil(filteredSuppliers.length / rowsPerPage) || 1)
+              )
+            }
+            disabled={currentPage >= Math.ceil(filteredSuppliers.length / rowsPerPage) || filteredSuppliers.length === 0}
+          >
+            {">"}
+          </button>
         </div>
         <>
           {showModal && (

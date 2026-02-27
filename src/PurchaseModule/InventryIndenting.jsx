@@ -60,12 +60,8 @@ const InventryIndenting = () => {
   const columns = [
     { header: "S. No.", accessor: "sno" },
     { header: "Indent ID", accessor: "id" },
-    { header: "Request for", accessor: "request_for" },
-    { header: "Category", accessor: "category" },
-    { header: "Request Material", accessor: "asset_name" },
-    { header: "Quantity", accessor: "quantity" },
+    { header: "RFP ID", accessor: "rfp_id" },
     { header: "Approval Date", accessor: "approval_date" },
-    { header: "Status", accessor: "status" },
   ];
   const [formData, setFormData] = useState({
     title: "",
@@ -726,6 +722,13 @@ const fetchRequests = async () => {
         );
       }
 
+      // Build required_doc object with Profile key set to selected dropdown values
+      const requiredDocObj = {
+        Profile: Array.isArray(formData.requiredDocument) 
+          ? formData.requiredDocument.join(", ") 
+          : ""
+      };
+
       const rfpPayload = {
         rfp_id: rfpId || undefined,
         user_id: Number(userId),
@@ -739,13 +742,10 @@ const fetchRequests = async () => {
           description: formData.description || "",
           notes: formData.notes || "",
         },
-        required_doc: Array.isArray(formData.requiredDocument)
+        required_doc_count: Array.isArray(formData.requiredDocument)
           ? formData.requiredDocument.length
-          : formData.requiredDocument || 0,
-        required_doc_name: Array.isArray(formData.requiredDocument)
-          ? formData.requiredDocument.join(", ")
-          : formData.requiredDocument || "",
-        additional_doc_link: additionalDocUrl || "",
+          : 0,
+        required_doc: requiredDocObj,
         rfp_file_link: generatedRfpUrl || "",
       };
 
@@ -907,15 +907,11 @@ const fetchRequests = async () => {
 
   const exportData = filteredRequests.map((item, idx) => ({
     sno: idx + 1,
-    id: item.id,
-    request_for: item.request_for,
-    category: item.category,
-    asset_name: item.asset_name,
-    quantity: item.quantity,
+    id: item.indent_id || item.id,
+    rfp_id: item.rfp_id || "-",
     approval_date: item.updated_at
       ? new Date(item.updated_at).toLocaleDateString("en-GB")
-      : "",
-    status: item.status,
+      : "-",
   }));
 
   useEffect(() => {

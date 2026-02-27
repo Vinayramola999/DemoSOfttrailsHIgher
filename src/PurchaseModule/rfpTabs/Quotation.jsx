@@ -85,7 +85,7 @@ const Quotation = () => {
     const fetchRfps = async () => {
       try {
         const res = await axios.get(
-          `${process.env.REACT_APP_PURCHASE_API}/supplier_quotation/rfp_ids`,
+          `${process.env.REACT_APP_PURCHASE_API}/supplier_quotation/rfp_ids/shared`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -643,9 +643,11 @@ const Quotation = () => {
                     fontWeight: 600,
                     fontSize: 16,
                     border: "none",
-                    cursor: "pointer",
+                    cursor: (selectedQuotation.documents || []).length === 0 ? "not-allowed" : "pointer",
+                    opacity: (selectedQuotation.documents || []).length === 0 ? 0.5 : 1,
                   }}
                   onClick={handleUpdateStatus}
+                  disabled={(selectedQuotation.documents || []).length === 0}
                 >
                   Update
                 </button>

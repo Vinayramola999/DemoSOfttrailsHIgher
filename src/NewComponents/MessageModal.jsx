@@ -8,7 +8,7 @@ const MessageModal = ({ message, type, setMessage }) => {
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={() => setMessage("")} // Close modal when clicking outside
+      onClick={() => setMessage("")} 
     >
       <div
         className="relative bg-white w-[390px] max-w-md mx-4 sm:mx-auto p-10 rounded-2xl shadow-xl transform transition-all ease-in-out duration-300"

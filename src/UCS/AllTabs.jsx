@@ -2,7 +2,6 @@
 import axios from 'axios';
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../NewComponents/HRMSidebar';
-import ProfileDropdown from '../ProfileDropdown';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import UCS3 from './UCS3';

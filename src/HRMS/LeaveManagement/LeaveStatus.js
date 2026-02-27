@@ -4,6 +4,7 @@ import Excel from "../../assests/excel.png";
 import Folder from "../../assests/folder.png";
 import { useEffect, useState } from 'react';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { HRMS_API_BASE } from '../../config/apiBase';
 
 const LeaveStatus = () => {
     const [leaves, setLeaves] = useState([]);
@@ -22,7 +23,7 @@ const LeaveStatus = () => {
     useEffect(() => {
         const fetchLeaves = async () => {
             try {
-                const response = await fetch('https://devdemo.softtrails.net/leave/leave-requests', {
+                const response = await fetch(`${HRMS_API_BASE}/leave/leave-requests`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },

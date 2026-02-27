@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import Select from "react-select";
 import { useState } from "react";
 import useFetchEmails from "../NewComponents/useFetchEmails";
+import { MAIN_API_BASE } from "../config/apiBase"
 Modal.setAppElement("#root");
 
 const OrganizationTab = () => {
@@ -28,13 +29,8 @@ const OrganizationTab = () => {
     setSelectedEmail(userId);
     if (userId) {
       try {
-        const response = await axios.get(
-          `https://devdemo.softtrails.net/access/access/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-            },
-          }
+        const response = await axios.get(`${MAIN_API_BASE}/access/access/${userId}`,
+          { headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}`, }, }
         );
         const filteredAccess = response.data.filter(
           (access) => access.user_id === parseInt(userId)
@@ -126,7 +122,7 @@ const OrganizationTab = () => {
     if (isUserCategoryChecked) selectedApiAccess.push("UserCategory");
     try {
       const response = await axios.put(
-        "https://devdemo.softtrails.net/access/update_access",
+        `${MAIN_API_BASE}/access/update_access`,
         {
           user_id: selectedEmail,
           module: selectedModule,
@@ -226,73 +222,29 @@ const OrganizationTab = () => {
           <div className="flex flex-col sm:flex-row mt-6">
             <div className="w-full sm:w-1/2 rounded-lg p-4 h-auto max-h-[450px] overflow-y-auto">
               <div className="rounded-lg overflow-y-auto">
-                {/* Parent Checkbox - Organization Setup */}
                 <label className="flex items-center font-semibold text-blue-700 text-lg">
-                  <input
-                    type="checkbox"
-                    onChange={handleOrgCheckboxChange}
-                    checked={isORGChecked}
-                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                  />
-                  <span className="ml-2">Organization Setup</span>
+                  <input type="checkbox" onChange={handleOrgCheckboxChange} checked={isORGChecked} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" /> <span className="ml-2">Organization Setup</span>
                 </label>
 
-                {/* Child Checkboxes - Only visible when Organization Setup is checked */}
                 {isORGChecked && (
                   <div className="ml-6 mt-3 flex flex-col space-y-2">
                     <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        onChange={() => setIsSummaryChecked(!isSummaryChecked)}
-                        checked={isSummaryChecked}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <span className="ml-2">Summary</span>
+                      <input type="checkbox" onChange={() => setIsSummaryChecked(!isSummaryChecked)} checked={isSummaryChecked} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" /> <span className="ml-2">Summary</span>
                     </label>
                     <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        onChange={() => setIsDeptChecked(!isDeptChecked)}
-                        checked={isDeptChecked}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <span className="ml-2">Dept</span>
+                      <input type="checkbox" onChange={() => setIsDeptChecked(!isDeptChecked)} checked={isDeptChecked} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" /> <span className="ml-2">Department</span>
                     </label>
                     <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        onChange={() => setIsLocationChecked(!isLocationChecked)}
-                        checked={isLocationChecked}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <span className="ml-2">Location</span>
+                      <input type="checkbox" onChange={() => setIsLocationChecked(!isLocationChecked)} checked={isLocationChecked} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" /> <span className="ml-2">Location</span>
                     </label>
                     <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        onChange={() => setIsDesignationChecked(!isDesignationChecked)}
-                        checked={isDesignationChecked}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <span className="ml-2">Designation</span>
+                      <input type="checkbox" onChange={() => setIsDesignationChecked(!isDesignationChecked)} checked={isDesignationChecked} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" /> <span className="ml-2">Designation</span>
                     </label>
                     <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        onChange={() => setIsDomainChecked(!isDomainChecked)}
-                        checked={isDomainChecked}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <span className="ml-2">Domain</span>
+                      <input type="checkbox" onChange={() => setIsDomainChecked(!isDomainChecked)} checked={isDomainChecked} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" /> <span className="ml-2">Domain</span>
                     </label>
                     <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        onChange={() => setIsUserCategoryChecked(!isUserCategoryChecked)}
-                        checked={isUserCategoryChecked}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <span className="ml-2">User Directory</span>
+                      <input type="checkbox" onChange={() => setIsUserCategoryChecked(!isUserCategoryChecked)} checked={isUserCategoryChecked} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" /> <span className="ml-2">User Category</span>
                     </label>
                   </div>
                 )}

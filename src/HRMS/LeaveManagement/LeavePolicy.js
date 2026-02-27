@@ -5,6 +5,7 @@ import PolicyModal from './PolicyModal';
 import PolicyTable from './PolicyTable';
 import PolicyDetailsModal from './PolicyDetailsModal';
 import MessageModal from '../../NewComponents/MessageModal';
+import {HRMS_API_BASE} from '../../config/apiBase';
 
 function LeavePolicy() {
     const [sandwichLeave, setSandwichLeave] = useState('Yes');
@@ -15,9 +16,8 @@ function LeavePolicy() {
     const [selectedPolicy, setSelectedPolicy] = useState(null);
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("success");
-    const [hasAMSAccessAddPolicy, setHasAMSAccessAddPolicy] = useState(false);
-    const [hasAMSAccessSchedular, setHasAMSAccessSchedular] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState(null);
 
     useEffect(() => {
         fetchSandwichLeave();
@@ -28,8 +28,7 @@ function LeavePolicy() {
         const token = sessionStorage.getItem('token');
         const enabled = sandwichLeave === 'Yes';
         try {
-            const response = await axios.post(
-                'https://devdemo.softtrails.net/leave/sandwich', { enabled },
+            const response = await axios.post(`${HRMS_API_BASE}/leave/sandwich`, { enabled },
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -58,7 +57,7 @@ function LeavePolicy() {
     const fetchSandwichLeave = async () => {
         const token = sessionStorage.getItem('token');
         try {
-            const response = await axios.get('https://devdemo.softtrails.net/leave/sandwich', {
+            const response = await axios.get(`${HRMS_API_BASE}/leave/sandwich`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
@@ -78,7 +77,7 @@ function LeavePolicy() {
         const token = sessionStorage.getItem('token');
         const leaveValue = leaveSelection === 'Leave Left This Year';
         try {
-            const response = await axios.post('https://devdemo.softtrails.net/leave/set-condition', { condition: leaveValue },
+            const response = await axios.post(`${HRMS_API_BASE}/leave/set-condition`, { condition: leaveValue },
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`, // Add token to Authorization header
@@ -107,7 +106,7 @@ function LeavePolicy() {
     const fetchLeaveDetails = async () => {
         const token = sessionStorage.getItem('token');
         try {
-            const response = await axios.get('https://devdemo.softtrails.net/leave/get-condition', {
+            const response = await axios.get(`${HRMS_API_BASE}/leave/get-condition`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
@@ -127,7 +126,7 @@ function LeavePolicy() {
     const handleResetMonthlyLeave = async () => {
         const token = sessionStorage.getItem('token');
         try {
-            const response = await axios.get('https://devdemo.softtrails.net/leave/manual-trigger-monthly', {
+            const response = await axios.get(`${HRMS_API_BASE}/leave/manual-trigger-monthly`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
@@ -155,7 +154,7 @@ function LeavePolicy() {
     const handleResetYearlyLeave = async () => {
         const token = sessionStorage.getItem('token');
         try {
-            const response = await axios.get('https://devdemo.softtrails.net/leave/manual-trigger-yearly', {
+            const response = await axios.get(`${HRMS_API_BASE}/leave/manual-trigger-yearly`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
@@ -182,35 +181,34 @@ function LeavePolicy() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [policies, setPolicies] = useState([]);
-    const [formData, setFormData] = useState({
+    const initialFormData = {
         policy_name: "",
         allocation_type: "monthly",
-        allocation: 0,
+        allocation: "",
         constraint_type: "min",
-        constraint_value: 0,
+        constraint_value: "",
         tranche_period: "monthly",
-        no_of_tranches: 0,
-        half_day_allowed: "no",
+        no_of_tranches: "",
+        half_day_allowed: false,
         consecutive_leave_restriction: false,
-        consecutive_leave_gap_days: 0,
+        consecutive_leave_gap_days: "",
         carry_forward_enabled: false,
-        carry_forward_monthly_enabled: false,
         carry_forward_monthly_type: "",
-        carry_forward_monthly_value: 0,
-        carry_forward_yearly_enabled: false,
+        carry_forward_monthly_value: null,
         carry_forward_yearly_type: "",
-        carry_forward_yearly_value: 0,
+        carry_forward_yearly_value: null,
         threshold_enabled: false,
-        threshold_value: 0,
+        threshold_value: "",
         document_required: false,
-        document_threshold: 0,
-    });
+        document_threshold: "",
+    };
+    const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
 
     const fetchPolicies = async () => {
         try {
             const token = sessionStorage.getItem('token');
-            const res = await axios.get("https://devdemo.softtrails.net/leave/get-policy",
+            const res = await axios.get(`${HRMS_API_BASE}/leave/get-policy`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -232,6 +230,34 @@ function LeavePolicy() {
         setSelectedPolicy(policy);
     };
 
+    const handleEdit = (policy) => {
+        // map policy fields to formData shape
+        setFormData({
+            policy_name: policy.policy_name || "",
+            allocation_type: policy.allocation_type || "monthly",
+            allocation: policy.allocation ?? 0,
+            constraint_type: policy.constraint_type || "min",
+            constraint_value: policy.constraint_value ?? 0,
+            tranche_period: policy.tranche_period || "monthly",
+            no_of_tranches: policy.no_of_tranches ?? 0,
+            half_day_allowed: !!policy.half_day_allowed,
+            consecutive_leave_restriction: !!policy.consecutive_leave_restriction,
+            consecutive_leave_gap_days: policy.consecutive_leave_gap_days ?? 0,
+                carry_forward_enabled: !!policy.carry_forward_enabled,
+                carry_forward_monthly_type: policy.carry_forward_monthly_type || "",
+                carry_forward_monthly_value: policy.carry_forward_monthly_value ?? 0,
+                carry_forward_yearly_type: policy.carry_forward_yearly_type || "",
+                carry_forward_yearly_value: policy.carry_forward_yearly_value ?? 0,
+            threshold_enabled: !!policy.threshold_enabled,
+            threshold_value: policy.threshold_value ?? 0,
+            document_required: !!policy.document_required,
+            document_threshold: policy.document_threshold ?? 0,
+        });
+        setErrors({});
+        setEditingId(policy.id || policy._id || null);
+        setIsModalOpen(true);
+    };
+
     const closeModal = () => {
         setSelectedPolicy(null);
     };
@@ -244,12 +270,22 @@ function LeavePolicy() {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         if (type === "checkbox") {
+            // If carry_forward is disabled, clear monthly/yearly types and values
+            if (name === "carry_forward_enabled" && !checked) {
+                setFormData({
+                    ...formData,
+                    [name]: checked,
+                    carry_forward_monthly_type: "",
+                    carry_forward_monthly_value: 0,
+                    carry_forward_yearly_type: "",
+                    carry_forward_yearly_value: 0,
+                });
+                return;
+            }
             setFormData({ ...formData, [name]: checked });
         } else if (value === "true" || value === "false") {
-            // Convert string boolean to actual boolean
             setFormData({ ...formData, [name]: value === "true" });
         } else if (!isNaN(value) && value !== "") {
-            // Convert numeric inputs to numbers
             setFormData({ ...formData, [name]: Number(value) });
         } else {
             setFormData({ ...formData, [name]: value });
@@ -258,114 +294,71 @@ function LeavePolicy() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         if (!formData.policy_name) {
             setErrors({ policy_name: "Policy Name is required" });
             return;
         }
-
+        // carry forward validation
+        if (formData.carry_forward_enabled) {
+            const errs = {};
+            if (!formData.carry_forward_monthly_type) {
+                errs.carry_forward_monthly_type = "Monthly type is required";
+            }
+            if (formData.carry_forward_monthly_value === null || formData.carry_forward_monthly_value === "") {
+                errs.carry_forward_monthly_value = "Monthly value is required";
+            }
+            // if yearly type selected, yearly value required
+            if (formData.carry_forward_yearly_type && (formData.carry_forward_yearly_value === null || formData.carry_forward_yearly_value === "")) {
+                errs.carry_forward_yearly_value = "Yearly value is required when yearly type is selected";
+            }
+            if (Object.keys(errs).length > 0) {
+                setErrors(errs);
+                return;
+            }
+        }
+        setIsSubmitting(true);
         try {
             const token = sessionStorage.getItem("token");
 
             const payload = { ...formData, status: true };
-
-            const res = await axios.post(
-                "https://devdemo.softtrails.net/leave/leave-policies",
-                payload, // ✅ payload should be the 2nd argument
-                {
+            let res;
+            if (editingId) {
+                // update existing
+                res = await axios.put(`${HRMS_API_BASE}/leave/update-policy/${editingId}`, payload, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json",
                     },
-                }
-            );
-            setMessage("Policy added successfully!");
+                });
+                setMessage("Policy updated successfully!");
+            } else {
+                res = await axios.post(`${HRMS_API_BASE}/leave/leave-policies`, payload, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+                setMessage("Policy added successfully!");
+            }
             setMessageType("success");
-            setIsModalOpen(false); 
-            setFormData({
-                policy_name: "",
-                allocation_type: "monthly",
-                allocation: 0,
-                constraint_type: "min",
-                constraint_value: 0,
-                tranche_period: "monthly",
-                no_of_tranches: 0,
-                half_day_allowed: false,
-                carry_forward_enabled: false,
-                carry_forward_monthly_enabled: false,
-                carry_forward_monthly_type: "",
-                carry_forward_monthly_value: 0,
-                carry_forward_yearly_enabled: false,
-                carry_forward_yearly_type: "",
-                carry_forward_yearly_value: 0,
-                threshold_enabled: false,
-                threshold_value: 0,
-                document_required: false,
-                document_threshold: 0,
-                consecutive_leave_restriction: false,
-                consecutive_leave_gap_days: 0,
-            });
-
-            fetchPolicies();
+            setIsModalOpen(false);
+            setFormData(initialFormData);
+            setEditingId(null);
+            fetchPolicies(); // Refresh table
         } catch (err) {
-    console.error(err);
-
-    const backendMessage =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        "Something went wrong";
-    setMessage(backendMessage);
-    setMessageType("error");
-   }
+            console.error(err);
+            setMessage("Error adding policy");
+            setMessageType("error");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
-
-     useEffect(() => {
-            const checkAMSAccess = async () => {
-                setLoading(true);
-                try {
-                    const userId = sessionStorage.getItem('userId');
-                    const token = sessionStorage.getItem('token');
-    
-                    if (!userId || !token) {
-                        console.error('userId or token is missing');
-                        return;
-                    }
-                    // Make the API call
-                    const response = await axios.get(`https://devdemo.softtrails.net/access/access/${userId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        },
-                    });
-                    console.log('Access API Response:', response.data);
-                    const userAccess = response.data;
-                    const hasSchedularAccess = userAccess.some(access => access.api_name === 'Schedular');
-                    const hasAddPolicyAccess = userAccess.some(access => access.api_name === 'AddPolicy');
-                    setHasAMSAccessSchedular(hasSchedularAccess);
-                    setHasAMSAccessAddPolicy(hasAddPolicyAccess);
-                } catch (error) {
-                    console.error('Error occurred during API call: ', error);
-                    if (error.response) {
-                        console.error('API Response error:', error.response.data);
-                        console.error('Status code:', error.response.status);
-                    } else if (error.request) {
-                        console.error('No response received from API:', error.request);
-                    } else {
-                        console.error('Error message:', error.message);
-                    }
-                    setHasAMSAccessAddPolicy(false);
-                    setHasAMSAccessSchedular(false);
-                } finally {
-                    setLoading(false);
-                }
-            };
-            checkAMSAccess();
-        }, []);
 
     return (
         <div className="space-x-4 flex flex-col">
             <div className="flex justify-between space-x-4 border-b border-gray-500">
                 <div className="justify-between flex mb-3 mt-4">
-                    {/* <h2 className="text-lg font-bold mt-1">Reset Leave For :</h2>
+                    <h2 className="text-lg font-bold mt-1">Reset Leave For :</h2>
                     <div className="items-center grid grid-cols-3">
                         <button
                             onClick={handleResetMonthlyLeave}
@@ -380,28 +373,13 @@ function LeavePolicy() {
                             Yearly
                         </button>
                         <button
-                            onClick={() => setIsModalOpen(true)}
+                            onClick={() => { setIsModalOpen(true); setEditingId(null); setFormData(initialFormData); setErrors({}); }}
                             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-300 items-end ml-5"
                         >
                             + Add Policy
                         </button>
-                    </div> */}
-              {hasAMSAccessSchedular && (<h2 className="text-lg font-bold mt-1">Reset Leave For :</h2>)}
-            <div className="grid grid-cols-3 gap-4 items-center mt-2">
-                 {!hasAMSAccessSchedular && hasAMSAccessAddPolicy && (
-                 <button onClick={() => setIsModalOpen(true)} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-300" > + Add Policy </button>
-                 )}
-                 {hasAMSAccessSchedular && (
-            <>
-            <button onClick={handleResetMonthlyLeave} className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300" > Monthly </button>
-            <button onClick={handleResetYearlyLeave} className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300" > Yearly </button>
-        </>
-                 )}
+                    </div>
 
-                 {hasAMSAccessSchedular && hasAMSAccessAddPolicy && (
-        <button onClick={() => setIsModalOpen(true)} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-300" > + Add Policy </button>
-                 )}
-            </div>
                 </div>
             </div>
             <div className="flex flex-wrap justify-start gap-5 mt-5">
@@ -500,14 +478,21 @@ function LeavePolicy() {
 
             <PolicyModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setFormData(initialFormData);
+                    setErrors({});
+                    setEditingId(null);
+                }}
                 formData={formData}
                 handleChange={handleChange}
                 errors={errors}
                 handleSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+                isEditing={!!editingId}
             />
 
-            <PolicyTable policies={policies} onViewDetails={handleViewDetails} />
+            <PolicyTable policies={policies} fetchPolicies={fetchPolicies} onEdit={handleEdit} onViewDetails={handleViewDetails} />
 
             <PolicyDetailsModal
                 isOpen={!!selectedPolicy}
@@ -517,4 +502,4 @@ function LeavePolicy() {
         </div>
     );
 }
-export default LeavePolicy;
+export default LeavePolicy; 

@@ -3,13 +3,13 @@ import axios from "axios";
 import React, { useState, useEffect, useRef } from "react";
 import { FaHome } from "react-icons/fa";
 //
-import ProfileDropdown from "../../ProfileDropdown";
+//import ProfileDropdown from "../../ProfileDropdown";
 import { useNavigate } from "react-router-dom";
 import MappingRawRequest from "./MappingRawRequest";
 import RawMaterial from "./RawMaterialTab";
 import FinegoodsRepo from "./FinegoodsRepo";
 import FineGoodsAllocation from "./FineGoodsAllocation";
-import { DMS_BASE,JAVA_BASE, ASSET_NODE_BASE, UCS_BASE ,MAIN_BASE } from "../../config/apiBase"
+import { DMS_BASE, JAVA_BASE, ASSET_NODE_BASE, UCS_BASE, MAIN_BASE } from "../../config/apiBase"
 const Tabs = () => {
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ const Tabs = () => {
         try {
           console.log("Fetching data for userId:", userId);
           const response = await axios.get(
-           `${MAIN_BASE}users/id_user/${userId}`,
+            `${MAIN_BASE}users/id_user/${userId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -64,21 +64,19 @@ const Tabs = () => {
         <Box>
           <div className="flex justify-left font-bold  mt-3 border-gray-300">
             <button
-              className={`px-6 py-2 text-14px font- relative focus:outline-none transition duration-300 rounded-t-md ${
-                tabValue === 0
+              className={`px-6 py-2 text-14px font- relative focus:outline-none transition duration-300 rounded-t-md ${tabValue === 0
                   ? "bg-white text-blue-600 border-l border-t border-r border-gray-300"
                   : "bg-gray-200 text-gray-600"
-              }`}
+                }`}
               onClick={() => setTabValue(0)}
             >
               Finished Goods Request
             </button>
-           <button
-              className={`px-6 py-2 text-14px font- relative focus:outline-none transition duration-300 rounded-t-md ${
-                tabValue === 1
+            <button
+              className={`px-6 py-2 text-14px font- relative focus:outline-none transition duration-300 rounded-t-md ${tabValue === 1
                   ? "bg-white text-blue-600 border-l border-t border-r border-gray-300"
                   : "bg-gray-200 text-gray-600"
-              }`}
+                }`}
               onClick={() => setTabValue(1)}
             >
               Finished Goods Allocation Request
@@ -88,15 +86,15 @@ const Tabs = () => {
           <div className="border-l border-r border-gray-300 h-full bg-white">
             {tabValue === 0 && (
               <div>
-                < FinegoodsRepo/>
+                < FinegoodsRepo />
               </div>
             )}
-             {tabValue === 1 && (
+            {tabValue === 1 && (
               <div>
-                < FineGoodsAllocation/>
+                < FineGoodsAllocation />
               </div>
             )}
-           
+
           </div>
         </Box>
       </div>

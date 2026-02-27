@@ -14,9 +14,9 @@ import UserPrivilege from "./UserPrivilege";
 import DocumentManagement from "./DMSAccess";
 import Organization from "./OrganizationTab";
 import PAL from "./PAL";
-import CMSAccess from "./CMSAccess";
 import Workflow from "./Workflow";
 import VerifyToken from "../NewComponents/VerifyToken";
+import {MAIN_API_BASE} from "../config/apiBase";
 
 const AccessPrivilege1 = () => {
   const [userData, setUserData] = useState(null);
@@ -37,8 +37,7 @@ const AccessPrivilege1 = () => {
     if (userId) {
       const fetchUserData = async () => {
         try {
-          const response = await axios.get(
-            `https://devdemo.softtrails.net/users/id_user/${userId}`,
+          const response = await axios.get(`${MAIN_API_BASE}/users/id_user/${userId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -67,7 +66,7 @@ const AccessPrivilege1 = () => {
           console.error("userId or token is missing");
           return;
         }
-        const response = await axios.get(`https://devdemo.softtrails.net/access/access/${userId}`,{ headers: { Authorization: `Bearer ${token}`, }, });
+        const response = await axios.get(`${MAIN_API_BASE}/access/access/${userId}`,{ headers: { Authorization: `Bearer ${token}`, }, });
         const userAccess = response.data;
         const hasCRMAccess = userAccess.some((access) => access.api_name === "CRM");
         const hasHRMSAccess = userAccess.some((access) => access.api_name === "HRMS");
@@ -82,7 +81,6 @@ const AccessPrivilege1 = () => {
         const hasBudgetPagesAccess = userAccess.some((access) => access.api_name === "Budget");
         const hasUserAccess = userAccess.some((access) => access.api_name === "UMC");
         const hasDocumentAccess = userAccess.some((access) => access.api_name === "doc_management");
-        const hasCMSAccess = userAccess?.some((access) => access.api_name === "CMS");
         const hasWorkflowAccess =userAccess?.some((access) => access.api_name === "WF")
         const accessibleTabs = [];
         if (hasGroupAccess) accessibleTabs.push({ id: "group", label: "Group" });
@@ -97,7 +95,6 @@ const AccessPrivilege1 = () => {
         if (hasWorkflowAccess) accessibleTabs.push({ id: "wf", label: "Workflow" });
         if (hasPurchaseAccess) accessibleTabs.push({ id: "purchasemodule", label: "Purchase Module", });
         if (hasBudgetPagesAccess) accessibleTabs.push({ id: "financialbudget", label: "Financial Budget", });  
-        if (hasCMSAccess) accessibleTabs.push({ id: "cms", label: "CMS" });  
         if (hasAMSAccess) accessibleTabs.push({ id: "accessprivilege", label: "Access Privilege", });
         if (hasLogsPagesAccess)accessibleTabs.push({ id: "logs", label: "Logs" });
         setTabs(accessibleTabs);
@@ -168,7 +165,6 @@ const AccessPrivilege1 = () => {
             {activeTab === "financialbudget" && <FinancialBudget />}
             {activeTab === "accessprivilege" && <AccessPrivilege />}
             {activeTab === "logs" && <Logs />}
-            {activeTab === "cms" && <CMSAccess />}
             {activeTab === "wf" && <Workflow/>}
           </div>
         </div>

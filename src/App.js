@@ -4,14 +4,16 @@ import React from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 // Import Components and Pages
 import Login from "./Pages/Login";
-import Cards from "./Cards";
-import HRMS from "./HRMS";
+import Cards from "./Cards/Cards";
+import HRMS from "./Cards/HRMS";
+import AssetManagement from "./Cards/AssetManagement";
+import ProductAssembly from "./Cards/ProductAssembly";
+import ProfilePart from "./Cards/ProfilePart";
 import Verify from "./Pages/Verify";
 import Password from "./Pages/Password";
 import NewPassword from "./Components/NewPassword";
 import ChangePassword from "./Components/ChangePassword";
 import LogsPage from "./Logs/LogsPage";
-import ProfilePart from "./ProfilePart";
 //Global Module
 import Organization from "./OrganizationSetup/Organization";
 import Users from "./UserManagemnt/Users";
@@ -65,23 +67,13 @@ import AllTab from "./Asset/ApprovalAuthority/AllTab";
 import CategoryTab from "./Asset/Category/CatergoryTab";
 import QuotationView from "./PurchaseModule/rfpTabs/QuotationView";
 
-
 //Sales Management
 import SetupWorkflow from "./Workflow/SetupWorkflow";
 import SubmitApprovalTab from "./CRM/Customer/pages/SubmitApprovalTab";
 import Lead from "./SalesManagement/Lead";
 import QuotationPreview from "./SalesManagement/QuotationPreview";
 import Salesprocess from "./SalesManagement/Salesprocess";
-//CMS
-import CmsDashBoard from "./CMS/components/CmsDashBoard";
-import CustomersDetails from "./CMS/components/CustomersDetails";
-import Products from "./CMS/components/Products";
-import OurProducts from "./CMS/components/OurProducts";
-import ProductIndividualpage from "./CMS/components/ProductIndividualpage";
-import ProductDetail from "./CMS/components/ProductDetail";
-import Lic from "./CMS/components/Lic";
-import DMSProductAddOn from "./CMS/components/DMSProductAddOn";
-import AllTabss from "./CMS/components/UCS/AllTabs";
+
 
 function App({ employeeId, userId }) {
   const appRouter = createBrowserRouter([
@@ -94,6 +86,8 @@ function App({ employeeId, userId }) {
     { path: "change-password", element: <ChangePassword /> },
     { path: "/cards", element: <Cards /> },
     { path: "/hrms", element: <HRMS /> },
+    { path: "/AssetManagement", element: <AssetManagement /> },
+    { path: "/ProductAssembly", element: <ProductAssembly /> },
     //1...... Employee Data
     { path: "employeedata", element: <EmployeeData /> },
     { path: "/SubmitApprovalTab", element: <SubmitApprovalTab /> },
@@ -164,16 +158,7 @@ function App({ employeeId, userId }) {
         { path: "/Lead", element: <Lead /> },
         { path: "/Salesprocess", element: <Salesprocess /> },
         { path: "/quotation-preview", element: <QuotationPreview /> },
-        //12.............CMS...............
-        { path: "CmsDashBoard", element: <CmsDashBoard /> },
-        { path: "setup", element: <Lic /> },
-        { path: "customers", element: <CustomersDetails /> },
-        { path: "products", element: <Products /> },
-        { path: "our-products", element: <OurProducts /> },
-        { path: "product/:id", element: <ProductIndividualpage /> },
-        { path: "product-show/:id", element: <ProductDetail /> },
-        { path: "productaddon/ucs", element: <AllTabss /> },
-        { path: "productaddon/dms", element: <DMSProductAddOn /> },
+        
         //13.............Workflow................
         { path: "/SetupWorkflow", element: <SetupWorkflow /> },
 

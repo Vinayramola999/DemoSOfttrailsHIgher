@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import {HRMS_API_BASE} from '../../config/apiBase'; 
 
 const BalanceLeave = () => {
     const [leaves, setLeaves] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [userData, setUserData] = useState(null);
     const token = sessionStorage.getItem('token');
     const userId = sessionStorage.getItem('userId');
     const itemsPerPage = 6;
@@ -11,7 +11,7 @@ const BalanceLeave = () => {
     const fetchLeaveBalance = async () => {
         if (!userId) return;
         try {
-            const response = await fetch(`https://devdemo.softtrails.net/leave/leave-balances/${userId}`, {
+            const response = await fetch(`${HRMS_API_BASE}/leave/leave-balances/${userId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

@@ -85,7 +85,7 @@ const Quotation = () => {
     const fetchRfps = async () => {
       try {
         const res = await axios.get(
-          `${process.env.REACT_APP_PURCHASE_API}/supplier_quotation/rfp_ids`,
+          `${process.env.REACT_APP_PURCHASE_API}/supplier_quotation/rfp_ids/shortlisted`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

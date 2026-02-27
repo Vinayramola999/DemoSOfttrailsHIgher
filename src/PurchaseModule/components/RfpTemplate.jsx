@@ -431,7 +431,7 @@ export async function RfpTemplate(rfpData = {}) {
   const gapX = 40;
   const colW = (pw - marginX * 2 - gapX) / 2;
   // Left column - Indent ID (use the indentId extracted at the top)
-  drawText2({ text: "Indent ID", x: marginX, y: cursorY, size: 11, color: textMuted });
+  // drawText2({ text: "Indent ID", x: marginX, y: cursorY, size: 11, color: textMuted });
   drawText2({ 
     text: indentId || "-", 
     x: marginX, 

@@ -28,7 +28,7 @@ const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-lightgray p-4">
+    <div className="flex h-screen bg-lightgray p-4">
       <HRMSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex-1 flex flex-col ml-4">
      

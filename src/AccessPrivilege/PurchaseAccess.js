@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import Select from "react-select";
 import React, { useState } from "react";
 import useFetchEmails from "../NewComponents/useFetchEmails";
+import { MAIN_API_BASE } from "../config/apiBase"
 Modal.setAppElement("#root");
 
 const PurchaseAccess = () => {
@@ -18,8 +19,7 @@ const PurchaseAccess = () => {
         setSelectedEmail(userId);
         if (userId) {
             try {
-                // Fetch API access
-                const response = await axios.get(`https://devdemo.softtrails.net/access/access/${userId}`,
+                const response = await axios.get(`${MAIN_API_BASE}/access/access/${userId}`,
                     { headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}`, }, }
                 );
 
@@ -76,8 +76,7 @@ const PurchaseAccess = () => {
         const selectedApiAccess = [];
         if (isPurchaseChecked) selectedApiAccess.push("purchase_module");
         try {
-            const response = await axios.put(
-                "https://devdemo.softtrails.net/access/update_access",
+            const response = await axios.put(`${MAIN_API_BASE}/access/update_access`,
                 {
                     user_id: selectedEmail,
                     module: selectedModule,

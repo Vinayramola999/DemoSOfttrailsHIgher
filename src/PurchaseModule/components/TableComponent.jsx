@@ -2,16 +2,15 @@ import React from "react";
 
 const TableComponent = ({ columns, data }) => {
   return (
-    <div className="overflow-x-auto border border-blue-400 rounded">
-      <table className="w-full border-collapse text-xs">
-        {/* Sticky Header with Blue Background */}
-        <thead className="sticky top-0 bg-blue-50 z-20">
-          <tr className="border-b border-blue-400">
+    <div className="overflow-x-auto" style={{ maxHeight: "600px", overflowY: "auto" }}>
+      <table className="w-full border-collapse">
+        {/* Header */}
+        <thead className="sticky top-0 bg-white z-10">
+          <tr className="border-b-2 border-gray-800">
             {columns.map((col, index) => (
               <th
                 key={index}
-                className="px-3 py-2.5 text-center font-semibold text-gray-700 border-r border-blue-400 last:border-r-0"
-                style={{ fontSize: "9px" }}
+                className="px-6 py-3 text-center font-bold text-gray-900 text-sm"
               >
                 {col.header}
               </th>
@@ -24,16 +23,14 @@ const TableComponent = ({ columns, data }) => {
           {data.map((row, rowIndex) => (
             <tr
               key={rowIndex}
-              className="bg-white border-b border-gray-300 hover:bg-gray-50"
+              className={`border-b border-gray-200 ${
+                rowIndex % 2 === 0 ? "bg-blue-50" : "bg-white"
+              }`}
             >
               {columns.map((col, colIndex) => (
-                <td 
-                  key={colIndex} 
-                  className="px-3 py-2.5 border-r border-gray-300 last:border-r-0 text-gray-800"
-                  style={{ 
-                    fontSize: "9px",
-                    textAlign: col.align || "center"
-                  }}
+                <td
+                  key={colIndex}
+                  className="px-6 py-4 text-center text-gray-700 text-sm"
                 >
                   {row[col.accessor]}
                 </td>

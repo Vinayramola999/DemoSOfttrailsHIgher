@@ -3,7 +3,7 @@ import Select from "react-select";
 import axios from "axios";
 import API from "../config/api";
 import ManageActionModal from "./components/ManageActionModal";
-import ProfileDropdown from "../ProfileDropdown";
+
 import PopupModal from "./PopupModal";
 
 const SetupWorkflow = () => {

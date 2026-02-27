@@ -41,6 +41,7 @@ import LoadingSpinner from "../component/LoadingSpinner";
 import ErrorBoundary from "../component/ErrorBoundary";
 import ConfirmationModal from "../../../NewComponents/ConfirmationModal";
 import MessageModal from "../../../NewComponents/MessageModal";
+import {MAIN_API_BASE} from "../../../config/apiBase";
 import "../../../App.css";
 const Customer = () => {
   const API_BASE_URL = process.env.REACT_APP_API_CRM_BASE_URL;
@@ -195,7 +196,7 @@ const Customer = () => {
     }
 
     try {
-      const response = await axios.post(`https://devdemo.softtrails.net/users/verify-token`, { token });
+      const response = await axios.post(`${MAIN_API_BASE}/users/verify-token`, { token });
       console.log("Token is valid:", response.data);
     } catch (error) {
       console.error("Token verification failed:", error.response?.data || error.message);

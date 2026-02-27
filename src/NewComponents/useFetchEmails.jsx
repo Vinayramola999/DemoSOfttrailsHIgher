@@ -1,43 +1,7 @@
-// import { useState, useEffect } from "react";
-// import axios from "axios";
-// import Swal from "sweetalert2";
-
-// const useFetchEmails = () => {
-//   const [emails, setEmails] = useState([]);
-
-//   useEffect(() => {
-//     const fetchEmails = async () => {
-//       try {
-//         const response = await axios.get(
-//           "https://devdemo.softtrails.net/users/email_users",
-//           {
-//             headers: {
-//               Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-//             },
-//           }
-//         );
-//         const emailsArray = response.data.users || [];
-//         setEmails(emailsArray);
-//       } catch (error) {
-//         Swal.fire({
-//           icon: "error",
-//           title: "Error",
-//           text: "Error fetching emails.",
-//         });
-//       }
-//     };
-
-//     fetchEmails();
-//   }, []);
-
-//   return emails;
-// };
-// export default useFetchEmails;
-
-///////////////////////////////////
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
+import {MAIN_API_BASE} from "../config/apiBase";
 
 const useFetchEmails = () => {
   const [emails, setEmails] = useState([]);
@@ -45,8 +9,7 @@ const useFetchEmails = () => {
   useEffect(() => {
     const fetchEmails = async () => {
       try {
-        const response = await axios.get(
-          "https://devdemo.softtrails.net/users/getusers",
+        const response = await axios.get(`${MAIN_API_BASE}/users/getusers`,
           {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem("token")}`,

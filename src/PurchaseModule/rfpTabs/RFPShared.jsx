@@ -26,7 +26,7 @@ export default function RFPShared() {
     const fetchRfps = async () => {
       try {
         const res = await axios.get(
-          `${process.env.REACT_APP_PURCHASE_API}/supplier_quotation/rfp_ids`,
+          `${process.env.REACT_APP_PURCHASE_API}/supplier_quotation/rfp_ids/shared`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -83,10 +83,11 @@ export default function RFPShared() {
     sno: idx + 1,
     rfp_id: row.rfp_id,
     vendor_id: row.vendor_id,
-    shared_date: row.shared_date,
-    sender_name: row.sender_name,
-    sender_contact: row.sender_contact,
-    vendor_contact: row.vendor_contact,
+    shared_date: row.shared_at
+      ? new Date(row.shared_at).toLocaleDateString("en-GB")
+      : "--",
+    sender_contact: row.send_by_email || "-",
+    vendor_contact: row.vendor_email || "-",
   }));
 
   const totalPages = Math.max(1, Math.ceil((data.length || 0) / rowsPerPage));
@@ -135,6 +136,10 @@ export default function RFPShared() {
             columns={[
               { header: "S. No.", accessor: "sno" },
               { header: "RFP ID", accessor: "rfp_id" },
+              { header: "Vendor ID", accessor: "vendor_id" },
+              { header: "Shared Date", accessor: "shared_date" },
+              { header: "Sender Contact", accessor: "sender_contact" },
+              { header: "Vendor Contact", accessor: "vendor_contact" },
             ]}
             fileName="RFP_Shared"
           />

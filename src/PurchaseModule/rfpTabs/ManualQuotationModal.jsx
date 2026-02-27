@@ -19,9 +19,9 @@ export default function ManualQuotationModal({
   poNumber = "",
   quotationOptions = [],
   vendorOptions = [],
-  onSaveDraft = () => { },
-  onSend = () => { },
-  onDownloadPdf = () => { },
+  onSaveDraft = () => {},
+  onSend = () => {},
+  onDownloadPdf = () => {},
 }) {
   // ...existing code...
   const [quotationDate, setQuotationDate] = useState("");
@@ -98,7 +98,7 @@ export default function ManualQuotationModal({
     const fetchVendors = async () => {
       try {
         const res = await axios.get(
-          "https://devdemo.softtrails.net/purchase/supplier/list",
+          "http://devdemo.softtrails.net/purchase/supplier/list",
           {
             headers: { Authorization: token ? `Bearer ${token}` : "" },
           }
@@ -130,7 +130,7 @@ export default function ManualQuotationModal({
       setRfpError("");
       try {
         const res = await axios.get(
-          `https://devdemo.softtrails.net/purchase/rfps/${vendor.value}/rfpIDs`,
+          `http://devdemo.softtrails.net/purchase/rfps/${vendor.value}/rfpIDs`,
           { headers: { Authorization: token ? `Bearer ${token}` : "" } }
         );
         const data = res.data?.data || res.data || [];
@@ -168,7 +168,7 @@ export default function ManualQuotationModal({
 
     const fetchExisting = async () => {
       try {
-        const url = `https://devdemo.softtrails.net/purchase/supplier_quotation/quotationDetails?rfp_id=${encodeURIComponent(
+        const url = `http://devdemo.softtrails.net/purchase/supplier_quotation/quotationDetails?rfp_id=${encodeURIComponent(
           rfpId
         )}&&vendor_id=${encodeURIComponent(vendor.value)}`;
         const res = await axios.get(url, {
@@ -376,7 +376,7 @@ export default function ManualQuotationModal({
         // If vendor already has a quotation, call versions endpoint or allow POST as per API rules.
         // We attempt to POST to manual endpoint to add a new grouped manual quotation (API may dedupe server-side)
         await axios.post(
-          "https://devdemo.softtrails.net/purchase/supplier_quotation/manual/quotation",
+          "http://devdemo.softtrails.net/purchase/supplier_quotation/manual/quotation",
           createPayload,
           {
             headers: {
@@ -390,7 +390,7 @@ export default function ManualQuotationModal({
       } else {
         // Create new manual quotation
         await axios.post(
-          "https://devdemo.softtrails.net/purchase/supplier_quotation/manual/quotation",
+          "http://devdemo.softtrails.net/purchase/supplier_quotation/manual/quotation",
           createPayload,
           {
             headers: {
@@ -420,260 +420,264 @@ export default function ManualQuotationModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 scrollbar-hide">
-        <div className="bg-white rounded-xl w-full max-w-4xl shadow-lg relative max-h-[90vh] overflow-y-auto scrollbar-hide">
-          {/* Header */}
-          <div className="flex items-start justify-between px-8 py-6 border-b">
-            <div>
-              <h2 className="text-2xl font-semibold text-[#0B4A87]">
-                Manual Quotation
-              </h2>
-            </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={onClose}
-                className="text-gray-600 hover:text-black text-lg"
-              >
-                ✕
-              </button>
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 scrollbar-hide">
+      <div className="bg-white rounded-xl w-full max-w-4xl shadow-lg relative max-h-[90vh] overflow-y-auto scrollbar-hide">
+        {/* Header */}
+        <div className="flex items-start justify-between px-8 py-6 border-b">
+          <div>
+            <h2 className="text-2xl font-semibold text-[#0B4A87]">
+              Manual Quotation
+            </h2>
           </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={onClose}
+              className="text-gray-600 hover:text-black text-lg"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
 
-          {/* Top fields */}
-          <div className="p-8 space-y-6">
-            <div className="grid grid-cols-2 gap-0">
-              <div className="flex flex-col gap-4 w-1/2">
-                <div className="flex gap-8 items-center">
-                  <label className="text-sm text-gray-600 block mb-2">
-                    Quotation Date
-                  </label>
-                  <input
-                    type="date"
-                    value={quotationDate}
-                    onChange={(e) => setQuotationDate(e.target.value)}
-                    className="border-b border-gray-300 bg-transparent"
-                  />
-                </div>
-                <div className="flex gap-8 items-center">
-                  <label className="text-sm text-gray-600 block mb-2">
-                    Validity Date
-                  </label>
-                  <input
-                    type="date"
-                    value={validityDate}
-                    onChange={(e) => setValidityDate(e.target.value)}
-                    className="mt-1 border-b border-gray-200 py-2 text-sm outline-none"
-                  />
-                </div>
+        {/* Top fields */}
+        <div className="p-8 space-y-6">
+          <div className="grid grid-cols-2 gap-0">
+            <div className="flex flex-col gap-4 w-1/2">
+              <div className="flex gap-8 items-center">
+                <label className="text-sm text-gray-600 block mb-2">
+                  Quotation Date
+                </label>
+                <input
+                  type="date"
+                  value={quotationDate}
+                  onChange={(e) => setQuotationDate(e.target.value)}
+                  className="border-b border-gray-300 bg-transparent"
+                />
               </div>
+              <div className="flex gap-8 items-center">
+                <label className="text-sm text-gray-600 block mb-2">
+                  Validity Date
+                </label>
+                <input
+                  type="date"
+                  value={validityDate}
+                  onChange={(e) => setValidityDate(e.target.value)}
+                  className="mt-1 border-b border-gray-200 py-2 text-sm outline-none"
+                />
+              </div>
+            </div>
 
-              <div className="grid grid-row-2 gap-4">
-                <div className="flex gap-8 items-center">
-                  <label className=" w-1/4 text-sm text-gray-600 block mb-2">
-                    Vendor ID
-                  </label>
+            <div className="grid grid-row-2 gap-4">
+              <div className="flex gap-8 items-center">
+                <label className=" w-1/4 text-sm text-gray-600 block mb-2">
+                  Vendor ID
+                </label>
+                <Select
+                  options={vendorList}
+                  value={vendor}
+                  onChange={(opt) => {
+                    setVendor(opt);
+                    setRfpId("");
+                  }}
+                  className="mt-1 w-full border-gray-200 py-2 text-sm outline-none"
+                  isClearable
+                  placeholder="Select Vendor"
+                />
+              </div>
+              <div className="flex gap-8 items-center">
+                <label className=" w-1/4 text-sm text-gray-600 block mb-2">
+                  RFP ID
+                </label>
+                <div className="w-full">
                   <Select
-                    options={vendorList}
-                    value={vendor}
-                    onChange={(opt) => {
-                      setVendor(opt);
-                      setRfpId("");
-                    }}
-                    className="mt-1 w-full border-gray-200 py-2 text-sm outline-none"
+                    options={rfpOptions}
+                    value={rfpOptions.find((o) => o.value === rfpId) || null}
+                    onChange={(opt) => setRfpId(opt?.value || "")}
+                    isLoading={rfpLoading}
+                    placeholder={
+                      rfpOptions.length ? "Select RFP" : "Enter RFP ID"
+                    }
                     isClearable
-                    placeholder="Select Vendor"
                   />
-                </div>
-                <div className="flex gap-8 items-center">
-                  <label className=" w-1/4 text-sm text-gray-600 block mb-2">
-                    RFP ID
-                  </label>
-                  <div className="w-full">
-                    <Select
-                      options={rfpOptions}
-                      value={rfpOptions.find((o) => o.value === rfpId) || null}
-                      onChange={(opt) => setRfpId(opt?.value || "")}
-                      isLoading={rfpLoading}
-                      placeholder={
-                        rfpOptions.length ? "Select RFP" : "Enter RFP ID"
-                      }
-                      isClearable
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Notes & Totals */}
-            <div className="rounded-2xl overflow-hidden mb-8">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-blue-600 text-white">
-                    <th className="py-2 px-3 font-medium text-left rounded-tl-2xl">
-                      Item
-                    </th>
-                    <th className="py-2 px-3 font-medium text-left">Quantity</th>
-                    <th className="py-2 px-3 font-medium text-left">
-                      Unit Price
-                    </th>
-                    <th className="py-2 px-3 font-medium text-left">Tax%</th>
-                    <th className="py-2 px-3 font-medium text-left">Amount</th>
-                    <th className="py-2 px-3 rounded-tr-2xl"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, idx) => (
-                    <React.Fragment key={idx}>
-                      <tr className="bg-[#F4F8FC]">
-                        <td className="py-3 px-3 align-top">
-                          <input
-                            className={`w-full bg-transparent border-0 border-b ${missingFields.includes("item")
-                                ? "border-red-500"
-                                : "border-gray-300"
-                              } focus:ring-0 focus:border-blue-400 text-gray-900`}
-                            value={row.item}
-                            onChange={(e) =>
-                              handleRowChange(idx, "item", e.target.value)
-                            }
-                            placeholder="Item"
-                          />
-                        </td>
-                        <td className="py-3 px-3 align-top">
-                          <input
-                            type="number"
-                            className={`w-full bg-transparent border-0 border-b ${missingFields.includes("quantity")
-                                ? "border-red-500"
-                                : "border-gray-300"
-                              } focus:ring-0 focus:border-blue-400 text-gray-900`}
-                            value={row.quantity}
-                            onChange={(e) =>
-                              handleRowChange(idx, "quantity", e.target.value)
-                            }
-                            placeholder="Qty"
-                            min="0"
-                          />
-                        </td>
-                        <td className="py-3 px-3 align-top">
-                          <input
-                            type="number"
-                            className={`w-full bg-transparent border-0 border-b ${missingFields.includes("unitPrice")
-                                ? "border-red-500"
-                                : "border-gray-300"
-                              } focus:ring-0 focus:border-blue-400 text-gray-900`}
-                            value={row.unitPrice}
-                            onChange={(e) =>
-                              handleRowChange(idx, "unitPrice", e.target.value)
-                            }
-                            placeholder="₹"
-                            min="0"
-                          />
-                        </td>
-                        <td className="py-3 px-3 align-top">
-                          <input
-                            type="number"
-                            className={`w-full bg-transparent border-0 border-b ${missingFields.includes("tax")
-                                ? "border-red-500"
-                                : "border-gray-300"
-                              } focus:ring-0 focus:border-blue-400 text-gray-900`}
-                            value={row.tax}
-                            onChange={(e) =>
-                              handleRowChange(idx, "tax", e.target.value)
-                            }
-                            placeholder="%"
-                            min="0"
-                          />
-                        </td>
-                        <td className="py-3 px-3 align-top font-medium text-gray-900">
-                          ₹{getRowAmount(row)}
-                        </td>
-                        <td className="py-3 px-3 align-top">
-                          {rows.length > 1 && (
-                            <button
-                              type="button"
-                              className="text-gray-400 hover:text-red-600 text-lg"
-                              onClick={() => handleRemoveRow(idx)}
-                            >
-                              ×
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                      <tr className="bg-[#F4F8FC]">
-                        <td colSpan={6} className="py-1 px-3 text-xs">
-                          <div style={{ fontSize: 11, color: "#555" }}>
-                            {typeof row.description === "object"
-                              ? row.description.description
-                              : row.description}
-                          </div>
-                        </td>
-                      </tr>
-                    </React.Fragment>
-                  ))}
-                  <tr>
-                    <td colSpan={6} className="py-2 px-3 text-center">
-                      <button
-                        type="button"
-                        className="text-blue-600 flex items-center gap-1 mx-auto border border-dashed border-gray-400 w-full justify-center rounded-lg py-2"
-                        onClick={handleAddRow}
-                        style={{ background: "#F4F8FC" }}
-                      >
-                        <span className="text-lg">＋</span> Add new line
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Summary */}
-            <div className="flex justify-end gap-12">
-              <div className="text-right">
-                <div className="mb-1">
-                  Amount{" "}
-                  <span className="ml-4 font-medium">₹{taxableAmount}</span>
-                </div>
-                <div className="mb-1">
-                  Taxable amount{" "}
-                  <span className="ml-4 font-medium">
-                    ₹{totalAmount - taxableAmount}
-                  </span>
-                </div>
-                <div className="mb-1 font-bold text-lg mt-4">
-                  Total(INR){" "}
-                  <span className="ml-4 text-2xl text-black">
-                    ₹{totalAmount.toLocaleString()}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-500 mt-2">
-                  Total (in words)
-                  <br />
-                  <span className="text-black font-bold">
-                    {numberToWords(totalAmount)}
-                  </span>{" "}
                 </div>
               </div>
             </div>
           </div>
-          <div className=" m-4">
-            <div className="flex justify-end items-center gap-4 mt-6">
-              <button
-                className="text-gray-700 px-6 py-2 rounded-lg font-semibold shadow hover:bg-gray-100 transition"
-                onClick={() => navigate("/app/allquotation")}
-              >
-                Back
-              </button>
-              <button
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition"
-                onClick={handleSaveAndNext}
-                disabled={submitting}
-              >
-                {submitting ? "Submitting..." : "Save & Next"}
-              </button>
+
+          {/* Notes & Totals */}
+          <div className="rounded-2xl overflow-hidden mb-8">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-blue-600 text-white">
+                  <th className="py-2 px-3 font-medium text-left rounded-tl-2xl">
+                    Item
+                  </th>
+                  <th className="py-2 px-3 font-medium text-left">Quantity</th>
+                  <th className="py-2 px-3 font-medium text-left">
+                    Unit Price
+                  </th>
+                  <th className="py-2 px-3 font-medium text-left">Tax%</th>
+                  <th className="py-2 px-3 font-medium text-left">Amount</th>
+                  <th className="py-2 px-3 rounded-tr-2xl"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, idx) => (
+                  <React.Fragment key={idx}>
+                    <tr className="bg-[#F4F8FC]">
+                      <td className="py-3 px-3 align-top">
+                        <input
+                          className={`w-full bg-transparent border-0 border-b ${
+                            missingFields.includes("item")
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          } focus:ring-0 focus:border-blue-400 text-gray-900`}
+                          value={row.item}
+                          onChange={(e) =>
+                            handleRowChange(idx, "item", e.target.value)
+                          }
+                          placeholder="Item"
+                        />
+                      </td>
+                      <td className="py-3 px-3 align-top">
+                        <input
+                          type="number"
+                          className={`w-full bg-transparent border-0 border-b ${
+                            missingFields.includes("quantity")
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          } focus:ring-0 focus:border-blue-400 text-gray-900`}
+                          value={row.quantity}
+                          onChange={(e) =>
+                            handleRowChange(idx, "quantity", e.target.value)
+                          }
+                          placeholder="Qty"
+                          min="0"
+                        />
+                      </td>
+                      <td className="py-3 px-3 align-top">
+                        <input
+                          type="number"
+                          className={`w-full bg-transparent border-0 border-b ${
+                            missingFields.includes("unitPrice")
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          } focus:ring-0 focus:border-blue-400 text-gray-900`}
+                          value={row.unitPrice}
+                          onChange={(e) =>
+                            handleRowChange(idx, "unitPrice", e.target.value)
+                          }
+                          placeholder="₹"
+                          min="0"
+                        />
+                      </td>
+                      <td className="py-3 px-3 align-top">
+                        <input
+                          type="number"
+                          className={`w-full bg-transparent border-0 border-b ${
+                            missingFields.includes("tax")
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          } focus:ring-0 focus:border-blue-400 text-gray-900`}
+                          value={row.tax}
+                          onChange={(e) =>
+                            handleRowChange(idx, "tax", e.target.value)
+                          }
+                          placeholder="%"
+                          min="0"
+                        />
+                      </td>
+                      <td className="py-3 px-3 align-top font-medium text-gray-900">
+                        ₹{getRowAmount(row)}
+                      </td>
+                      <td className="py-3 px-3 align-top">
+                        {rows.length > 1 && (
+                          <button
+                            type="button"
+                            className="text-gray-400 hover:text-red-600 text-lg"
+                            onClick={() => handleRemoveRow(idx)}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                    <tr className="bg-[#F4F8FC]">
+                      <td colSpan={6} className="py-1 px-3 text-xs">
+                        <div style={{ fontSize: 11, color: "#555" }}>
+                          {typeof row.description === "object"
+                            ? row.description.description
+                            : row.description}
+                        </div>
+                      </td>
+                    </tr>
+                  </React.Fragment>
+                ))}
+                <tr>
+                  <td colSpan={6} className="py-2 px-3 text-center">
+                    <button
+                      type="button"
+                      className="text-blue-600 flex items-center gap-1 mx-auto border border-dashed border-gray-400 w-full justify-center rounded-lg py-2"
+                      onClick={handleAddRow}
+                      style={{ background: "#F4F8FC" }}
+                    >
+                      <span className="text-lg">＋</span> Add new line
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Summary */}
+          <div className="flex justify-end gap-12">
+            <div className="text-right">
+              <div className="mb-1">
+                Amount{" "}
+                <span className="ml-4 font-medium">₹{taxableAmount}</span>
+              </div>
+              <div className="mb-1">
+                Taxable amount{" "}
+                <span className="ml-4 font-medium">
+                  ₹{totalAmount - taxableAmount}
+                </span>
+              </div>
+              <div className="mb-1 font-bold text-lg mt-4">
+                Total(INR){" "}
+                <span className="ml-4 text-2xl text-black">
+                  ₹{totalAmount.toLocaleString()}
+                </span>
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                Total (in words)
+                <br />
+                <span className="text-black font-bold">
+                  {numberToWords(totalAmount)}
+                </span>{" "}
+              </div>
             </div>
           </div>
         </div>
+        <div className=" m-4">
+          <div className="flex justify-end items-center gap-4 mt-6">
+            <button
+              className="text-gray-700 px-6 py-2 rounded-lg font-semibold shadow hover:bg-gray-100 transition"
+              onClick={() => navigate("/app/allquotation")}
+            >
+              Back
+            </button>
+            <button
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition"
+              onClick={handleSaveAndNext}
+              disabled={submitting}
+            >
+              {submitting ? "Submitting..." : "Save & Next"}
+            </button>
+          </div>
+        </div>
       </div>
-      {showSuccessPopup && (
+    </div>
+     {showSuccessPopup && (
         <PopupModal
           type="success"
           title="Success"
@@ -681,12 +685,12 @@ export default function ManualQuotationModal({
           onClose={() => {
             setShowSuccessPopup(false);
             // close the manual quotation modal
-            try { onClose?.(); } catch (e) { }
+            try { onClose?.(); } catch (e) {}
             // navigate back to quotations list
             // navigate("/app/allquotation");
           }}
         />
       )}
-    </>
+      </>
   );
 }

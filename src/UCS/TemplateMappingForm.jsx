@@ -310,7 +310,7 @@ const TemplateMappingForm = ({ activeTab, allModules, subTabs, moduleTableNames 
       };
 
       if (type === "Email") {
-        payload.Email = initialConfig.selectedTemplateId;
+        payload.email = initialConfig.selectedTemplateId;
         payload.emailService = initialConfig.selectedService;
       } else {
         payload.SMS = initialConfig.selectedTemplateId;

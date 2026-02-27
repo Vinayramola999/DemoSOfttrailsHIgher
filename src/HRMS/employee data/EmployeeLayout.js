@@ -19,7 +19,7 @@ import PersonalInfo from "./personalInfo";
 import JobDetails from "./JobDetails";
 import Swal from "sweetalert2";
 import HRPoliciesTab from "./HRPoliciesTab";
-import {MAIN_API_BASE } from "../../config/apiBase";
+import {MAIN_API_BASE, DMS_API_BASE } from "../../config/apiBase";
 
 function EmployeeLayout() {
   const fileInputRef = useRef(null);
@@ -35,6 +35,7 @@ function EmployeeLayout() {
   const [imageSrc, setImageSrc] = useState(null);
   const [cropType, setCropType] = useState("profile");
   const [activeTab, setActiveTab] = useState("personalInfo");
+  const [uploading, setUploading] = useState(false);
 
   const tabs = [
     { id: "personalInfo", label: "Employee Info" },
@@ -60,7 +61,16 @@ function EmployeeLayout() {
           },
         })
         .then((response) => {
-          setEmployeeData(response.data.user);
+          const userData = response.data.user;
+          setEmployeeData(userData);
+          
+          // Load saved images if they exist
+          if (userData?.profile_logo) {
+            setProfileImage(userData.profile_logo);
+          }
+          if (userData?.bg_logo) {
+            setBackgroundImage(userData.bg_logo);
+          }
         })
         .catch((error) => {
           console.error("Error fetching user data:", error);
@@ -84,17 +94,68 @@ function EmployeeLayout() {
   const handleCropComplete = (_, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
+  const token = sessionStorage.getItem("token");
+
+  const getDmsPublishId = async () => {
+    try {
+      const response = await axios.get(`${DMS_API_BASE}/mapping/check`,
+        {
+          params: { service_name: "User Profile", doctype: "User Profile", doc_name: "User Profile" },
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data.dms_publish_id || null;
+    } catch { return null; }
+  };
+
+  const handleDmsUpload = async (blob) => {
+    const publishId = await getDmsPublishId();
+    const file = new File([blob], "image.jpg", { type: "image/jpeg" });
+    const formData = new FormData();
+    formData.append("documents", file);
+    formData.append("ref", "DMS");
+    formData.append("metadata", JSON.stringify([{ service: "User Profile", publish_id: parseInt(publishId), user_id: employeeId, document_name: file.name }]));
+    
+    const response = await fetch(`${DMS_API_BASE}/dmsapi/upload-documents`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    const data = await response.json();
+    return data.uploaded_files?.[0]?.file_url || null;
+  };
+
   const handleSaveCroppedImage = async () => {
     try {
-      const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels);
+      setUploading(true);
+      
+      // getCroppedImg returns a URL, we need to convert it to blob
+      const croppedImageUrl = await getCroppedImg(imageSrc, croppedAreaPixels);
+      
+      // Fetch the blob from the URL
+      const response = await fetch(croppedImageUrl);
+      const croppedImageBlob = await response.blob();
+      
+      // Upload to DMS
+      const imageUrl = await handleDmsUpload(croppedImageBlob);
+
+      if (!imageUrl) throw new Error("Image upload failed");
+
       if (cropType === "profile") {
-        setProfileImage(croppedImage);
+        setProfileImage(imageUrl);
+        await axios.post(`${MAIN_API_BASE}/users/user-details`, { user_id: employeeId, profile_logo: imageUrl }, { headers: { Authorization: `Bearer ${token}` } });
       } else {
-        setBackgroundImage(croppedImage);
+        setBackgroundImage(imageUrl);
+        await axios.post(`${MAIN_API_BASE}/users/user-details`, { user_id: employeeId, bg_logo: imageUrl }, { headers: { Authorization: `Bearer ${token}` } });
       }
+      
+      Swal.fire("Success!", "Image updated successfully.", "success");
       setIsCropModalOpen(false);
     } catch (error) {
-      console.error("Error cropping image:", error);
+      console.error("Error cropping/uploading image:", error);
+      Swal.fire("Error!", `Failed to update image: ${error.message}`, "error");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -328,15 +389,17 @@ function EmployeeLayout() {
                   <div className="p-4 flex gap-3 justify-end bg-gray-50">
                     <button
                       onClick={() => setIsCropModalOpen(false)}
-                      className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      disabled={uploading}
+                      className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSaveCroppedImage}
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-md transition-colors"
+                      disabled={uploading}
+                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Save Changes
+                      {uploading ? "Uploading..." : "Save Changes"}
                     </button>
                   </div>
                 </div>

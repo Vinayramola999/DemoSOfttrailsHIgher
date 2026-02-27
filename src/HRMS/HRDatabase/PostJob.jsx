@@ -5,6 +5,7 @@ import { FaPlus } from "react-icons/fa";
 import JobDetailsModal from "./JobDetailsModal";
 import { DeleteIcon, EditIcon } from "../../NewComponents/ReactIcons";
 import DeleteConfirmModal from "../../NewComponents/DeleteConfirmModal";
+import { HRMS_API_BASE, MAIN_API_BASE } from "../../config/apiBase";
 
 const PostJob = () => {
     const [data, setData] = useState([]);
@@ -59,7 +60,7 @@ const PostJob = () => {
     const [isOpen, setIsOpen] = useState(false);
 
     useEffect(() => {
-        fetch("https://devdemo.softtrails.net/departments",
+        fetch(`${MAIN_API_BASE}/departments`,
             { headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` } }
         )
             .then(res => res.json())
@@ -101,7 +102,7 @@ const PostJob = () => {
             let response;
             if (isEdit) {
                 // Update job
-                response = await fetch(`https://devdemo.softtrails.net/jobs/update/${jobForm.id}`, {
+                response = await fetch(`${HRMS_API_BASE}/jobs/update/${jobForm.id}`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -111,7 +112,7 @@ const PostJob = () => {
                 });
             } else {
                 // Create job
-                response = await fetch("https://devdemo.softtrails.net/jobs/create", {
+                response = await fetch(`${HRMS_API_BASE}/jobs/create`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -155,7 +156,7 @@ const PostJob = () => {
 
     const fetchJobs = () => {
         const token = sessionStorage.getItem("token");
-        fetch("https://devdemo.softtrails.net/jobs/list", {
+        fetch(`${HRMS_API_BASE}/jobs/list`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -226,7 +227,7 @@ const PostJob = () => {
         setLoading(true);
         const token = sessionStorage.getItem("token"); // ✅ Get token from session storage
 
-        fetch(`https://devdemo.softtrails.net/jobs/delete/${selectedJobId}`, {
+        fetch(`${HRMS_API_BASE}/jobs/delete/${selectedJobId}`, {
             method: "DELETE",
             headers: {
                 Authorization: `Bearer ${token}`, // ✅ Add token to headers
@@ -241,9 +242,7 @@ const PostJob = () => {
                 setSelectedJobId(null);
                 setLoading(false);
                 Swal.fire("Deleted!", "Job has been deleted.", "success");
-
-                // ✅ Refresh the job list with token
-                fetch("https://devdemo.softtrails.net/jobs/list", {
+                fetch(`${HRMS_API_BASE}/jobs/list`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -408,28 +407,28 @@ const PostJob = () => {
                     </table>
                 </div>
                 {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="sticky bottom-0 left-0 w-full flex justify-center items-center flex-wrap gap-2 px-4 py-2 z-20">
-                        <button
-                            onClick={() => handlePageChange("prev")}
-                            disabled={currentPage === 1}
-                            className="px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            &lt;
-                        </button>
-                        <span className="px-3 py-1 bg-blue-600 text-white rounded">{currentPage}</span>
-                        <span className="text-[8px]">of</span>
-                        <span className="px-3 py-1 border border-blue-500 text-blue-600 rounded">
-                            {totalPages}
-                        </span>
-                        <button
-                            onClick={() => handlePageChange("next")}
-                            disabled={currentPage === totalPages}
-                            className="px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            &gt;
-                        </button>
-                    </div>)}
+                {totalPages > 1 &&(
+                <div className="sticky bottom-0 left-0 w-full flex justify-center items-center flex-wrap gap-2 px-4 py-2 z-20">
+                    <button
+                        onClick={() => handlePageChange("prev")}
+                        disabled={currentPage === 1}
+                        className="px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        &lt;
+                    </button>
+                    <span className="px-3 py-1 bg-blue-600 text-white rounded">{currentPage}</span>
+                    <span className="text-[8px]">of</span>
+                    <span className="px-3 py-1 border border-blue-500 text-blue-600 rounded">
+                        {totalPages}
+                    </span>
+                    <button
+                        onClick={() => handlePageChange("next")}
+                        disabled={currentPage === totalPages}
+                        className="px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        &gt;
+                    </button>
+                </div>)}
             </div>
 
             {isJobModalOpen && selectedJob && (

@@ -6,6 +6,7 @@ import excel from "../../assests/excel.png";
 import folder from '../../assests/folder.png';
 import * as XLSX from 'xlsx';
 import 'jspdf-autotable';
+import { HRMS_API_BASE } from '../../config/apiBase';
 
 const getUniqueOptions = (array, key) => {
     return [...new Set(array.map((item) => item[key]))];
@@ -129,8 +130,7 @@ const LeaveModal = ({ leave, onClose, onUpdateLeaves }) => {
                 status: status,
                 remarks: finalRemarks, // Include final remarks in the payload
             };
-            const response = await axios.put(
-                `https://devdemo.softtrails.net/leave/leave-requests/${leave.id}`,
+            const response = await axios.put(`${HRMS_API_BASE}/leave/leave-requests/${leave.id}`,
                 payload,
                 {
                     headers: {
@@ -296,7 +296,7 @@ const LeaveManagement = () => {
     const fetchLeaves = async () => {
         if (!userId || !token) return;
         try {
-            const response = await axios.get(`https://devdemo.softtrails.net/leave/manager/${userId}`, {
+            const response = await axios.get(`${HRMS_API_BASE}/leave/manager/${userId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

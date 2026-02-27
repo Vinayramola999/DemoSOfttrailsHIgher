@@ -8,6 +8,7 @@ import folder from '../../assests/folder.png';
 import Swal from 'sweetalert2';
 import AddButton from '../../NewComponents/AddButton';
 import { FaPlus } from "react-icons/fa";
+import { DMS_API_BASE,HRMS_API_BASE } from "../../config/apiBase";
 
 const TalentDatabase = () => {
     const [data, setData] = useState([]);
@@ -34,7 +35,7 @@ const TalentDatabase = () => {
 
     const fetchData = async () => {
         try {
-            const response = await axios.get("https://devdemo.softtrails.net/resume/careers", {
+            const response = await axios.get(`${HRMS_API_BASE}/resume/careers`, {
                 headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` },
             });
             const sortedData = response.data.data.sort((a, b) =>
@@ -170,14 +171,7 @@ const TalentDatabase = () => {
     const [file, setFile] = useState(null);
 
     const handleChange = (e) => {
-        let { name, value } = e.target;
-
-        if (name === "phone") {
-            value = value.replace(/\D/g, "");
-            if (value.length > 10) return;
-        }
-
-        setFormData({ ...formData, [name]: value });
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleFileChange = (e) => {
@@ -185,7 +179,7 @@ const TalentDatabase = () => {
     };
 
     const getDmsPublishId = async () => {
-        const url = "https://devdemo.softtrails.net/mapping/check";
+        const url = `${DMS_API_BASE}/mapping/check`;
         const token = sessionStorage.getItem("token");
 
         try {
@@ -232,13 +226,10 @@ const TalentDatabase = () => {
         uploadData.append("metadata", JSON.stringify(metadata));
 
         try {
-            const response = await fetch(
-                "https://devdemo.softtrails.net/dmsapi/upload-documents",
+            const response = await fetch(`${DMS_API_BASE}/dmsapi/upload-documents`,
                 {
                     method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    headers: {Authorization: `Bearer ${token}`,},
                     body: uploadData,
                 }
             );
@@ -272,7 +263,7 @@ const TalentDatabase = () => {
                 source: "HR",
                 status: "New Application"
             };
-            const response = await fetch("https://devdemo.softtrails.net/resume/apply-hr", {
+            const response = await fetch(`${HRMS_API_BASE}/resume/apply-hr`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -327,7 +318,7 @@ const TalentDatabase = () => {
         }
 
         try {
-            const response = await fetch(`https://devdemo.softtrails.net/resume/flag/${selectedId}`, {
+            const response = await fetch(`${HRMS_API_BASE}/resume/flag/${selectedId}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -352,7 +343,7 @@ const TalentDatabase = () => {
     //////////////////////Update Status////////////////////
     const handleStatusChange = async (id, newStatus) => {
         try {
-            const response = await fetch(`https://devdemo.softtrails.net/resume/update-status/${id}`, {
+            const response = await fetch(`${HRMS_API_BASE}/resume/update-status/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

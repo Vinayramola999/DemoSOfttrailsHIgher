@@ -3,12 +3,12 @@ import axios from "axios";
 import React, { useState, useEffect } from "react";
 import { FaHome } from "react-icons/fa";
 //
-import ProfileDropdown from "../../ProfileDropdown";
+//import ProfileDropdown from "../../ProfileDropdown";
 import { useLocation, useNavigate } from "react-router-dom";
 import Index from "./index";
 import RawInventory from "./RawInventory";
 import AllocatedMaterial from "./AllocatedMaterial";
-import { DMS_BASE,JAVA_BASE, ASSET_NODE_BASE, UCS_BASE ,MAIN_BASE } from "../../config/apiBase"
+import { DMS_BASE, JAVA_BASE, ASSET_NODE_BASE, UCS_BASE, MAIN_BASE } from "../../config/apiBase"
 const Tabs = () => {
   const [userData, setUserData] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -32,7 +32,7 @@ const Tabs = () => {
   };
   const token = getToken();
 
-  
+
 
   useEffect(() => {
     const userId = sessionStorage.getItem("userId");
@@ -78,14 +78,14 @@ const Tabs = () => {
         );
         navigate("/RepoAllTab", {
           state: {
-            requestFor : location?.state?.requestFor,     
-            category:location?.state?.category,        
-            requestAsset:location?.state?.requestAsset,    
-            type: "inventory" 
+            requestFor: location?.state?.requestFor,
+            category: location?.state?.category,
+            requestAsset: location?.state?.requestAsset,
+            type: "inventory"
           },
         });
       } catch (error) {
-        
+
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("tokenExpiry");
         navigate("/");
@@ -100,26 +100,24 @@ const Tabs = () => {
         <Box>
           <div className="flex justify-left font-bold  mt-3 border-gray-300">
             <button
-              className={`px-6 py-2 text-14px font-bold relative focus:outline-none transition duration-300 rounded-t-md ${
-                tabValue === 0
+              className={`px-6 py-2 text-14px font-bold relative focus:outline-none transition duration-300 rounded-t-md ${tabValue === 0
                   ? "bg-white text-blue-600 border-l border-t border-r border-gray-300"
                   : "bg-gray-200 text-gray-600"
-              }`}
+                }`}
               onClick={() => setTabValue(0)}
             >
-             Inventory
+              Inventory
             </button>
             <button
-              className={`px-6 py-2 text-14px font-bold relative focus:outline-none transition duration-300 rounded-t-md ${
-                tabValue === 1
+              className={`px-6 py-2 text-14px font-bold relative focus:outline-none transition duration-300 rounded-t-md ${tabValue === 1
                   ? "bg-white text-blue-600 border-l border-t border-r border-gray-300"
                   : "bg-gray-200 text-gray-600"
-              }`}
+                }`}
               onClick={() => setTabValue(1)}
             >
-             Allocated Material
+              Allocated Material
             </button>
-           
+
 
           </div>
 
@@ -129,12 +127,12 @@ const Tabs = () => {
                 <RawInventory />
               </div>
             )}
-             {tabValue === 1 && (
+            {tabValue === 1 && (
               <div>
-                <AllocatedMaterial/>
+                <AllocatedMaterial />
               </div>
             )}
-            
+
           </div>
         </Box>
       </div>

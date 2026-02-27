@@ -94,9 +94,9 @@ const PolicyDetailsModal = ({ isOpen, onClose, policy }) => {
           {Object.keys(fieldLabels).map(
             (key) =>
               shouldShowField(key) && (
-                <div key={key} className="flex justify-between border-b py-1">
-                  <span className="font-medium">{fieldLabels[key]}</span>
-                  <span>{formatValue(policy[key], key)}</span>
+                <div key={key} className="flex justify-between border-b">
+                  <span className="font-medium text-xs">{fieldLabels[key]}</span>
+                  <span classNAme ="text-xs">{formatValue(policy[key], key)}</span>
                 </div>
               )
           )}

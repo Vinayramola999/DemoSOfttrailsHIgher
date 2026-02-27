@@ -5,6 +5,7 @@ import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import Pagination from "./Pagination";
+import {MAIN_API_BASE} from "../config/apiBase"
 const UnifiedService = () => {
   const navigate = useNavigate();
 
@@ -15,7 +16,7 @@ const UnifiedService = () => {
     auth: {
       // verify-token endpoint uses slightly different base
       // verifyToken: apiUrl.replace(/ucs\/test\/?$/, "test/") + "users/verify-token",
-      verifyToken: "https://devdemo.softtrails.net/users/verify-token",
+      verifyToken: `${MAIN_API_BASE}/users/verify-token`,
     },
     templates: {
       viewAll: `${apiUrl}ucs/viewAllTemplates`,

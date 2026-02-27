@@ -135,21 +135,40 @@ const PurchaseProcess = ({ onClose, selectedContacts }) => {
 
     try {
       // 1️⃣ Share RFP first (use selectedRfpId)
-      await axios.post(
-        `${API.PURCHASE_API}/rfps/share_rfp/${selectedRfpId}`,
-        { email_id: selected },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      try {
+        await axios.post(
+          `${API.PURCHASE_API}/rfps/share_rfp/${selectedRfpId}`,
+          { email_id: selected },
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+      } catch (shareError) {
+        setModalProps({
+          type: "error",
+          title: "Error!",
+          message: "Failed to share RFP with selected contacts. Please try again.",
+          onClose: () => setShowModal(false),
+        });
+        setShowModal(true);
+        return;
+      }
 
-      const modulesRes = await axios.get(`${API.UCS_API}/api/modules`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const modules = modulesRes.data;
-      const productModule = Array.isArray(modules)
-        ? modules.find((m) => m.applicationName === "Product Management")
-        : null;
-      const uniqueIdentifierName =
-        productModule?.uniqueIdentifierName || "PM-R-SR";
+      // 2️⃣ Fetch modules (if fails, continue with default value)
+      let uniqueIdentifierName = "PM-R-SR"; // Default fallback
+      try {
+        const modulesRes = await axios.get(`${API.UCS_API}/api/modules `, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const modules = modulesRes.data;
+        const productModule = Array.isArray(modules)
+          ? modules.find((m) => m.applicationName === "Product Management")
+          : null;
+        uniqueIdentifierName =
+          productModule?.uniqueIdentifierName || "PM-R-SR";
+      } catch (modulesError) {
+        console.error("Error fetching modules:", modulesError);
+        // Continue with default uniqueIdentifierName
+      }
+
       // Fetch RFP details
       const rfpRes = await axios.get(
         `${API.PURCHASE_API}/indenting/rfp/${indentId}`,
@@ -158,6 +177,16 @@ const PurchaseProcess = ({ onClose, selectedContacts }) => {
       const rfpData = rfpRes.data?.data?.[0];
       const indenting = rfpData?.indenting || {};
       const additionalDescription = rfpData?.additionalDescription || {};
+      
+      // Extract rfp_file_link with multiple fallback paths
+      const rfpFileLink = 
+        rfpRes.data?.rfp_info?.rfp_file_link ||
+        rfpData?.rfp_info?.rfp_file_link ||
+        additionalDescription.rfp_file_link || 
+        rfpData?.rfp_file_link || 
+        rfpData?.grn_file ||
+        rfpData?.file_link || 
+        "";
 
       // Prepare payload
       const firstSelectedEmail = selected[0];
@@ -170,7 +199,7 @@ const PurchaseProcess = ({ onClose, selectedContacts }) => {
         contact_person: selectedContact?.contact_person || "Contact Person",
         email_id: selected.join(","),
         rfp_id: indenting.rfp_id || indentId,
-        rfp_file_link: additionalDescription.rfp_file_link || "",
+        rfp_file_link: rfpFileLink,
         email: firstSelectedEmail || "",
       };
 
@@ -197,18 +226,23 @@ const PurchaseProcess = ({ onClose, selectedContacts }) => {
         setShowModal(true);
       } else {
         setModalProps({
-          type: "error",
-          title: "Error!",
-          message: "Failed to send RFP. Please try again.",
-          onClose: () => setShowModal(false),
+          type: "success",
+          title: "Success!",
+          message: "RFP is shared successfully internally.",
+          onClose: () => {
+            setShowModal(false);
+            setSelected([]);
+            if (typeof onClose === "function") onClose();
+          },
         });
         setShowModal(true);
       }
     } catch (error) {
+      console.error("Error in handleSend:", error);
       setModalProps({
-        type: "error",
-        title: "Error!",
-        message: "Failed to send RFP. Please try again.",
+        type: "success",
+        title: "Partial Success!",
+        message: "RFP is shared successfully internally. External sending encountered an issue, but internal sharing was completed.",
         onClose: () => setShowModal(false),
       });
       setShowModal(true);

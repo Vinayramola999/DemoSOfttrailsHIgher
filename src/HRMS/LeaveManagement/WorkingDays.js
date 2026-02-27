@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import MessageModal from "../../NewComponents/MessageModal";
+import { HRMS_API_BASE } from "../../config/apiBase";
 
 const WorkingDays = () => {
   const [yearType, setYearType] = useState("");
@@ -22,9 +23,9 @@ const WorkingDays = () => {
 
   useEffect(() => {
     const fetchWorkingDays = async () => {
-      if (!yearType) return; // ✅ Prevent API call if yearType not selected
+      if (!yearType) return; 
       try {
-        const res = await fetch("https://devdemo.softtrails.net/leave/working-days", {
+        const res = await fetch(`${HRMS_API_BASE}/leave/working-days`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -99,13 +100,12 @@ const WorkingDays = () => {
             : selectedWeeks.map((w) => w.split(" ")[0]),
       })),
     };
-
     try {
-      const res = await fetch("https://devdemo.softtrails.net/leave/days", {
+      const res = await fetch(`${HRMS_API_BASE}/leave/days`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`, // ✅ Added token
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(apiData),
       });

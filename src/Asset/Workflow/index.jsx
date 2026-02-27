@@ -5,10 +5,10 @@ import { useNavigate } from "react-router-dom";
 import NotificationSelector from "../Components/NotificationSelector";
 import axios from "axios";
 import MessageModal from "../ApprovalAuthority/MessageModal";
-import ProfileDropdown from "../../ProfileDropdown";
+//import ProfileDropdown from "../../ProfileDropdown";
 import Select from "react-select";
 import Loader from "../Components/Loader";
-import { DMS_BASE,JAVA_BASE, ASSET_NODE_BASE, UCS_BASE ,MAIN_BASE } from "../../config/apiBase"
+import { DMS_BASE, JAVA_BASE, ASSET_NODE_BASE, UCS_BASE, MAIN_BASE } from "../../config/apiBase"
 const WorkflowPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [workflows, setWorkflows] = useState([]); // Main table data
@@ -18,7 +18,7 @@ const WorkflowPage = () => {
     workflowid: " ",
     user: "",
     description: "",
-    user_id: "", 
+    user_id: "",
   });
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
@@ -40,9 +40,9 @@ const WorkflowPage = () => {
   const [messageType, setMessageType] = useState(""); // State to store the type of message
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15; // You can change this to whatever number you prefer
-const [isLoading, setIsLoading] = useState(false);
- const [showNotificationModal, setShowNotificationModal] = useState(false);
-const [notificationPayload, setNotificationPayload] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationPayload, setNotificationPayload] = useState(null);
   //TOKEN AND USERPROFILE  START
   const userId = sessionStorage.getItem("userId");
   const [userData, setUserData] = useState("");
@@ -88,7 +88,7 @@ const [notificationPayload, setNotificationPayload] = useState(null);
     const fetchUsers = async () => {
       try {
         const response = await axios.get(
-        `${MAIN_BASE}users/getusers`,
+          `${MAIN_BASE}users/getusers`,
           {
             headers: { Authorization: `Bearer ${token}` }, // Attach token
           }
@@ -131,7 +131,7 @@ const [notificationPayload, setNotificationPayload] = useState(null);
 
     try {
       const response = await axios.delete(
-      `${JAVA_BASE}workflow/delete/${id}`,
+        `${JAVA_BASE}workflow/delete/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` }, // Attach token
         }
@@ -214,129 +214,129 @@ const [notificationPayload, setNotificationPayload] = useState(null);
   // };
 
 
-const handleAddUserToWorkflow = async (e) => {
-  e.preventDefault();
+  const handleAddUserToWorkflow = async (e) => {
+    e.preventDefault();
 
-  if (!formData.user_id || !formData.workflowid) {
-    setError("User ID or Workflow ID is missing");
-    setMessageType("error");
-    return;
-  }
-
-  const selectedUser = availableUsers.find(
-    (user) => user.user_id === Number(formData.user_id)
-  );
-  const selectedWorkflow = availableWorkflows.find(
-    (workflow) => workflow.workflowid === Number(formData.workflowid)
-  );
-
-  if (!selectedUser || !selectedWorkflow) {
-    setError("User or Workflow not found");
-    setMessageType("error");
-    return;
-  }
-
-  const payloadToSend = {
-    userid: Number(formData.user_id),
-    workflowid: Number(formData.workflowid),
-    workflowname: selectedWorkflow.workflowname,
-    email: selectedUser.email,
-    phone_no: selectedUser.phone_no,
-  };
-
-  let finalMessage = "";
-  let messageTypeFinal = "success";
-
-  try {
-    const token = sessionStorage.getItem("token");
-
-    // ✅ Step 1: Add user to Workflow (Start loader here)
-    setIsLoading(true);
-
-    await axios.post(`${ASSET_NODE_BASE}workflow`, payloadToSend, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    console.log("User added to workflow");
-    await fetchWorkflowDetails(formData.workflowid);
-
-    // ✅ Stop loader after user successfully added
-    setIsLoading(false);
-
-    // ✅ Step 2: Fetch UCS module info (no loader needed yet)
-    const moduleResponse = await axios.get(`${UCS_BASE}api/modules`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const filteredModule = moduleResponse.data.find(
-      (mod) =>
-        mod.moduleName === "Workflow" && mod.subModuleName === "User Addition"
-    );
-
-    if (!filteredModule) {
-      finalMessage = "User added, but UCS module not found.";
-      messageTypeFinal = "error";
-      setMessage(finalMessage);
-      setMessageType(messageTypeFinal);
+    if (!formData.user_id || !formData.workflowid) {
+      setError("User ID or Workflow ID is missing");
+      setMessageType("error");
       return;
     }
 
-    // ✅ Step 3: Open notification selection modal
-    setNotificationPayload({
-      ...payloadToSend,
-      name: selectedUser.name,
-      moduleName: filteredModule.moduleName,
-      subName: filteredModule.subModuleName,
-      uniqueIdentifierName: filteredModule.uniqueIdentifierName,
-      applicationName: filteredModule.applicationName,
-    });
+    const selectedUser = availableUsers.find(
+      (user) => user.user_id === Number(formData.user_id)
+    );
+    const selectedWorkflow = availableWorkflows.find(
+      (workflow) => workflow.workflowid === Number(formData.workflowid)
+    );
 
-    setShowNotificationModal(true);
-    // ❌ Do not set loader here, only when actual notification is sent
-  } catch (error) {
-    console.error("Workflow API error:", error);
-    finalMessage =
-      error.response?.data?.message ||
-      "Something went wrong while adding the user.";
-    messageTypeFinal = "error";
-    setMessage(finalMessage);
-    setMessageType(messageTypeFinal);
-    setIsLoading(false);
-  }
-};
+    if (!selectedUser || !selectedWorkflow) {
+      setError("User or Workflow not found");
+      setMessageType("error");
+      return;
+    }
 
-
-// 📨 Handle sending UCS based on modal selection
-const handleSendNotification = async (selectedTypes) => {
-  if (!notificationPayload) return;
-
-  setShowNotificationModal(false);
-  setIsLoading(true); // 🟢 Loader starts only now (sending notification)
-
-  try {
-    const token = sessionStorage.getItem("token");
-
-    const finalPayload = {
-      ...notificationPayload,
-      ...(selectedTypes.includes("email") ? {} : { email: undefined }),
-      ...(selectedTypes.includes("sms") ? {} : { phone_no: undefined }),
+    const payloadToSend = {
+      userid: Number(formData.user_id),
+      workflowid: Number(formData.workflowid),
+      workflowname: selectedWorkflow.workflowname,
+      email: selectedUser.email,
+      phone_no: selectedUser.phone_no,
     };
 
-    await axios.post(`${UCS_BASE}ucs/send`, finalPayload, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    let finalMessage = "";
+    let messageTypeFinal = "success";
 
-    setMessage("User added and notification sent successfully.");
-    setMessageType("success");
-  } catch (ucsError) {
-    console.error("UCS/send API error:", ucsError);
-    setMessage("User added, but failed to send UCS notification.");
-    setMessageType("error");
-  } finally {
-    setIsLoading(false); // 🟢 Stop loader after UCS call completes
-    setNotificationPayload(null);
-  }
-};
+    try {
+      const token = sessionStorage.getItem("token");
+
+      // ✅ Step 1: Add user to Workflow (Start loader here)
+      setIsLoading(true);
+
+      await axios.post(`${ASSET_NODE_BASE}workflow`, payloadToSend, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log("User added to workflow");
+      await fetchWorkflowDetails(formData.workflowid);
+
+      // ✅ Stop loader after user successfully added
+      setIsLoading(false);
+
+      // ✅ Step 2: Fetch UCS module info (no loader needed yet)
+      const moduleResponse = await axios.get(`${UCS_BASE}api/modules`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const filteredModule = moduleResponse.data.find(
+        (mod) =>
+          mod.moduleName === "Workflow" && mod.subModuleName === "User Addition"
+      );
+
+      if (!filteredModule) {
+        finalMessage = "User added, but UCS module not found.";
+        messageTypeFinal = "error";
+        setMessage(finalMessage);
+        setMessageType(messageTypeFinal);
+        return;
+      }
+
+      // ✅ Step 3: Open notification selection modal
+      setNotificationPayload({
+        ...payloadToSend,
+        name: selectedUser.name,
+        moduleName: filteredModule.moduleName,
+        subName: filteredModule.subModuleName,
+        uniqueIdentifierName: filteredModule.uniqueIdentifierName,
+        applicationName: filteredModule.applicationName,
+      });
+
+      setShowNotificationModal(true);
+      // ❌ Do not set loader here, only when actual notification is sent
+    } catch (error) {
+      console.error("Workflow API error:", error);
+      finalMessage =
+        error.response?.data?.message ||
+        "Something went wrong while adding the user.";
+      messageTypeFinal = "error";
+      setMessage(finalMessage);
+      setMessageType(messageTypeFinal);
+      setIsLoading(false);
+    }
+  };
+
+
+  // 📨 Handle sending UCS based on modal selection
+  const handleSendNotification = async (selectedTypes) => {
+    if (!notificationPayload) return;
+
+    setShowNotificationModal(false);
+    setIsLoading(true); // 🟢 Loader starts only now (sending notification)
+
+    try {
+      const token = sessionStorage.getItem("token");
+
+      const finalPayload = {
+        ...notificationPayload,
+        ...(selectedTypes.includes("email") ? {} : { email: undefined }),
+        ...(selectedTypes.includes("sms") ? {} : { phone_no: undefined }),
+      };
+
+      await axios.post(`${UCS_BASE}ucs/send`, finalPayload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setMessage("User added and notification sent successfully.");
+      setMessageType("success");
+    } catch (ucsError) {
+      console.error("UCS/send API error:", ucsError);
+      setMessage("User added, but failed to send UCS notification.");
+      setMessageType("error");
+    } finally {
+      setIsLoading(false); // 🟢 Stop loader after UCS call completes
+      setNotificationPayload(null);
+    }
+  };
 
 
 
@@ -563,7 +563,7 @@ const handleSendNotification = async (selectedTypes) => {
       }
       try {
         const response = await axios.post(
-        `${MAIN_BASE}users/verify-token`,
+          `${MAIN_BASE}users/verify-token`,
           { token }
         );
         console.log("Token is valid:", response.data);
@@ -601,7 +601,7 @@ const handleSendNotification = async (selectedTypes) => {
 
     try {
       const response = await axios.get(
-     `${ASSET_NODE_BASE}workflow/${workflowid}`,
+        `${ASSET_NODE_BASE}workflow/${workflowid}`,
         {
           headers: { Authorization: `Bearer ${token}` }, // Add token here
         }
@@ -661,7 +661,7 @@ const handleSendNotification = async (selectedTypes) => {
 
     try {
       const response = await axios.delete(
-       `${ASSET_NODE_BASE}workflow/${workflowUserId[0]}`,
+        `${ASSET_NODE_BASE}workflow/${workflowUserId[0]}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -748,8 +748,8 @@ const handleSendNotification = async (selectedTypes) => {
       backgroundColor: state.isSelected
         ? "#3B82F6"
         : state.isFocused
-        ? "#DBEAFE"
-        : "white",
+          ? "#DBEAFE"
+          : "white",
       color: state.isSelected || state.isFocused ? "#1E3A8A" : "#111827",
       padding: "0.5rem 1rem",
     }),
@@ -812,9 +812,8 @@ const handleSendNotification = async (selectedTypes) => {
                     return (
                       <tr
                         key={workflow.workflowid}
-                        className={`hover:bg-blue-100 ${
-                          index % 2 === 0 ? "bg-blue-50" : "bg-white"
-                        }`}
+                        className={`hover:bg-blue-100 ${index % 2 === 0 ? "bg-blue-50" : "bg-white"
+                          }`}
                       >
                         <td className="p-4 text-center">
                           {(currentPage - 1) * itemsPerPage + index + 1}
@@ -872,11 +871,10 @@ const handleSendNotification = async (selectedTypes) => {
                   <button
                     key={idx}
                     onClick={() => setCurrentPage(idx + 1)}
-                    className={`px-3 py-1 rounded text-sm ${
-                      currentPage === idx + 1
+                    className={`px-3 py-1 rounded text-sm ${currentPage === idx + 1
                         ? "bg-blue-600 text-white"
                         : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                    }`}
+                      }`}
                   >
                     {idx + 1}
                   </button>
@@ -1240,10 +1238,10 @@ const handleSendNotification = async (selectedTypes) => {
         setMessage={setMessage}
       />
       <NotificationSelector
-  open={showNotificationModal}
-  onClose={() => setShowNotificationModal(false)}
-  onConfirm={handleSendNotification}
-/>
+        open={showNotificationModal}
+        onClose={() => setShowNotificationModal(false)}
+        onConfirm={handleSendNotification}
+      />
 
     </div>
   );

@@ -4,6 +4,7 @@ import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import excel from '../../assests/excel.png';
 import Swal from "sweetalert2";
+import { HRMS_API_BASE } from '../../config/apiBase';
 
 const ApprovalAuthority = () => {
   const [leaveData, setLeaveData] = useState([]);
@@ -22,8 +23,7 @@ const ApprovalAuthority = () => {
         return;
       }
 
-      const leaveResponse = await fetch(
-        "https://devdemo.softtrails.net/leave/leave-balances-for-manager",
+      const leaveResponse = await fetch(`${HRMS_API_BASE}/leave/leave-balances-for-manager`,
         {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
@@ -117,8 +117,7 @@ const ApprovalAuthority = () => {
     if (selectedUser) {
       const token = sessionStorage.getItem("token");
       try {
-        await axios.put(
-          `https://devdemo.softtrails.net/leave/leave-balances-approval/${selectedUser.id}`,
+        await axios.put(`${HRMS_API_BASE}/leave/leave-balances-approval/${selectedUser.id}`,
           { status },
           { headers: { Authorization: `Bearer ${token}` } }
         );

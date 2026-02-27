@@ -4,34 +4,26 @@ import Swal from "sweetalert2";
 import Select from "react-select";
 import React, { useState } from "react";
 import useFetchEmails from "../NewComponents/useFetchEmails";
+import { MAIN_API_BASE } from "../config/apiBase";
 Modal.setAppElement("#root");
 
 const PAL = () => {
   const [selectedEmail, setSelectedEmail] = useState("");
   const [apiAccess, setApiAccess] = useState([]);
-
-  // Access States
   const [isPALChecked, setIsPALChecked] = useState(false);
-  const [isFineGoodsChecked, setIsFineGoodsChecked] = useState(false); // Asset Fine Goods
-  const [isCategoryFineGoodsChecked, setIsCategoryFineGoodsChecked] =
-    useState(false); // Category Fine Goods
-
+  const [isFineGoodsChecked, setIsFineGoodsChecked] = useState(false);
+  const [isCategoryFineGoodsChecked, setIsCategoryFineGoodsChecked] = useState(false);
   const [hasAmsAccess, setHasAmsAccess] = useState(false);
   const emails = useFetchEmails();
 
   const handleEmailChange = async (e) => {
     const userId = e.target.value;
     setSelectedEmail(userId);
-
     if (userId) {
       try {
-        const response = await axios.get(
-          `https://devdemo.softtrails.net/access/access/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-            },
-          }
+        // Fetch API access
+        const response = await axios.get(`${MAIN_API_BASE}/access/access/${userId}`,
+          { headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}`, }, }
         );
 
         const filteredAccess = response.data.filter(
@@ -40,8 +32,6 @@ const PAL = () => {
         const apiAccessNames = filteredAccess.map((access) => access.api_name);
 
         setApiAccess(apiAccessNames);
-
-        // Set Access Values
         setIsPALChecked(apiAccessNames.includes("PAL"));
         setIsFineGoodsChecked(apiAccessNames.includes("AssetFineGoods"));
         setIsCategoryFineGoodsChecked(apiAccessNames.includes("FineProduct"));
@@ -102,8 +92,7 @@ const PAL = () => {
     if (isCategoryFineGoodsChecked) selectedApiAccess.push("FineProduct"); // Category Fine Goods
 
     try {
-      const response = await axios.put(
-        "https://devdemo.softtrails.net/access/update_access",
+      const response = await axios.put(`${MAIN_API_BASE}/access/update_access`,
         {
           user_id: selectedEmail,
           module: selectedModule,
@@ -173,29 +162,17 @@ const PAL = () => {
   };
 
   return (
-    <div className="w-full max-h-[80vh] overflow-auto">
-      <div className="bg-white p-4 rounded-lg shadow-md mt-3">
-        <form onSubmit={handleSubmit}>
-          {/* Select User */}
+    <div className="w-full overflow-auto">
+      <div className="bg-white p-4 rounded-lg h-[75vh] shadow-md mt-3">
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-[70vh]">
           <div className="flex flex-col sm:flex-row sm:items-center mt-5 ml-5 w-full sm:w-[50%]">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-2 sm:mb-0 sm:mr-4"
-            >
-              Select User:
-            </label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 sm:mb-0 sm:mr-4" > Select User:</label>
             <div className="w-full sm:w-[60%]">
               <Select
                 id="email"
                 options={emails}
-                value={
-                  emails.find((user) => user.value === selectedEmail) || null
-                }
-                onChange={(selectedOption) => {
-                  handleEmailChange({
-                    target: { value: selectedOption?.value || "" },
-                  });
-                }}
+                value={emails.find((user) => user.value === selectedEmail) || null}
+                onChange={(selectedOption) => { handleEmailChange({ target: { value: selectedOption?.value || "" }, }); }}
                 placeholder="Search or select user..."
                 isSearchable
                 classNamePrefix="react-select"
@@ -213,58 +190,32 @@ const PAL = () => {
             </div>
           </div>
 
-          {/* Permissions */}
           <div className="flex flex-col sm:flex-row mt-6">
-            <div className="w-full sm:w-1/2 rounded-lg p-4 overflow-y-auto h-[300px]">
-              {/* PAL */}
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  onChange={() => handleApiAccessChange("PAL")}
-                  checked={isPALChecked}
-                  className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                />
-                <span className="text-blue-600 text-lg font-bold ml-5">
-                  Product Assembly Line
-                </span>
-              </label>
+            <div className="w-full sm:w-1/2  rounded-lg p-4 h-auto max-h-[450px] overflow-y-auto">
+              <div className=" rounded-lg overflow-y-auto">
+                {/* PAL */}
+                <label className="flex items-center">
+                  <input type="checkbox" onChange={() => handleApiAccessChange("PAL")} checked={isPALChecked} className="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
+                  <span className="text-blue-600 text-lg font-bold ml-5"> Product Assembly Line </span>
+                </label>
 
-              {/* Asset Fine Goods */}
-              <label className="flex items-center mt-4">
-                <input
-                  type="checkbox"
-                  onChange={() => handleApiAccessChange("AssetFineGoods")}
-                  checked={isFineGoodsChecked}
-                  className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                />
-                <span className="text-green-600 text-lg font-bold ml-5">
-                  Asset Fine Goods
-                </span>
-              </label>
+                {/* Asset Fine Goods */}
+                <label className="flex items-center mt-4">
+                  <input type="checkbox" onChange={() => handleApiAccessChange("AssetFineGoods")} checked={isFineGoodsChecked} className="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
+                  <span className="text-green-600 text-lg font-bold ml-5"> Asset Fine Goods </span>
+                </label>
 
-              {/* Category Fine Goods */}
-              <label className="flex items-center mt-4">
-                <input
-                  type="checkbox"
-                  onChange={() => handleApiAccessChange("FineProduct")}
-                  checked={isCategoryFineGoodsChecked}
-                  className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                />
-                <span className="text-purple-600 text-lg font-bold ml-5">
-                  Category Fine Goods
-                </span>
-              </label>
+                {/* Category Fine Goods */}
+                <label className="flex items-center mt-4">
+                  <input type="checkbox" onChange={() => handleApiAccessChange("FineProduct")} checked={isCategoryFineGoodsChecked} className="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
+                  <span className="text-purple-600 text-lg font-bold ml-5"> Category Fine Goods </span>
+                </label>
+              </div>
             </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="mt-6 ml-5">
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Update Access
-            </button>
+          <div className="mt-auto flex justify-start pr-6 pb-6">
+            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md" > Update Access </button>
           </div>
         </form>
       </div>

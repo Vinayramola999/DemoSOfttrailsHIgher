@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import React, { useState } from "react";
 import Select from "react-select";
 import useFetchEmails from "../NewComponents/useFetchEmails";
+import {MAIN_API_BASE} from "../config/apiBase"
 Modal.setAppElement("#root");
 
 const UpdateAccess = () => {
@@ -26,8 +27,7 @@ const UpdateAccess = () => {
 
     if (userId) {
       try {
-        const response = await axios.get(
-          `https://devdemo.softtrails.net/access/access/${userId}`,
+        const response = await axios.get(`${MAIN_API_BASE}/access/access/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -88,8 +88,7 @@ const UpdateAccess = () => {
     if (isDeleteUserChecked) selectedApiAccess.push("DltUM");
     if (isEditUserChecked) selectedApiAccess.push("EditUM");
     try {
-      const response = await axios.put(
-        "https://devdemo.softtrails.net/access/update_access",
+      const response = await axios.put(`${MAIN_API_BASE}/access/update_access`,
         {
           user_id: selectedEmail,
           module: selectedModule,

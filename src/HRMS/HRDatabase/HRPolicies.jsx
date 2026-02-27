@@ -7,6 +7,8 @@ import { DeleteIcon, EditIcon } from "../../NewComponents/ReactIcons";
 import { FaPlus } from "react-icons/fa";
 import Swal from "sweetalert2";
 import axios from "axios";
+import { HRMS_API_BASE, DMS_API_BASE } from "../../config/apiBase";
+import DeleteConfirmModal from "../../NewComponents/DeleteConfirmModal";
 
 const HRPolicies = () => {
   const [policies, setPolicies] = useState([]);
@@ -24,7 +26,7 @@ const HRPolicies = () => {
   const [services, setServices] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
   const [documentUrl, setDocumentUrl] = useState(null);
-  const [expandedId, setExpandedId] = useState(null);
+
   const [formData, setFormData] = useState({
     category: "",
     categoryId: "",
@@ -35,7 +37,7 @@ const HRPolicies = () => {
   const token = sessionStorage.getItem("token");
 
   useEffect(() => {
-    fetch("https://devdemo.softtrails.net/dmsapi/upload",
+    fetch(`${DMS_API_BASE}/dmsapi/upload`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -61,8 +63,8 @@ const HRPolicies = () => {
     };
 
     const apiUrl = isEditMode
-      ? `https://devdemo.softtrails.net/hr-policy/update-policy/${editPolicyData.policy_id}`
-      : "https://devdemo.softtrails.net/hr-policy/upload-policy";
+      ? `${HRMS_API_BASE}/hr-policy/update-policy/${editPolicyData.policy_id}`
+      : `${HRMS_API_BASE}/hr-policy/upload-policy`;
 
     const method = isEditMode ? "PUT" : "POST";
 
@@ -132,7 +134,7 @@ const HRPolicies = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editPolicyData, setEditPolicyData] = useState(null);
 
-  const handleEdit = (policy) => {
+  const handleEdit = async (policy) => {
     setIsEditMode(true);
     setShowForm(true);
     setEditPolicyData(policy);
@@ -143,6 +145,25 @@ const HRPolicies = () => {
       status: policy.status || true,
     });
     setDocumentUrl(policy.document || "");
+
+    // Fetch policies for the category to populate the dropdown
+    if (policy.category_id) {
+      try {
+        const token = sessionStorage.getItem("token");
+        const res = await fetch(`${HRMS_API_BASE}/hr-policy/${policy.category_id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const result = await res.json();
+        if (result.success && Array.isArray(result.data)) {
+          setPolicyList(result.data);
+        } else {
+          setPolicyList([]);
+        }
+      } catch (err) {
+        console.error("Policy fetch failed during edit:", err);
+        setPolicyList([]);
+      }
+    }
   };
 
   const filteredPolicies = policies.filter(
@@ -158,7 +179,7 @@ const HRPolicies = () => {
   const fetchPolicies = async () => {
     try {
       const token = sessionStorage.getItem("token");
-      const response = await fetch("https://devdemo.softtrails.net/hr-policy/policies", {
+      const response = await fetch(`${HRMS_API_BASE}/hr-policy/policies`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -181,7 +202,7 @@ const HRPolicies = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch("https://devdemo.softtrails.net/hr-policy/categories",
+      const res = await fetch(`${HRMS_API_BASE}/hr-policy/categories`,
         { headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` } }
       );
       const data = await res.json();
@@ -205,8 +226,7 @@ const HRPolicies = () => {
     if (!newCategory.trim()) return;
 
     try {
-      const response = await fetch(
-        "https://devdemo.softtrails.net/hr-policy/create-category",
+      const response = await fetch(`${HRMS_API_BASE}/hr-policy/create-category`,
         {
           method: "POST",
           headers: {
@@ -237,6 +257,7 @@ const HRPolicies = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedPolicyId, setSelectedPolicyId] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const openConfirmPopup = (policyId) => {
     setSelectedPolicyId(policyId);
@@ -250,8 +271,10 @@ const HRPolicies = () => {
   };
 
   const confirmDelete = async () => {
+    setDeleteLoading(true);
+    setErrorMessage("");
     try {
-      const response = await fetch(`https://devdemo.softtrails.net/hr-policy/policies/${selectedPolicyId}`, {
+      const response = await fetch(`${HRMS_API_BASE}/hr-policy/policies/${selectedPolicyId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -264,16 +287,19 @@ const HRPolicies = () => {
         setShowConfirm(false);
         setSelectedPolicyId(null);
       } else {
-        setErrorMessage("Failed to delete the policy.");
+        const result = await response.json();
+        setErrorMessage(result.message || "Failed to delete the policy.");
       }
     } catch (error) {
       console.error("Error deleting policy:", error);
       setErrorMessage("An error occurred while deleting.");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
   const getDmsPublishId = async () => {
-    const url = "https://devdemo.softtrails.net/mapping/check";
+    const url = `${DMS_API_BASE}/mapping/check`;
     const token = sessionStorage.getItem("token");
 
     try {
@@ -321,7 +347,7 @@ const HRPolicies = () => {
 
     try {
       const response = await fetch(
-        "https://devdemo.softtrails.net/dmsapi/upload-documents",
+        `${DMS_API_BASE}/dmsapi/upload-documents`,
         {
           method: "POST",
           headers: {
@@ -348,7 +374,7 @@ const HRPolicies = () => {
 
 
       {/***TABLE***/}
-      <div className="w-full overflow-x-auto overflow-y-auto scrollbar-hide max-h-[75vh] sm:max-h-[60vh] md:max-h-[65vh] rounded-lg bg-white">
+      {/* <div className="w-full overflow-x-auto overflow-y-auto scrollbar-hide max-h-[75vh] sm:max-h-[60vh] md:max-h-[65vh] rounded-lg bg-white">
         <table className="min-w-[800px] md:min-w-full table-auto border-collapse text-sm">
           <thead className="text-[14px] font-medium bg-white sticky top-0" style={{ boxShadow: "0 2px 0 black" }}>
             <tr>
@@ -371,17 +397,20 @@ const HRPolicies = () => {
                   <td className="px-5 py-4 text-left">{indexOfFirst + index + 1}</td>
                   <td className="px-5 py-4 text-left">{getCategoryName(policy.category_id)}</td>
                   <td className="px-5 py-4 text-left">{policy.name}</td>
-                  <td className="px-5 py-3 text-left text-gray-700 max-w-[200px]">
-                    <div className="overflow-hidden whitespace-pre-wrap">
-                      {expandedId === policy.policy_id ? (
-                        <> {policy.description || "NA"} <button onClick={() => setExpandedId(null)} className="text-blue-600 ml-2 hover:underline" > Less </button> </>
-                      ) : (
-                        <>
-                          {(policy.description && policy.description.length > 10) ? policy.description.substring(0, 10) + "..." : policy.description || "NA"}
-                          {policy.description && policy.description.length > 10 && (<button onClick={() => setExpandedId(policy.policy_id)} className="text-blue-600 ml-2 hover:underline" > More </button>)}
-                        </>
-                      )}
+                  <td className="px-5 py-3 text-left text-gray-700 max-w-[200px] relative group">
+                    <div className="truncate cursor-help">
+                      {policy.description || "NA"}
                     </div>
+                    {policy.description && (
+                      <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-[100] w-72 p-4 bg-white border border-gray-100 rounded-xl shadow-2xl text-gray-600 text-xs whitespace-normal backdrop-blur-md bg-white/95 ring-1 ring-black/5">
+                        <div className="font-bold mb-2 text-blue-600 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                          <span className="w-1 h-1 bg-blue-600 rounded-full"></span>
+                          Policy Description
+                        </div>
+                        <p className="leading-relaxed">{policy.description}</p>
+                        <div className="absolute -top-1.5 left-6 w-3 h-3 bg-white border-t border-l border-gray-100 rotate-45"></div>
+                      </div>
+                    )}
                   </td>
                   <td className="px-5 py-4 text-left">{policy.version}</td>
                   <td className="px-5 py-4 text-left">{new Date(policy.created_at).toLocaleDateString()}</td>
@@ -406,301 +435,351 @@ const HRPolicies = () => {
           totalPages={totalPages}
           onPageChange={setCurrentPage}
         />
+      </div> */}
+
+      <div className="h-[75vh] sm:h-[60vh] md:h-[65vh] rounded-lg flex flex-col">
+        <div className="flex-1 overflow-auto scrollbar-hide bg-white rounded-lg">
+          <table className="min-w-full table-auto border-collapse text-sm mb-20">
+            <thead className="text-[14px] font-medium bg-white sticky top-0" style={{ boxShadow: "0 2px 0 black" }} >
+              <tr>
+                <th className="p-5 text-left text-black">S.No</th>
+                <th className="p-5 text-left text-black">Category</th>
+                <th className="p-5 text-left text-black">Policy</th>
+                <th className="p-5 text-left text-black">Description</th>
+                <th className="p-5 text-left text-black">Version</th>
+                <th className="p-5 text-left text-black">Date</th>
+                <th className="p-5 text-left text-black">Status</th>
+                <th className="p-5 text-left text-black">Document</th>
+                <th className="p-5 text-left text-black">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colSpan={6} className="h-3 bg-white" /></tr>
+              {currentPolicies.length === 0 ? (
+                <tr> <td colSpan={6} className="px-5 py-8 text-center text-gray-400 text-sm"> No Policy found. </td> </tr>
+              ) : (
+                currentPolicies.map((policy, index) => (
+                  <tr key={policy.id || index} className={`${(index + 1) % 2 === 0 ? "bg-white" : "bg-blue-50"} relative hover:z-[60]`} >
+                    <td className="px-5 py-4 text-left">{indexOfFirst + index + 1}</td>
+                    <td className="px-5 py-4 text-left">{getCategoryName(policy.category_id)}</td>
+                    <td className="px-5 py-4 text-left">{policy.name}</td>
+                    <td className="px-5 py-3 text-left text-gray-700 max-w-[200px] relative group">
+                      <div className="truncate cursor-help">
+                        {policy.description || "NA"}
+                      </div>
+                      {policy.description && (
+                        <div className="absolute left-0 top-full mt-2 hidden group-hover:block z-[100] w-72 p-4 bg-white border border-gray-100 rounded-xl shadow-2xl text-gray-600 text-xs whitespace-normal backdrop-blur-md bg-white/95 ring-1 ring-black/5 animate-in fade-in zoom-in duration-200 origin-top-left">
+                          <div className="font-bold mb-2 text-blue-600 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                            <span className="w-1 h-1 bg-blue-600 rounded-full"></span>
+                            Policy Description
+                          </div>
+                          <p className="leading-relaxed">{policy.description}</p>
+                          <div className="absolute -top-1.5 left-6 w-3 h-3 bg-white border-t border-l border-gray-100 rotate-45"></div>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-left">{policy.version}</td>
+                    <td className="px-5 py-4 text-left">{new Date(policy.created_at).toLocaleDateString()}</td>
+                    <td className="px-5 py-4 text-left">{policy.status ? (<span className="text-green-600 font-medium">Active</span>) : (<span className="text-red-600 font-medium">Inactive</span>)}</td>
+                    <td className="px-5 py-4 text-left">
+                      {policy.document ? (<a href={policy.document} target="_blank" rel="noopener noreferrer" className="hover:text-blue-800 flex items-center" > <img src={folder} alt="preview" className="w-5 h-5 mr-2" /> </a>) : (<span className="text-gray-500">No Document</span>)}
+                    </td>
+                    <td className="px-5 py-4 text-left flex items-center gap-2">
+                      <button className="text-blue-600 hover:text-blue-800 p-1" onClick={() => handleEdit(policy)} > <EditIcon /> </button>
+                      <button className="text-red-500 hover:text-red-700 p-1" onClick={() => openConfirmPopup(policy.policy_id)} > <DeleteIcon /> </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded shadow-lg w-[600px] max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">
-                {isEditMode ? "Edit Policy" : "Add Policy"}
-              </h2>
-              <button onClick={() => setShowForm(false)} className="text-red-600 text-xl font-bold" > &times; </button>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                {/* Category Dropdown */}
-                <div>
-                  <label className="block text-sm font-medium">Category</label>
-                  <select
-                    value={formData.categoryId || ""}
-                    onChange={async (e) => {
-                      const selectedId = e.target.value;
-
-                      if (selectedId === "__add_new__") {
-                        setFormData((prev) => ({
-                          ...prev,
-                          categoryId: "",
-                          categoryName: "",
-                        }));
-                        setShowNewCategoryInput(true);
-                        setPolicyList([]);
-                        setLocalPolicyList([]); // 🟢 clear local policies when switching
-                      } else {
-                        const selectedCategory = categories.find(
-                          (cat) => String(cat.id) === selectedId
-                        );
-
-                        setFormData((prev) => ({
-                          ...prev,
-                          categoryId: selectedCategory?.id || "",
-                          categoryName: selectedCategory?.name || "",
-                        }));
-                        setShowNewCategoryInput(false);
-
-                        try {
-                          const res = await fetch(
-                            `https://devdemo.softtrails.net/hr-policy/${selectedId}`,
-                            {
-                              headers: { Authorization: `Bearer ${token}` },
-                            }
-                          );
-                          const result = await res.json();
-                          if (result.success && Array.isArray(result.data)) {
-                            setPolicyList(result.data);
-                          } else {
-                            setPolicyList([]);
-                          }
-                          setLocalPolicyList([]); // 🟢 clear temp policies for new category
-                        } catch (err) {
-                          console.error("Policy fetch failed:", err);
-                          setPolicyList([]);
-                          setLocalPolicyList([]);
-                        }
-                      }
-                    }}
-                    className="w-full border rounded px-3 py-2"
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                    <option value="__add_new__">+ Add New Category</option>
-                  </select>
-
-
-                  {/* Add New Category */}
-                  {showNewCategoryInput && (
-                    <div className="mt-2 flex gap-2 items-center">
-                      <input
-                        type="text"
-                        placeholder="Enter new category"
-                        value={newCategory}
-                        onChange={(e) => setNewCategory(e.target.value)}
-                        className="flex-1 border rounded px-2 py-1"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddCategory}
-                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Policy Name Dropdown */}
-                <div>
-                  <label className="block text-sm font-medium">Policy Name</label>
-                  <select
-                    value={formData.policyName || ""}
-                    onChange={(e) => {
-                      const selectedValue = e.target.value;
-
-                      if (selectedValue === "__add_new_policy__") {
-                        setShowNewPolicyInput(true);
-                        setFormData((prev) => ({ ...prev, policyName: "" }));
-                      } else {
-                        setFormData((prev) => ({ ...prev, policyName: selectedValue }));
-                      }
-                    }}
-                    className="w-full border rounded px-3 py-2"
-                  >
-                    <option value="">Select Policy Name</option>
-
-                    {/* 🟢 combine policies (backend + temporary added) */}
-                    {[...new Map(
-                      [...policyList, ...localPolicyList.filter(
-                        (p) => p.category_id === formData.categoryId
-                      )].map((p) => [p.name, p])
-                    ).values()].map((policy) => (
-                      <option key={policy.name} value={policy.name}>
-                        {policy.name}
-                      </option>
-                    ))}
-
-                    <option value="__add_new_policy__">+ Add New Policy</option>
-                  </select>
-
-
-                  {/* Add New Policy Input + Add Button */}
-                  {showNewPolicyInput && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <input
-                        type="text"
-                        value={formData.policyName}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, policyName: e.target.value }))
-                        }
-                        placeholder="Enter new policy name"
-                        className="border rounded px-3 py-2 w-full"
-                      />
-                      <button
-                        onClick={() => {
-                          const trimmed = formData.policyName.trim();
-                          if (!trimmed) return;
-
-                          // Avoid duplicates
-                          const alreadyExists =
-                            policyList.some((p) => p.name === trimmed) ||
-                            localPolicyList.some((p) => p.name === trimmed);
-
-                          if (!alreadyExists) {
-                            setLocalPolicyList((prev) => [
-                              ...prev,
-                              { name: trimmed, category_id: formData.categoryId },
-                            ]);
-                          }
-
-                          setShowNewPolicyInput(false);
-                        }}
-                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  )}
-
-                </div>
-
-                {/* Description */}
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium">Description</label>
-                  <input
-                    type="text"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
-                  />
-                </div>
+      {
+        showForm && (
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded shadow-lg w-[600px] max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">
+                  {isEditMode ? "Edit Policy" : "Add Policy"}
+                </h2>
+                <button onClick={() => setShowForm(false)} className="text-red-600 text-xl font-bold" > &times; </button>
               </div>
 
-              {/* Upload HR Policy Section */}
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.jpg,.png"
-                className="w-full border rounded px-3 py-2"
-                onChange={async (e) => {
-                  const file = e.target.files[0];
-                  if (!file) return;
-                  try {
-                    const uploadedUrl = await handleFileUpload(file);
-                    if (uploadedUrl) {
-                      setDocumentUrl(uploadedUrl);
+              <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  {/* Category Dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium">Category</label>
+                    <select
+                      value={formData.categoryId || ""}
+                      onChange={async (e) => {
+                        const selectedId = e.target.value;
 
-                      Swal.fire({
-                        icon: "success",
-                        title: "Uploaded!",
-                        text: "File uploaded successfully.",
-                        confirmButtonColor: "#3085d6",
-                      });
-                    } else {
+                        if (selectedId === "__add_new__") {
+                          setFormData((prev) => ({
+                            ...prev,
+                            categoryId: "",
+                            categoryName: "",
+                          }));
+                          setShowNewCategoryInput(true);
+                          setPolicyList([]);
+                          setLocalPolicyList([]); // 🟢 clear local policies when switching
+                        } else {
+                          const selectedCategory = categories.find(
+                            (cat) => String(cat.id) === selectedId
+                          );
+
+                          setFormData((prev) => ({
+                            ...prev,
+                            categoryId: selectedCategory?.id || "",
+                            categoryName: selectedCategory?.name || "",
+                          }));
+                          setShowNewCategoryInput(false);
+
+                          try {
+                            const res = await fetch(`${HRMS_API_BASE}/hr-policy/${selectedId}`,
+                              { headers: { Authorization: `Bearer ${token}` }, }
+                            );
+                            const result = await res.json();
+                            if (result.success && Array.isArray(result.data)) {
+                              setPolicyList(result.data);
+                            } else {
+                              setPolicyList([]);
+                            }
+                            setLocalPolicyList([]); // 🟢 clear temp policies for new category
+                          } catch (err) {
+                            console.error("Policy fetch failed:", err);
+                            setPolicyList([]);
+                            setLocalPolicyList([]);
+                          }
+                        }
+                      }}
+                      className="w-full border rounded px-3 py-2"
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                      <option value="__add_new__">+ Add New Category</option>
+                    </select>
+
+
+                    {/* Add New Category */}
+                    {showNewCategoryInput && (
+                      <div className="mt-2 flex gap-2 items-center">
+                        <input
+                          type="text"
+                          placeholder="Enter new category"
+                          value={newCategory}
+                          onChange={(e) => setNewCategory(e.target.value)}
+                          className="flex-1 border rounded px-2 py-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddCategory}
+                          className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Policy Name Dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium">Policy Name</label>
+                    <select
+                      value={formData.policyName || ""}
+                      onChange={(e) => {
+                        const selectedValue = e.target.value;
+
+                        if (selectedValue === "__add_new_policy__") {
+                          setShowNewPolicyInput(true);
+                          setFormData((prev) => ({ ...prev, policyName: "" }));
+                        } else {
+                          setFormData((prev) => ({ ...prev, policyName: selectedValue }));
+                        }
+                      }}
+                      className="w-full border rounded px-3 py-2"
+                    >
+                      <option value="">Select Policy Name</option>
+
+                      {/* 🟢 combine policies (backend + temporary added) */}
+                      {[...new Map(
+                        [...policyList, ...localPolicyList.filter(
+                          (p) => p.category_id === formData.categoryId
+                        )].map((p) => [p.name, p])
+                      ).values()].map((policy) => (
+                        <option key={policy.name} value={policy.name}>
+                          {policy.name}
+                        </option>
+                      ))}
+
+                      <option value="__add_new_policy__">+ Add New Policy</option>
+                    </select>
+
+
+                    {/* Add New Policy Input + Add Button */}
+                    {showNewPolicyInput && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <input
+                          type="text"
+                          value={formData.policyName}
+                          onChange={(e) =>
+                            setFormData((prev) => ({ ...prev, policyName: e.target.value }))
+                          }
+                          placeholder="Enter new policy name"
+                          className="border rounded px-3 py-2 w-full"
+                        />
+                        <button
+                          onClick={() => {
+                            const trimmed = formData.policyName.trim();
+                            if (!trimmed) return;
+
+                            // Avoid duplicates
+                            const alreadyExists =
+                              policyList.some((p) => p.name === trimmed) ||
+                              localPolicyList.some((p) => p.name === trimmed);
+
+                            if (!alreadyExists) {
+                              setLocalPolicyList((prev) => [
+                                ...prev,
+                                { name: trimmed, category_id: formData.categoryId },
+                              ]);
+                            }
+
+                            setShowNewPolicyInput(false);
+                          }}
+                          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* Description */}
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium">Description</label>
+                    <input
+                      type="text"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      className="w-full border rounded px-3 py-2"
+                    />
+                  </div>
+                </div>
+
+                {/* Upload HR Policy Section */}
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.png"
+                  className="w-full border rounded px-3 py-2"
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    try {
+                      const uploadedUrl = await handleFileUpload(file);
+                      if (uploadedUrl) {
+                        setDocumentUrl(uploadedUrl);
+
+                        Swal.fire({
+                          icon: "success",
+                          title: "Uploaded!",
+                          text: "File uploaded successfully.",
+                          confirmButtonColor: "#3085d6",
+                        });
+                      } else {
+                        Swal.fire({
+                          icon: "error",
+                          title: "Upload Failed!",
+                          text: "Something went wrong during upload.",
+                          confirmButtonColor: "#d33",
+                        });
+                      }
+                    } catch (err) {
                       Swal.fire({
                         icon: "error",
-                        title: "Upload Failed!",
-                        text: "Something went wrong during upload.",
+                        title: "Error",
+                        text: "Unexpected error while uploading file.",
                         confirmButtonColor: "#d33",
                       });
+                      console.error("Upload error:", err);
                     }
-                  } catch (err) {
-                    Swal.fire({
-                      icon: "error",
-                      title: "Error",
-                      text: "Unexpected error while uploading file.",
-                      confirmButtonColor: "#d33",
-                    });
-                    console.error("Upload error:", err);
-                  }
-                }}
-              />
-              <div className="mt-3">
-                <label className="block text-sm font-medium mb-1">Status</label>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-1">
-                    <input
-                      type="radio"
-                      name="status"
-                      value="true"
-                      checked={formData.status === true}
-                      onChange={() =>
-                        setFormData((prev) => ({ ...prev, status: true }))
-                      }
-                    />
-                    Active
-                  </label>
-                  <label className="flex items-center gap-1">
-                    <input
-                      type="radio"
-                      name="status"
-                      value="false"
-                      checked={formData.status === false}
-                      onChange={() =>
-                        setFormData((prev) => ({ ...prev, status: false }))
-                      }
-                    />
-                    Inactive
-                  </label>
+                  }}
+                />
+                <div className="mt-3">
+                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-1">
+                      <input
+                        type="radio"
+                        name="status"
+                        value="true"
+                        checked={formData.status === true}
+                        onChange={() =>
+                          setFormData((prev) => ({ ...prev, status: true }))
+                        }
+                      />
+                      Active
+                    </label>
+                    <label className="flex items-center gap-1">
+                      <input
+                        type="radio"
+                        name="status"
+                        value="false"
+                        checked={formData.status === false}
+                        onChange={() =>
+                          setFormData((prev) => ({ ...prev, status: false }))
+                        }
+                      />
+                      Inactive
+                    </label>
+                  </div>
                 </div>
-              </div>
-              <div className="flex justify-end gap-4 mt-4">
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="border px-4 py-2 rounded hover:bg-gray-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                >
-                  {isEditMode ? "Update" : "Submit"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            {errorMessage && <p className="text-red-500 text-sm text-center mb-2">{errorMessage}</p>}
-            <h3 className="text-xl font-bold text-center text-gray-800">Confirm Deletion</h3>
-            <p className="text-gray-600 text-center mt-4">Are you sure you want to delete this policy?</p>
-            <div className="flex justify-center gap-4 mt-6">
-              <button
-                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400"
-                onClick={cancelDelete}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600"
-                onClick={confirmDelete}
-              >
-                Delete
-              </button>
+                <div className="flex justify-end gap-4 mt-4">
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="border px-4 py-2 rounded hover:bg-gray-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                  >
+                    {isEditMode ? "Update" : "Submit"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+
+      <DeleteConfirmModal
+        open={showConfirm}
+        title="Delete Policy?"
+        message="Are you sure you want to delete this policy? This action cannot be undone."
+        onCancel={cancelDelete}
+        onConfirm={confirmDelete}
+        loading={deleteLoading}
+        errorMessage={errorMessage}
+      />
+    </div >
   );
 };
 export default HRPolicies;

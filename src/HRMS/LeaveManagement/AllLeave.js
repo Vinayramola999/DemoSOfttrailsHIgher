@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { faTrash, faEdit } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { EditIcon, DeleteIcon } from "../../NewComponents/ReactIcons";
 import Pagination from "../../NewComponents/Pagination";
 import DeleteConfirmModal from "../../NewComponents/DeleteConfirmModal";
 import MessageModal from "../../NewComponents/MessageModal";
 import MultiSelectDropdown from "../../NewComponents/MultiSelectDropdown";
 import { FaPlus } from 'react-icons/fa';
 import AddButton from "../../NewComponents/AddButton";
+import { MAIN_API_BASE, HRMS_API_BASE } from "../../config/apiBase";
 
 const AllLeave = () => {
     const [policies, setPolicies] = useState([]);
@@ -43,7 +43,7 @@ const AllLeave = () => {
 
     const fetchDepartments = async () => {
         try {
-            const res = await axios.get("https://devdemo.softtrails.net/departments", {
+            const res = await axios.get(`${MAIN_API_BASE}/departments`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const activeDepts = res.data.filter(
@@ -57,7 +57,7 @@ const AllLeave = () => {
 
     const fetchPolicies = async () => {
         try {
-            const res = await axios.get("https://devdemo.softtrails.net/leave/get-policy", {
+            const res = await axios.get(`${HRMS_API_BASE}/leave/get-policy`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setPolicies(res.data.data || []);
@@ -68,7 +68,7 @@ const AllLeave = () => {
 
     const fetchCategories = async () => {
         try {
-            const res = await axios.get("https://devdemo.softtrails.net/user-category/all", {
+            const res = await axios.get(`${MAIN_API_BASE}/user-category/all`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setCategories(res.data.data || []);
@@ -79,7 +79,7 @@ const AllLeave = () => {
 
     const fetchLeaves = async () => {
         try {
-            const res = await axios.get("https://devdemo.softtrails.net/leave/all-leave-types", {
+            const res = await axios.get(`${HRMS_API_BASE}/leave/all-leave-types`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setLeaves(res.data.leave_types || []);
@@ -113,12 +113,8 @@ const AllLeave = () => {
     const handleAddLeave = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(
-                "https://devdemo.softtrails.net/leave/leave-types",
-                newLeave,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
+            await axios.post(`${HRMS_API_BASE}/leave/leave-types`, newLeave,
+                { headers: { Authorization: `Bearer ${token}` }, }
             );
             setIsAddModalOpen(false);
             setNewLeave({
@@ -143,7 +139,8 @@ const AllLeave = () => {
     const confirmDelete = async () => {
         try {
             await axios.delete(
-                `https://devdemo.softtrails.net/leave/leave-types/${showDeleteConfirm.id}`,
+                `${HRMS_API_BASE}
+                /leave/leave-types/${showDeleteConfirm.id}`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }
@@ -179,22 +176,11 @@ const AllLeave = () => {
     const [selectedLeave, setSelectedLeave] = useState(null);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
-    // const handleDepartmentChange = (selected) => {
-    //     if (selected.includes("all")) {
-    //         const allDeptIds = departments.map((d) => d.dept_id);
-    //         setNewLeave((prev) => ({ ...prev, department_ids: allDeptIds }));
-    //     } else {
-    //         setNewLeave((prev) => ({ ...prev, department_ids: selected }));
-    //     }
-    // };
-
     const openDetailsModal = (leave) => {
         setSelectedLeave(leave);
         setIsDetailsModalOpen(true);
     };
 
-
-    // For Edit Modal
     const handleEditDepartmentChange = (selected) => {
         if (selected.includes("all")) {
             const allDeptIds = departments.map((d) => d.dept_id);
@@ -208,7 +194,7 @@ const AllLeave = () => {
         e.preventDefault();
         try {
             await axios.put(
-                `https://devdemo.softtrails.net/leave/leave-types/${editLeave.id}`,
+                `${HRMS_API_BASE}/leave/leave-types/${editLeave.id}`,
                 {
                     ...editLeave,
                     status: editLeave.status === "true", // convert back to boolean
@@ -363,20 +349,15 @@ const AllLeave = () => {
                             {paginatedLeaves.map((leave, index) => (
                                 <tr key={leave.id} className={`${index % 2 === 0 ? "bg-tableblue" : "bg-white"}`} >
                                     <td className="px-5 py-4">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                    <td
-                                        className="px-5 py-4 text-blue-600 cursor-pointer hover:underline"
-                                        onClick={() => openDetailsModal(leave)}
-                                    >
-                                        {leave.leave_type}
-                                    </td>
+                                    <td className="px-5 py-4 text-blue-600 cursor-pointer hover:underline" onClick={() => openDetailsModal(leave)} > {leave.leave_type} </td>
                                     <td className="px-5 py-4">{leave.description || "NA"}</td>
                                     <td className="px-5 py-4">{policies.find((p) => p.id === leave.policy_id)?.policy_name || leave.policy_id}</td>
                                     <td className="px-5 py-4">{leave.category_ids && leave.category_ids.length > 0 ? leave.category_ids.map((id) => categories.find((c) => c.category_id === id)?.category || id).join(", ") : "NA"}</td>
                                     <td className="px-5 py-4"><span className={`font-medium ${leave.status ? " text-green-600" : " text-red-600"}`} >{leave.status ? "Active" : "Inactive"}</span></td>
                                     <td className="px-5 py-4 text-left text-[14px] text-black">{new Date(leave.created_at).toLocaleDateString("en-GB")}</td>
                                     <td className="px-5 py-4">
-                                        <button onClick={() => openEditModal(leave)} className="text-blue-600 " > <FontAwesomeIcon icon={faEdit} /></button>
-                                        {/* <button onClick={() => setShowDeleteConfirm(leave)} className="text-red-600 ml-2" > <FontAwesomeIcon icon={faTrash} /> </button> */}
+                                        <button onClick={() => openEditModal(leave)} className="text-blue-600" > <EditIcon /></button>
+                                        <button onClick={() => setShowDeleteConfirm(leave)} className="text-red-600" > <DeleteIcon /> </button>
                                     </td>
                                 </tr>
                             ))}
@@ -566,29 +547,12 @@ const AllLeave = () => {
                                     : "NA"}
                             </div>
 
-                            <div>
-                                <strong>Status:</strong>{" "}
-                                <span
-                                    className={`font-medium ${selectedLeave.status ? "text-green-600" : "text-red-600"
-                                        }`}
-                                >
-                                    {selectedLeave.status ? "Active" : "Inactive"}
-                                </span>
-                            </div>
-
-                            <div>
-                                <strong>Created At:</strong>{" "}
-                                {new Date(selectedLeave.created_at).toLocaleDateString("en-GB")}
-                            </div>
+                            <div> <strong>Status:</strong>{" "} <span className={`font-medium ${selectedLeave.status ? "text-green-600" : "text-red-600"}`} > {selectedLeave.status ? "Active" : "Inactive"} </span> </div>
+                            <div> <strong>Created At:</strong>{" "} {new Date(selectedLeave.created_at).toLocaleDateString("en-GB")} </div>
                         </div>
 
                         <div className="flex justify-end mt-5">
-                            <button
-                                onClick={() => setIsDetailsModalOpen(false)}
-                                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-                            >
-                                Close
-                            </button>
+                            <button onClick={() => setIsDetailsModalOpen(false)} className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400" > Close </button>
                         </div>
                     </div>
                 </div>

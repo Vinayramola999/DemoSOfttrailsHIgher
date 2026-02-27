@@ -23,12 +23,8 @@ const [selectedStatus, setSelectedStatus] = useState("");
   const columns = [
     { header: "S. No.", accessor: "sno" },
     { header: "User Id", accessor: "user_id" },
+    { header: "Indent ID", accessor: "indent_id" },
     { header: "Department", accessor: "department" },
-    { header: "Request", accessor: "asset_name" },
-    { header: "Request for", accessor: "request_for" },
-    { header: "Quantity", accessor: "quantity" },
-    { header: "UOM", accessor: "uom" },
-    { header: "Budget", accessor: "budget" },
     { header: "Status", accessor: "status" },
   ];
 
@@ -235,14 +231,9 @@ useEffect(() => {
   const exportData = filteredData.map((item, idx) => ({
     sno: idx + 1,
     user_id: item.user_id,
+    indent_id: item.indent_id || item.id || "-",
     department:
       departments.find((b) => b.dept_id === item.dept_id)?.dept_name || "N/A",
-    asset_name: item.asset_name,
-    request_for: item.request_for,
-    quantity: item.quantity,
-    uom: item.uom,
-    budget:
-      budgetOptions.find((b) => b.id === item.budget_id)?.budget_name || "N/A",
     status: item.status,
   }));
  const departmentSelectOptions = [
@@ -286,12 +277,12 @@ useEffect(() => {
                 <DownloadTableButtons
                   data={exportData}
                   columns={columns}
-                  fileName="Quotations"
+                  fileName="Approved Indents"
                 />
               </div>
             </div>
             <div
-              className="overflow-x-auto rounded-lg shadow bg-white p-4"
+              className="oveIndent-Approvaluto rounded-lg shadow bg-white p-4"
               style={{ maxHeight: 600, overflowY: "auto", minWidth: 900 }}
             >
               {/* <table className="w-full bg-white rounded-lg border-collapse"> */}

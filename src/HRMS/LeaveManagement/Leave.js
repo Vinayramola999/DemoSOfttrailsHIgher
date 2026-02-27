@@ -13,6 +13,7 @@ import AllLeave from './AllLeave';
 import ApprovalStatus from './LeaveStatus';
 import WorkingDays from './WorkingDays';
 import ApprovalAuthority from './ApprovalAuthority';
+import { MAIN_API_BASE } from '../../config/apiBase';
 
 const Leave = () => {
     const [userData, setUserData] = useState(null);
@@ -33,7 +34,7 @@ const Leave = () => {
         if (userId) {
             const fetchUserData = async () => {
                 try {
-                    const response = await axios.get(`https://devdemo.softtrails.net/users/id_user/${userId}`, {
+                    const response = await axios.get(`${MAIN_API_BASE}/users/id_user/${userId}`, {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },
@@ -62,7 +63,7 @@ const Leave = () => {
                     console.error('userId or token is missing');
                     return;
                 }
-                const response = await axios.get(`https://devdemo.softtrails.net/access/access/${userId}`, {
+                const response = await axios.get(`${MAIN_API_BASE}/access/access/${userId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },

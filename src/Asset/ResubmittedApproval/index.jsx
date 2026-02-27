@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { FaHome, FaSignOutAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 //
-import ProfileDropdown from "../../ProfileDropdown";
+//import ProfileDropdown from "../../ProfileDropdown";
 import axios from "axios";
-import { DMS_BASE,JAVA_BASE, ASSET_NODE_BASE, UCS_BASE ,MAIN_BASE } from "../../config/apiBase"
+import { DMS_BASE, JAVA_BASE, ASSET_NODE_BASE, UCS_BASE, MAIN_BASE } from "../../config/apiBase"
 const ResubmittedApproval = () => {
   const [requests, setRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +61,7 @@ const ResubmittedApproval = () => {
   const fetchUserDetails = async (userId) => {
     try {
       const response = await axios.get(
-       `${MAIN_BASE}users/id_user/${userId}`
+        `${MAIN_BASE}users/id_user/${userId}`
       );
       return `${response.data.first_name} ${response.data.last_name}`; // Assuming user has first_name and last_name properties
     } catch (error) {
@@ -155,7 +155,7 @@ const ResubmittedApproval = () => {
         try {
           console.log("Fetching data for userId:", userId);
           const response = await axios.get(
-           `${MAIN_BASE}users/id_user/${userId}`,
+            `${MAIN_BASE}users/id_user/${userId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -185,11 +185,10 @@ const ResubmittedApproval = () => {
         <div className="mb-4 flex space-x-4 mt-3">
           <button
             onClick={() => setActiveTab("category")}
-            className={`px-4 py-2 rounded-lg  ${
-              activeTab === "category"
+            className={`px-4 py-2 rounded-lg  ${activeTab === "category"
                 ? "bg-blue-600 text-white"
                 : "bg-gray-200 text-gray-600"
-            }`}
+              }`}
           >
             Category Logs
           </button>
@@ -243,7 +242,7 @@ const ResubmittedApproval = () => {
                         >
                           <td className="py-2 px-4">{index + 1}</td>
                           <td className="py-2 px-4">
-                          {request.categoriesname || "N/A"}</td>
+                            {request.categoriesname || "N/A"}</td>
                           <td className="py-2 px-4">
                             {new Date(request.created_at).toLocaleDateString()}
                           </td>

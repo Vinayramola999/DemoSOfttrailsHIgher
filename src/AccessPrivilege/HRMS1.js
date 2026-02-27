@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import Select from "react-select";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import useFetchEmails from '../NewComponents/useFetchEmails';
+import { MAIN_API_BASE } from '../config/apiBase';
 Modal.setAppElement('#root');
 
 const UpdateAccess = () => {
@@ -23,8 +24,6 @@ const UpdateAccess = () => {
     const [isBalanceChecked, setIsBalanceChecked] = useState(false);
     const [isApprovalChecked, setIsApprovalChecked] = useState(false);
     const [isPolicyChecked, setIsPolicyChecked] = useState(false);
-    const [isAddPolicyChecked, setIsAddPolicyChecked] = useState(false);
-    const [isSchedularChecked, setIsSchedularChecked] = useState(false);
     const [isYearSetUpChecked, setIsYearSetUpChecked] = useState(false);
     const [isAllBalanceChecked, setIsAllBalanceChecked] = useState(false);
     const [isHolidayChecked, setIsHolidayChecked] = useState(false);
@@ -53,7 +52,7 @@ const UpdateAccess = () => {
     const [isAttendanceTabChecked, setIsAttendanceTabChecked] = useState(false);
     const [isAttendanceChecked, setIsAttendanceChecked] = useState(false);
     const [isIndividualAttendanceChecked, setIsIndividualAttendanceChecked] = useState(false);
-    const [isTeamAttendanceChecked, setIsTeamAttendanceChecked] = useState(false);
+    const [isTimeManagementChecked, setIsTimeManagementChecked] = useState(false);
     const [isRegularizationChecked, setIsRegularizationChecked] = useState(false);
     const [isRegularizationSubChecked, setIsRegularizationSubChecked] = useState(false);
     const [isManagerApprovalChecked, setIsManagerApprovalChecked] = useState(false);
@@ -63,13 +62,17 @@ const UpdateAccess = () => {
     const [isGoalChecked, setIsGoalChecked] = useState(false);
     const [isKRAChecked, setIsKRAChecked] = useState(false);
     const [isMappingChecked, setIsMappingChecked] = useState(false);
+    const [isAnnualGoalsChecked, setIsAnnualGoalsChecked] = useState(false);
+    const [isApprovalSetUpChecked, setIsApprovalSetUpChecked] = useState(false);
+    const [isApproveGoalChecked, setIsApproveGoalChecked] = useState(false);
+    const [isGoalSettingChecked, setIsGoalSettingChecked] = useState(false);
 
     const handleEmailChange = async (e) => {
         const userId = e.target.value;
         setSelectedEmail(userId);
         if (userId) {
             try {
-                const response = await axios.get(`https://devdemo.softtrails.net/access/access/${userId}`, {
+                const response = await axios.get(`${MAIN_API_BASE}/access/access/${userId}`, {
                     headers: {
                         'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
                     },
@@ -85,8 +88,6 @@ const UpdateAccess = () => {
                 setIsBalanceChecked(apiAccessNames.includes('Balance'));
                 setIsApprovalChecked(apiAccessNames.includes('Approval'));
                 setIsPolicyChecked(apiAccessNames.includes('Policy'));
-                setIsSchedularChecked(apiAccessNames.includes('Schedular'));
-                setIsAddPolicyChecked(apiAccessNames.includes('AddPolicy'));
                 setIsYearSetUpChecked(apiAccessNames.includes('YearSet'));
                 setIsHolidayChecked(apiAccessNames.includes('Holiday'));
                 setIsAddHolidayChecked(apiAccessNames.includes('AddHoliday'));
@@ -113,15 +114,19 @@ const UpdateAccess = () => {
                 setIsAttendanceTabChecked(apiAccessNames.includes('AttendanceTab'));             //AttendanceManagement
                 setIsAttendanceChecked(apiAccessNames.includes('Attendance'));
                 setIsIndividualAttendanceChecked(apiAccessNames.includes('Individual'));
-                setIsTeamAttendanceChecked(apiAccessNames.includes('TeamAttendance'));
+                setIsTimeManagementChecked(apiAccessNames.includes('TimeManagement'));
                 setIsRegularizationChecked(apiAccessNames.includes('RegularizationTab'));
                 setIsRegularizationSubChecked(apiAccessNames.includes('Regularization'));
                 setIsManagerApprovalChecked(apiAccessNames.includes('ManagerApproval'));
 
-                setIsPMSChecked(apiAccessNames.includes('PMS'));
+                setIsPMSChecked(apiAccessNames.includes('PMS'));                  //PMS
                 setIsGoalChecked(apiAccessNames.includes('Goal'));
                 setIsKRAChecked(apiAccessNames.includes('KRA'));
                 setIsMappingChecked(apiAccessNames.includes('Mapping'));
+                setIsAnnualGoalsChecked(apiAccessNames.includes("AnnualGoals"));
+                setIsApprovalSetUpChecked(apiAccessNames.includes("approvalsetup"));
+                setIsApproveGoalChecked(apiAccessNames.includes("ApproveGoal"));
+                setIsGoalSettingChecked(apiAccessNames.includes("GoalSetting"));
             } catch (error) {
                 Swal.fire({
                     icon: 'warning',
@@ -139,8 +144,6 @@ const UpdateAccess = () => {
             setIsBalanceChecked(false);
             setIsApprovalChecked(false);
             setIsPolicyChecked(false);
-            setIsSchedularChecked(false);
-            setIsAddPolicyChecked(false);
             setIsYearSetUpChecked(false);
             setIsHolidayChecked(false);
             setIsAddHolidayChecked(false);
@@ -166,7 +169,7 @@ const UpdateAccess = () => {
             setIsAttendanceTabChecked(false);
             setIsAttendanceChecked(false);
             setIsIndividualAttendanceChecked(false);
-            setIsTeamAttendanceChecked(false);
+            setIsTimeManagementChecked(false);
             setIsRegularizationChecked(false);
             setIsRegularizationSubChecked(false);
             setIsManagerApprovalChecked(false);
@@ -175,23 +178,27 @@ const UpdateAccess = () => {
             setIsGoalChecked(false);
             setIsKRAChecked(false);
             setIsMappingChecked(false);
+            setIsAnnualGoalsChecked(false);
+            setIsApprovalSetUpChecked(false);
+            setIsApproveGoalChecked(false);
+            setIsGoalSettingChecked(false);
         }
     };
 
-    // const handleApiAccessChange = async (apiName) => {
-    //     const isAlreadySelected = apiAccess.includes(apiName);
-    //     setApiAccess((prev) =>
-    //         isAlreadySelected
-    //             ? prev.filter((name) => name !== apiName) // Remove API if unchecked
-    //             : [...prev, apiName] // Add API if checked
-    //     );
+    const handleApiAccessChange = async (apiName) => {
+        const isAlreadySelected = apiAccess.includes(apiName);
+        setApiAccess((prev) =>
+            isAlreadySelected
+                ? prev.filter((name) => name !== apiName) // Remove API if unchecked
+                : [...prev, apiName] // Add API if checked
+        );
 
-    //     if (apiName === 'update_access') {
-    //         setHasAmsAccess((prev) => !prev);
-    //     } else if (apiName === 'HRMS') {
-    //         setIsHRMSChecked((prev) => !prev);
-    //     }
-    // };
+        if (apiName === 'update_access') {
+            setHasAmsAccess((prev) => !prev);
+        } else if (apiName === 'HRMS') {
+            setIsHRMSChecked((prev) => !prev);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -214,8 +221,6 @@ const UpdateAccess = () => {
         if (isBalanceChecked) selectedApiAccess.push('Balance');
         if (isApprovalChecked) selectedApiAccess.push('Approval');
         if (isPolicyChecked) selectedApiAccess.push('Policy');
-        if (isSchedularChecked) selectedApiAccess.push('Schedular');
-        if (isAddPolicyChecked) selectedApiAccess.push('AddPolicy');
         if (isYearSetUpChecked) selectedApiAccess.push('YearSet');
         if (isAllBalanceChecked) selectedApiAccess.push('AllBalance');
         if (isHolidayChecked) selectedApiAccess.push('Holiday');
@@ -242,7 +247,7 @@ const UpdateAccess = () => {
         if (isAttendanceTabChecked) selectedApiAccess.push('AttendanceTab');
         if (isAttendanceChecked) selectedApiAccess.push('Attendance');
         if (isIndividualAttendanceChecked) selectedApiAccess.push('Individual');
-        if (isTeamAttendanceChecked) selectedApiAccess.push('TeamAttendance');
+        if (isTimeManagementChecked) selectedApiAccess.push('TimeManagement');
         if (isRegularizationChecked) selectedApiAccess.push('RegularizationTab');
         if (isRegularizationSubChecked) selectedApiAccess.push('Regularization');
         if (isManagerApprovalChecked) selectedApiAccess.push('ManagerApproval');
@@ -251,9 +256,12 @@ const UpdateAccess = () => {
         if (isGoalChecked) selectedApiAccess.push('Goal');
         if (isKRAChecked) selectedApiAccess.push('KRA');
         if (isMappingChecked) selectedApiAccess.push('Mapping');
+        if (isAnnualGoalsChecked) selectedApiAccess.push("AnnualGoals");
+        if (isApprovalSetUpChecked) selectedApiAccess.push("approvalsetup");
+        if (isApproveGoalChecked) selectedApiAccess.push("ApproveGoal");
+        if (isGoalSettingChecked) selectedApiAccess.push("GoalSetting");
         try {
-            const response = await axios.put(
-                'https://devdemo.softtrails.net/access/update_access',
+            const response = await axios.put(`${MAIN_API_BASE}/access/update_access`,
                 {
                     user_id: selectedEmail,
                     module: selectedModule,
@@ -266,7 +274,6 @@ const UpdateAccess = () => {
                     },
                 }
             );
-
             if (response.status === 200) {
                 Swal.fire({
                     icon: 'success',
@@ -288,7 +295,6 @@ const UpdateAccess = () => {
             }
         } catch (error) {
             const { response } = error;
-
             if (response) {
                 if (response.status === 403) {
                     Swal.fire({
@@ -329,7 +335,6 @@ const UpdateAccess = () => {
         setIsUploadDocumentChecked(!isUploadDocumentChecked);
     };
 
-
     const Checkbox = ({ label, checked, onChange }) => (
         <label className="flex items-center space-x-2">
             <input type="checkbox" checked={checked} onChange={onChange} className="form-checkbox text-indigo-600 focus:ring-indigo-500" /> <span>{label}</span>
@@ -340,7 +345,6 @@ const UpdateAccess = () => {
         <div className="w-full max-h-[80vh] overflow-auto">
             <div className="bg-white p-4 rounded-lg shadow-md mt-3">
                 <form onSubmit={handleSubmit}>
-
                     <div className="flex flex-col sm:flex-row sm:items-center mt-5 ml-5 w-full sm:w-[50%]">
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 sm:mb-0 sm:mr-4" > Select User: </label>
                         <div className="w-full sm:w-[60%]">
@@ -364,33 +368,20 @@ const UpdateAccess = () => {
                                         <Checkbox label="Leave Management Card" checked={isLMCChecked} onChange={() => setIsLMCChecked(!isLMCChecked)} />
                                         {isLMCChecked && (
                                             <div className="pl-6 mt-2 space-y-2">
-                                                <Checkbox label="Leave Policy" checked={isPolicyChecked}
-                                                    onChange={() => {
-                                                        if (isPolicyChecked) { 
-                                                            setIsSchedularChecked(false); 
-                                                            setIsAddPolicyChecked(false); 
-                                                        }
-                                                        setIsPolicyChecked(!isPolicyChecked);
-                                                    }}
-                                                />
-                                                {isPolicyChecked && (
-                                                    <div className="pl-6 space-y-2">
-                                                        <Checkbox label="Schedular " checked={isSchedularChecked} onChange={() => setIsSchedularChecked(!isSchedularChecked)} />
-                                                        <Checkbox label="Add Policy" checked={isAddPolicyChecked} onChange={() => setIsAddPolicyChecked(!isAddPolicyChecked)} />
-                                                    </div>
-                                                )}
+                                                <Checkbox label="Leave Policy" checked={isPolicyChecked} onChange={() => setIsPolicyChecked(!isPolicyChecked)} />
                                                 <Checkbox label="Create Leave" checked={isCreateChecked} onChange={() => setIsCreateChecked(!isCreateChecked)} />
                                                 <Checkbox label="Apply Leave" checked={isApplyChecked} onChange={() => setIsApplyChecked(!isApplyChecked)} />
                                                 <Checkbox label="Balance Leave" checked={isBalanceChecked} onChange={() => setIsBalanceChecked(!isBalanceChecked)} />
                                                 <Checkbox label="Leave Approval" checked={isApprovalChecked} onChange={() => setIsApprovalChecked(!isApprovalChecked)} />
                                                 <Checkbox label="Year Setup" checked={isYearSetUpChecked} onChange={() => setIsYearSetUpChecked(!isYearSetUpChecked)} />
+                                                {/* Holiday */}
                                                 <Checkbox label="Holidays" checked={isHolidayChecked}
                                                     onChange={() => {
-                                                        if (isHolidayChecked) { 
-                                                            setIsAddHolidayChecked(false); 
-                                                            setIsViewHolidayChecked(false); 
-                                                            setIsDeleteHolidayChecked(false); 
-}
+                                                        if (isHolidayChecked) {
+                                                            setIsAddHolidayChecked(false);
+                                                            setIsViewHolidayChecked(false);
+                                                            setIsDeleteHolidayChecked(false);
+                                                        }
                                                         setIsHolidayChecked(!isHolidayChecked);
                                                     }}
                                                 />
@@ -427,40 +418,18 @@ const UpdateAccess = () => {
                                                         setIsEmployeeChecked(!isEmployeeChecked);
                                                     }}
                                                 />
-
                                                 {isEmployeeChecked && (
                                                     <div className="ml-6 mt-2 space-y-2">
-                                                        {/* Upload Document (Parent) */}
-                                                        <Checkbox
-                                                            label="Upload Documents"
-                                                            checked={isUploadDocumentChecked}
-                                                            onChange={handleUploadDocumentToggle}
-                                                        />
-
-                                                        {/* Child tabs appear ONLY if Upload Documents is selected */}
+                                                        <Checkbox label="Upload Documents" checked={isUploadDocumentChecked} onChange={handleUploadDocumentToggle} />
                                                         {isUploadDocumentChecked && (
                                                             <div className="ml-6 mt-2 space-y-2">
-                                                                <Checkbox
-                                                                    label="Revision Letter"
-                                                                    checked={isLetterChecked}
-                                                                    onChange={() => setIsLetterChecked(!isLetterChecked)}
-                                                                />
-                                                                <Checkbox
-                                                                    label="Appointment Letter"
-                                                                    checked={isSalarySlipChecked}
-                                                                    onChange={() => setIsSalarySlipChecked(!isSalarySlipChecked)}
-                                                                />
-                                                                <Checkbox
-                                                                    label="Document Access"
-                                                                    checked={isDocumentChecked}
-                                                                    onChange={() => setIsDocumentChecked(!isDocumentChecked)}
-                                                                />
+                                                                <Checkbox label="Revision Letter" checked={isLetterChecked} onChange={() => setIsLetterChecked(!isLetterChecked)} />
+                                                                <Checkbox label="Appointment Letter" checked={isSalarySlipChecked} onChange={() => setIsSalarySlipChecked(!isSalarySlipChecked)} />
+                                                                <Checkbox label="Document Access" checked={isDocumentChecked} onChange={() => setIsDocumentChecked(!isDocumentChecked)} />
                                                             </div>
                                                         )}
                                                     </div>
                                                 )}
-
-
                                                 <Checkbox label="Recruitment Activity" checked={isRecruitmentActivityChecked} onChange={() => setIsRecruitmentActivityChecked(!isRecruitmentActivityChecked)} />
                                                 {isRecruitmentActivityChecked && (
                                                     <div className="pl-6 space-y-2">
@@ -480,14 +449,8 @@ const UpdateAccess = () => {
                                         <Checkbox label="Attendance Management" checked={isAttendanceTabChecked} onChange={() => setIsAttendanceTabChecked(!isAttendanceTabChecked)} />
                                         {isAttendanceTabChecked && (
                                             <div className="pl-6 mt-2 space-y-2">
-                                                {/* Attendance Tab */}
-                                                <Checkbox label="Attendance" checked={isAttendanceChecked} onChange={() => setIsAttendanceChecked(!isAttendanceChecked)} />
-                                                {isAttendanceChecked && (
-                                                    <div className="pl-6 space-y-2">
-                                                        <Checkbox label="Individual Attendance" checked={isIndividualAttendanceChecked} onChange={() => setIsIndividualAttendanceChecked(!isIndividualAttendanceChecked)} />
-                                                        <Checkbox label="Team Attendance" checked={isTeamAttendanceChecked} onChange={() => setIsTeamAttendanceChecked(!isTeamAttendanceChecked)} />
-                                                    </div>
-                                                )}
+                                                <Checkbox label="Time Management" checked={isTimeManagementChecked} onChange={() => setIsTimeManagementChecked(!isTimeManagementChecked)} />
+                                                <Checkbox label="Individual Attendance" checked={isIndividualAttendanceChecked} onChange={() => setIsIndividualAttendanceChecked(!isIndividualAttendanceChecked)} />
                                                 {/* Regularization Tab */}
                                                 <Checkbox label="Regularization" checked={isRegularizationChecked} onChange={() => setIsRegularizationChecked(!isRegularizationChecked)} />
                                                 {isRegularizationChecked && (
@@ -505,9 +468,51 @@ const UpdateAccess = () => {
                                         <Checkbox label="Performance Management Card" checked={isPMSChecked} onChange={() => setIsPMSChecked(!isPMSChecked)} />
                                         {isPMSChecked && (
                                             <div className="pl-6 mt-2 space-y-2">
-                                                <Checkbox label="Goal" checked={isGoalChecked} onChange={() => setIsGoalChecked(!isGoalChecked)} />
-                                                <Checkbox label="KRA's" checked={isKRAChecked} onChange={() => setIsKRAChecked(!isKRAChecked)} />
-                                                <Checkbox label="Goal & KRA's Mapping" checked={isMappingChecked} onChange={() => setIsMappingChecked(!isMappingChecked)} />
+                                                <Checkbox
+                                                    label="Goal"
+                                                    checked={isGoalChecked}
+                                                    onChange={() => setIsGoalChecked(!isGoalChecked)}
+                                                />
+                                                <Checkbox
+                                                    label="KRA's"
+                                                    checked={isKRAChecked}
+                                                    onChange={() => setIsKRAChecked(!isKRAChecked)}
+                                                />
+                                                <Checkbox
+                                                    label="Goal & KRA's Mapping"
+                                                    checked={isMappingChecked}
+                                                    onChange={() =>
+                                                        setIsMappingChecked(!isMappingChecked)
+                                                    }
+                                                />
+                                                <Checkbox
+                                                    label="Annual Goals"
+                                                    checked={isAnnualGoalsChecked}
+                                                    onChange={() =>
+                                                        setIsAnnualGoalsChecked(!isAnnualGoalsChecked)
+                                                    }
+                                                />
+                                                <Checkbox
+                                                    label="Approval Setup"
+                                                    checked={isApprovalSetUpChecked}
+                                                    onChange={() =>
+                                                        setIsApprovalSetUpChecked(!isApprovalSetUpChecked)
+                                                    }
+                                                />
+                                                <Checkbox
+                                                    label="Approve Goal"
+                                                    checked={isApproveGoalChecked}
+                                                    onChange={() =>
+                                                        setIsApproveGoalChecked(!isApproveGoalChecked)
+                                                    }
+                                                />
+                                                <Checkbox
+                                                    label="Goal Setting"
+                                                    checked={isGoalSettingChecked}
+                                                    onChange={() =>
+                                                        setIsGoalSettingChecked(!isGoalSettingChecked)
+                                                    }
+                                                />
                                             </div>
                                         )}
                                     </div>

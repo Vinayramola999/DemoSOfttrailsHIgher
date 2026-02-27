@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import RolesAddModal from "./RolesAddModal";
 import MessageModal from "../ApprovalAuthority/MessageModal";
-import ProfileDropdown from "../../ProfileDropdown";
-import { DMS_BASE,JAVA_BASE, ASSET_NODE_BASE, UCS_BASE ,MAIN_BASE } from "../../config/apiBase"
+//import ProfileDropdown from "../../ProfileDropdown";
+import { DMS_BASE, JAVA_BASE, ASSET_NODE_BASE, UCS_BASE, MAIN_BASE } from "../../config/apiBase"
 const Category = () => {
   const [categoryData, setCategoryData] = useState({
     categoryName: "",
@@ -76,17 +76,17 @@ const Category = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 25;
 
-// Sort latest first
-const sortedCategories = [...filteredCategories].sort((a, b) => {
-  return new Date(b.createdAt) - new Date(a.createdAt);
-});
+  // Sort latest first
+  const sortedCategories = [...filteredCategories].sort((a, b) => {
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
 
-const totalPages = Math.ceil(sortedCategories.length / rowsPerPage);
+  const totalPages = Math.ceil(sortedCategories.length / rowsPerPage);
 
-const paginatedData = sortedCategories.slice(
-  (currentPage - 1) * rowsPerPage,
-  currentPage * rowsPerPage
-);
+  const paginatedData = sortedCategories.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -97,77 +97,77 @@ const paginatedData = sortedCategories.slice(
     fetchCategories();
     fetchCategoryFields();
   }, [updatedOn]);
-useEffect(() => {
-  if (isEditCategoryModalOpen && categories) {
-    const token = sessionStorage.getItem("token"); // get token
+  useEffect(() => {
+    if (isEditCategoryModalOpen && categories) {
+      const token = sessionStorage.getItem("token"); // get token
 
-    axios
-      .get(`${MAIN_BASE}role`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // add token here
-        },
-      })
-      .then((response) => {
+      axios
+        .get(`${MAIN_BASE}role`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // add token here
+          },
+        })
+        .then((response) => {
+          if (response && response.data) {
+            setRoles(response.data);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching roles:", error);
+        });
+    }
+  }, [isEditCategoryModalOpen, categories]);
+
+  useEffect(() => {
+    const fetchWorkflows = async () => {
+      const token = sessionStorage.getItem("token"); // get token
+      try {
+        const response = await axios.get(`${JAVA_BASE}workflow/get`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // add token here
+          },
+        });
         if (response && response.data) {
-          setRoles(response.data);
+          setWorkflows(response.data); // Assuming workflows are returned in response.data
         }
-      })
-      .catch((error) => {
-        console.error("Error fetching roles:", error);
-      });
-  }
-}, [isEditCategoryModalOpen, categories]);
+      } catch (error) {
+        console.error("Error fetching workflows:", error);
+      }
+    };
 
-useEffect(() => {
-  const fetchWorkflows = async () => {
+    fetchWorkflows();
+  }, []); // Empty dependency array means this effect runs once on component mount
+
+  const fetchCategories = async () => {
     const token = sessionStorage.getItem("token"); // get token
     try {
-      const response = await axios.get(`${JAVA_BASE}workflow/get`, {
+      const response = await axios.get(`${JAVA_BASE}api/categories/all`, {
         headers: {
           Authorization: `Bearer ${token}`, // add token here
         },
       });
-      if (response && response.data) {
-        setWorkflows(response.data); // Assuming workflows are returned in response.data
-      }
+      console.log("API response:", response.data); // Check structure of the response
+      setCategories(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
-      console.error("Error fetching workflows:", error);
+      console.error("Error fetching categories:", error);
+      setCategories([]); // Ensures `categories` is an array even if fetch fails
     }
   };
 
-  fetchWorkflows();
-}, []); // Empty dependency array means this effect runs once on component mount
-
-const fetchCategories = async () => {
-  const token = sessionStorage.getItem("token"); // get token
-  try {
-    const response = await axios.get(`${JAVA_BASE}api/categories/all`, {
-      headers: {
-        Authorization: `Bearer ${token}`, // add token here
-      },
-    });
-    console.log("API response:", response.data); // Check structure of the response
-    setCategories(Array.isArray(response.data) ? response.data : []);
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    setCategories([]); // Ensures `categories` is an array even if fetch fails
-  }
-};
-
-const fetchCategoryFields = async () => {
-  const token = sessionStorage.getItem("token"); // get token
-  try {
-    const response = await axios.get(`${JAVA_BASE}api/assets/fetch`, {
-      headers: {
-        Authorization: `Bearer ${token}`, // add token here
-      },
-    });
-    console.log("response", response.data);
-    setExistingFields(response.data);
-  } catch (error) {
-    console.error("Error fetching categories fields:", error);
-  }
-};
+  const fetchCategoryFields = async () => {
+    const token = sessionStorage.getItem("token"); // get token
+    try {
+      const response = await axios.get(`${JAVA_BASE}api/assets/fetch`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // add token here
+        },
+      });
+      console.log("response", response.data);
+      setExistingFields(response.data);
+    } catch (error) {
+      console.error("Error fetching categories fields:", error);
+    }
+  };
 
 
   const closedModal = () => {
@@ -211,22 +211,22 @@ const fetchCategoryFields = async () => {
   const removeField = (index) => {
     setNewFields(newFields.filter((_, i) => i !== index));
   };
-const removeExistingField = async (id) => {
-  const token = sessionStorage.getItem("token"); // get token
+  const removeExistingField = async (id) => {
+    const token = sessionStorage.getItem("token"); // get token
 
-  try {
-    await axios.delete(`${JAVA_BASE}api/assets/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`, // add token here
-      },
-    });
+    try {
+      await axios.delete(`${JAVA_BASE}api/assets/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // add token here
+        },
+      });
 
-    window.location.reload();
-    setUpdatedOn((prev) => prev + 1);
-  } catch (error) {
-    console.error("Error deleting category:", error);
-  }
-};
+      window.location.reload();
+      setUpdatedOn((prev) => prev + 1);
+    } catch (error) {
+      console.error("Error deleting category:", error);
+    }
+  };
 
 
   const handleSubmit = async (e) => {
@@ -304,7 +304,7 @@ const removeExistingField = async (id) => {
       console.log("Updating category: ", newCategory); // Debug log to check data
 
       const response = await axios.put(
-       `${JAVA_BASE}api/categories/id/${categoryData.categoryId}`,
+        `${JAVA_BASE}api/categories/id/${categoryData.categoryId}`,
         newCategory
       );
       setUpdatedOn(new Date()); // Trigger re-fetch or update of categories
@@ -393,7 +393,7 @@ const removeExistingField = async (id) => {
       console.log("Temporary Save Data:", temporaryData); // Log the data being sent
 
       const response = await axios.post(
-       `${JAVA_BASE}api/assets/insert`,
+        `${JAVA_BASE}api/assets/insert`,
         temporaryData
       );
 
@@ -496,7 +496,7 @@ const removeExistingField = async (id) => {
 
       // Send a POST request to save the temporary data
       const saveResponse = await axios.post(
-       `${JAVA_BASE}api/assets/insert`,
+        `${JAVA_BASE}api/assets/insert`,
         temporaryData
       );
 
@@ -568,7 +568,7 @@ const removeExistingField = async (id) => {
       console.log("Updated Category Data:", updatedCategory); // Log data being submitted
 
       const response = await axios.post(
-       `${JAVA_BASE}api/temp/save`,
+        `${JAVA_BASE}api/temp/save`,
         updatedCategory
       );
 
@@ -594,16 +594,14 @@ const removeExistingField = async (id) => {
       // console.log(newFields)
 
       let updatedFieldsData = newFields.reduce((acc, field) => {
-        acc[field.fieldname] = `${field.assetDataType}${
-          field.isNullable ? ",NULL" : ",NOT NULL"
-        }`;
+        acc[field.fieldname] = `${field.assetDataType}${field.isNullable ? ",NULL" : ",NOT NULL"
+          }`;
         return acc;
       }, {});
 
       for (let data of existingFields) {
-        updatedFieldsData[data.fieldname] = `${data.assetDataType}${
-          data.isNullable ? ",NULL" : ",NOT NULL"
-        }`;
+        updatedFieldsData[data.fieldname] = `${data.assetDataType}${data.isNullable ? ",NULL" : ",NOT NULL"
+          }`;
       }
 
       // updatedFieldsData["roles"] = [selectedRole];
@@ -652,57 +650,57 @@ const removeExistingField = async (id) => {
     setExistingFields(
       filterCategoryFields.length
         ? filterCategoryFields.map((c) => ({
-            id: c.id,
-            fieldname: c.fieldname,
-            assetDataType: c.assetDataType,
-            isUnique: c.isUnique,
-            isNullable: c.isNullable,
-          }))
+          id: c.id,
+          fieldname: c.fieldname,
+          assetDataType: c.assetDataType,
+          isUnique: c.isUnique,
+          isNullable: c.isNullable,
+        }))
         : []
     );
 
     setNewFields(
       !filterCategoryFields.length
         ? [
-            {
-              fieldname: "Asset Name",
-              assetDataType: "String",
-              isUnique: false,
-              isNullable: false,
-            },
-            {
-              fieldname: "Purchase Date",
-              assetDataType: "Date",
-              isUnique: false,
-              isNullable: false,
-            },
-            {
-              fieldname: "Original Cost",
-              assetDataType: "Number",
-              isUnique: false,
-              isNullable: false,
-            },
-            {
-              fieldname: "Scrap Value",
-              assetDataType: "Number",
-              isUnique: false,
-              isNullable: false,
-            },
-            {
-              fieldname: "Useful Life",
-              assetDataType: "Number",
-              isUnique: false,
-              isNullable: false,
-            },
-          ]
+          {
+            fieldname: "Asset Name",
+            assetDataType: "String",
+            isUnique: false,
+            isNullable: false,
+          },
+          {
+            fieldname: "Purchase Date",
+            assetDataType: "Date",
+            isUnique: false,
+            isNullable: false,
+          },
+          {
+            fieldname: "Original Cost",
+            assetDataType: "Number",
+            isUnique: false,
+            isNullable: false,
+          },
+          {
+            fieldname: "Scrap Value",
+            assetDataType: "Number",
+            isUnique: false,
+            isNullable: false,
+          },
+          {
+            fieldname: "Useful Life",
+            assetDataType: "Number",
+            isUnique: false,
+            isNullable: false,
+          },
+        ]
         : [
-            {
-              fieldname: "",
-              assetDataType: "String",
-              isUnique: false,
-              isNullable: false,
-            },
-          ]
+          {
+            fieldname: "",
+            assetDataType: "String",
+            isUnique: false,
+            isNullable: false,
+          },
+        ]
     ); // Reset new fields
   };
 
@@ -805,7 +803,7 @@ const removeExistingField = async (id) => {
 
       // Fetch roles from API
       const response = await fetch(
-       `${JAVA_BASE}api/roles/category/${category.categoryId}`
+        `${JAVA_BASE}api/roles/category/${category.categoryId}`
       );
       const roles = await response.json();
 
@@ -821,9 +819,9 @@ const removeExistingField = async (id) => {
   const renderRoles = (roles, action) => {
     return roles
       ? roles
-          .filter((item) => item.action === action)
-          .map((item) => item.groups)
-          .join(", ") || "No roles assigned"
+        .filter((item) => item.action === action)
+        .map((item) => item.groups)
+        .join(", ") || "No roles assigned"
       : "No roles found";
   };
 
@@ -843,19 +841,19 @@ const removeExistingField = async (id) => {
         />
         <div className="w-full">
           <div>
-         {/* Search Bar */}
-<div className="flex justify-end mb-4">
-  <div className="flex items-end gap-3">
-    <input
-      type="text"
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      placeholder="Search"
-      className="w-[250px] p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-   
-  </div>
-</div>
+            {/* Search Bar */}
+            <div className="flex justify-end mb-4">
+              <div className="flex items-end gap-3">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search"
+                  className="w-[250px] p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+
+              </div>
+            </div>
 
             <div className="relative w-full  overflow-hidden">
               <div className="overflow-x-auto overflow-y-auto max-h-[75vh] sm:max-h-[60vh] md:max-h-[55vh]">
@@ -897,9 +895,8 @@ const removeExistingField = async (id) => {
                       paginatedData.map((category, index) => (
                         <tr
                           key={category.categoryId}
-                          className={`${
-                            index % 2 === 0 ? "bg-blue-50" : "bg-white"
-                          } transition-colors duration-300 hover:bg-gray-100`}
+                          className={`${index % 2 === 0 ? "bg-blue-50" : "bg-white"
+                            } transition-colors duration-300 hover:bg-gray-100`}
                         >
                           <td className="px-5 py-3 text-center ">
                             {(currentPage - 1) * rowsPerPage + index + 1}
@@ -1044,7 +1041,7 @@ const removeExistingField = async (id) => {
                 </h2>
                 <div className="max-h-96 overflow-y-auto">
                   {selectedCategory.roles &&
-                  selectedCategory.roles.length > 0 ? (
+                    selectedCategory.roles.length > 0 ? (
                     <ol className="list-decimal pl-5">
                       {selectedCategory.roles
                         .filter((item) => item.action === selectedRoleType)
@@ -1273,14 +1270,14 @@ const removeExistingField = async (id) => {
                           "Scrap Value",
                           "Useful Life",
                         ].includes(field.fieldname) && (
-                          <button
-                            type="button"
-                            onClick={() => removeExistingField(field.id)}
-                            className="text-red-500 hover:underline"
-                          >
-                            <FaTrash />
-                          </button>
-                        )}
+                            <button
+                              type="button"
+                              onClick={() => removeExistingField(field.id)}
+                              className="text-red-500 hover:underline"
+                            >
+                              <FaTrash />
+                            </button>
+                          )}
                       </div>
                     ))}
                     {newFields.map((field, index) => (

@@ -4,7 +4,7 @@ import Select from "react-select";
 import { FiX } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import MessageModal from "../ApprovalAuthority/MessageModal";
-import { DMS_BASE, JAVA_BASE, ASSET_NODE_BASE, UCS_BASE, MAIN_BASE, WORKFLOW_BASE } from "../../config/apiBase"
+import { DMS_BASE, JAVA_BASE, ASSET_NODE_BASE, UCS_BASE, MAIN_BASE, WORKFLOW_BASE ,PURCHASE_BASE} from "../../config/apiBase"
 const IndentModal = ({ asset, onClose }) => {
   const [quantity, setQuantity] = useState("");
   const [remarks, setRemarks] = useState("");
@@ -48,7 +48,7 @@ const IndentModal = ({ asset, onClose }) => {
   useEffect(() => {
     axios
       .get(
-        "https://devapi.softtrails.net/saas/uniworkflow/workflow/get-modules/module?module_name=Purchase%20Management&sub_module_name=Indenting",
+        `${WORKFLOW_BASE}uniworkflow/workflow/get-modules/module?module_name=Purchase%20Management&sub_module_name=Indenting`,
         { headers: { Authorization: `Bearer ${token}` } }
       )
       .then((res) => {
@@ -66,12 +66,12 @@ const IndentModal = ({ asset, onClose }) => {
   useEffect(() => {
     axios
       .get(
-        `https://devapi.softtrails.net/saas/purchase/test/purchase/budget/department/${user_id}`,
+        `${PURCHASE_BASE}purchase/budget/department/${user_id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       )
       .then((res) => {
         setBudgetList(
-          (res.data?.budget_name || []).map((b) => ({
+          (res.data?.budgets || []).map((b) => ({
             value: b.id,
             label: b.name,
           }))
@@ -82,7 +82,7 @@ const IndentModal = ({ asset, onClose }) => {
 
   // ----------- SUBMIT HANDLER WITH MESSAGE MODAL -----------
   const handleSubmit = async () => {
-    if (!selectedWorkflow || !selectedBudget || !quantity) {
+    if ( !selectedBudget || !quantity) {
       setMessage("Please fill all required fields");
       setMessageType("warning");
       return;
@@ -90,7 +90,6 @@ const IndentModal = ({ asset, onClose }) => {
 
     const payload = {
       user_id,
-      workflow_id: selectedWorkflow.value,
       products: [
         {
           asset_name: asset.material_name,
@@ -106,7 +105,7 @@ const IndentModal = ({ asset, onClose }) => {
 
     try {
       await axios.post(
-        "https://devapi.softtrails.net/saas/purchase/test/purchase/indenting",
+        `${PURCHASE_BASE}purchase/indenting`,
         payload,
         {
           headers: {
@@ -191,16 +190,7 @@ const IndentModal = ({ asset, onClose }) => {
                 />
               </div>
 
-              <div>
-                <label className="text-sm text-gray-600">Workflow</label>
-                <Select
-                  isLoading={loadingWorkflow}
-                  options={workflowList}
-                  value={selectedWorkflow}
-                  onChange={setSelectedWorkflow}
-                  placeholder="Select Workflow"
-                />
-              </div>
+          
 
               <div>
                 <label className="text-sm text-gray-600">Budget</label>
