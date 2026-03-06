@@ -25,7 +25,7 @@ const QuotationView = () => {
        vendor_id: data.vendor_id ?? data.vendorId ?? data.vendor_id ?? data.vendor_id,
        status: "Shortlisted",
      };
-     const url = `http://devdemo.softtrails.net/purchase/supplier_quotation/shortlist`;
+     const url = `${process.env.REACT_APP_PURCHASE_API}/supplier_quotation/shortlist`;
      const res = await axios.patch(url, payload, {
        headers: { Authorization: token ? `Bearer ${token}` : "" },
      });

@@ -7,7 +7,7 @@ import API_BASE_URL from "../../config/api";
 
 const ACTIONS_API = `${API_BASE_URL}/uniworkflow/get-All/actions?module_name=Customer Relation Management`;
 const MODULES_API =
-  "https://devapi.softtrails.net/node/demo/uniworkflow/modules/with-submodules";
+  " http://devdemo.softtrails.net/uniworkflow/modules/with-submodules";
 
 const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
   const [identifier, setIdentifier] = useState("");
@@ -39,7 +39,7 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
       setActions(
         Array.isArray(actionsData)
           ? actionsData.map((a) => ({ ...a, enabled: !!a.enabled }))
-          : []
+          : [],
       );
     } catch (error) {
       console.error("Failed to fetch actions:", error);
@@ -58,13 +58,13 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
     const fetchWorkflows = async () => {
       try {
         const res = await axios.get(
-          `${API_BASE_URL}uniworkflow/workflow/get-modules/module`,
+          `${API_BASE_URL}/uniworkflow/workflow/get-modules/module`,
           {
             params: {
-              module_name: selectedModule?.product_name,  // ✅ dynamic module
+              module_name: selectedModule?.product_name, // ✅ dynamic module
               sub_module_name: selectedSubModule.sub_module,
             },
-          }
+          },
         );
 
         setAllWorkflows(res.data?.workflows || []);
@@ -86,7 +86,7 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
       const modulesData = moduleRes.data?.data || [];
 
       const crmModule = modulesData.find(
-        (m) => m.module_name?.toLowerCase() === "customer relation management"
+        (m) => m.module_name?.toLowerCase() === "customer relation management",
       );
 
       const normalizedModules = modulesData.map((m) => ({
@@ -99,11 +99,11 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
       setSelectedModule(
         crmModule
           ? {
-            product_name: crmModule.module_name,
-            product_no: crmModule.module_id,
-            sub_modules: crmModule.sub_modules || [],
-          }
-          : null
+              product_name: crmModule.module_name,
+              product_no: crmModule.module_id,
+              sub_modules: crmModule.sub_modules || [],
+            }
+          : null,
       );
       setSelectedSubModule(null);
 
@@ -149,8 +149,9 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
     // ✅ Duplicate check before proceeding
     const duplicateExists = actions.some(
       (a) =>
-        a.action_name?.trim().toLowerCase() === identifier.trim().toLowerCase() &&
-        a.workflow_id === selectedWorkflow.workflow_id
+        a.action_name?.trim().toLowerCase() ===
+          identifier.trim().toLowerCase() &&
+        a.workflow_id === selectedWorkflow.workflow_id,
     );
 
     if (duplicateExists) {
@@ -166,21 +167,17 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
       title: "Confirm Add Action",
       message: `Action: ${identifier}\nModule: ${selectedModule.product_name}\nSub-Module: ${selectedSubModule.sub_module}\nWorkflow: ${selectedWorkflow.workflow_name}\n\nDo you want to continue?`,
       onConfirm: async () => {
-
         try {
           setLoading(true);
-          await axios.post(
-            `${API_BASE_URL}/uniworkflow/actions_workflow`,
-            {
-              action_name: identifier,
-              module_name: selectedModule.product_name,
-              sub_module_name: selectedSubModule.sub_module,
-              module_id: Number(selectedModule.product_no),
-              sub_id: Number(selectedSubModule.sub_id),
-              description: description,
-              workflow_id: Number(selectedWorkflow.workflow_id),
-            }
-          );
+          await axios.post(`${API_BASE_URL}/uniworkflow/actions_workflow`, {
+            action_name: identifier,
+            module_name: selectedModule.product_name,
+            sub_module_name: selectedSubModule.sub_module,
+            module_id: Number(selectedModule.product_no),
+            sub_id: Number(selectedSubModule.sub_id),
+            description: description,
+            workflow_id: Number(selectedWorkflow.workflow_id),
+          });
 
           await fetchActions();
           resetForm();
@@ -203,7 +200,6 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
       },
     });
   };
-
 
   if (!open) return null;
 
@@ -245,8 +241,8 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
               onChange={(e) =>
                 setSelectedSubModule(
                   selectedModule?.sub_modules.find(
-                    (sm) => sm.sub_id === e.target.value
-                  )
+                    (sm) => sm.sub_id === e.target.value,
+                  ),
                 )
               }
             >
@@ -267,7 +263,7 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
               disabled={!selectedSubModule}
               onChange={(e) => {
                 const wf = allworkflow.find(
-                  (wf) => wf.workflow_id === Number(e.target.value)
+                  (wf) => wf.workflow_id === Number(e.target.value),
                 );
                 setSelectedWorkflow(wf || null);
               }}
@@ -313,14 +309,15 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
                 </>
               )}
             </select>
-
-
           </div>
 
           <div className="flex flex-col w-2/3">
             <div className="flex justify-between">
-              <label className="font-medium mb-1">Description</label>{descriptionError && (
-                <span className="text-red-500 text-sm mt-1">{descriptionError}</span>
+              <label className="font-medium mb-1">Description</label>
+              {descriptionError && (
+                <span className="text-red-500 text-sm mt-1">
+                  {descriptionError}
+                </span>
               )}
             </div>
             <input
@@ -331,7 +328,9 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
                 setDescription(e.target.value);
                 if (descriptionError) setDescriptionError(""); // Clear error on input
               }}
-              className={`border rounded px-4 py-2 ${descriptionError ? 'border-red-500' : ''}`}
+              className={`border rounded px-4 py-2 ${
+                descriptionError ? "border-red-500" : ""
+              }`}
               required
             />
           </div>
@@ -353,14 +352,18 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
           title={confirmationModal.title}
           message={confirmationModal.message}
           onConfirm={confirmationModal.onConfirm}
-          onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+          onClose={() =>
+            setConfirmationModal((prev) => ({ ...prev, isOpen: false }))
+          }
         />
 
         {/* Message Modal */}
         <MessageModal
           message={messageModal.message}
           type={messageModal.type}
-          setMessage={(msg) => setMessageModal(prev => ({ ...prev, message: msg }))}
+          setMessage={(msg) =>
+            setMessageModal((prev) => ({ ...prev, message: msg }))
+          }
         />
       </div>
     </div>

@@ -77,7 +77,7 @@ const SetupWorkflow = () => {
       try {
         const token = sessionStorage.getItem("token");
         const { data } = await axios.get(
-          `${API_BASE_URL}uniworkflow/workflow/get-modules/module`,
+          `${API_BASE_URL}/uniworkflow/workflow/get-modules/module`,
           {
             headers: { Authorization: `Bearer ${token}` },
             params: { module_name: "Customer Relation Management" },

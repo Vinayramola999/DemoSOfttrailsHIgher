@@ -99,7 +99,7 @@ export default function CRMTabs() {
           id={`tabpanel-${activeTab}`}
           role="tabpanel"
           aria-labelledby={`tab-${activeTab}`}
-          className="h-full"
+          className="h-full cursor-pointer"
         >
           {getContent()}
         </div>

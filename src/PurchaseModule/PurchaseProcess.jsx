@@ -204,7 +204,7 @@ const PurchaseProcess = ({ onClose, selectedContacts }) => {
       };
 
       // Send RFP (UCS)
-      const response = await axios.post(`${API.UCS_API}/ucs/send`, payload, {
+      const response = await axios.post(`${API.UCS_API}/ucs/sends`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

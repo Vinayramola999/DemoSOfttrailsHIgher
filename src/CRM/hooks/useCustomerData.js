@@ -248,7 +248,7 @@ const useCustomerData = () => {
       if (!token) return { success: false, error: "Token does not exist." };
       console.log("🚀 Creating customer with payload in use customer :", payload);
       try {
-        const response = await fetch(`${API_BASE_URL}/customers`, {
+        const response = await fetch(`${API_BASE_URL}/customers/`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -257,6 +257,7 @@ const useCustomerData = () => {
           body: JSON.stringify(payload),
         });
 
+         
         if (response.ok) {
           const result = await response.json();
           console.log("✅ Customer created successfully:", result);

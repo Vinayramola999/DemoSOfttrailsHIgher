@@ -722,12 +722,10 @@ const fetchRequests = async () => {
         );
       }
 
-      // Build required_doc object with Profile key set to selected dropdown values
-      const requiredDocObj = {
-        Profile: Array.isArray(formData.requiredDocument) 
-          ? formData.requiredDocument.join(", ") 
-          : ""
-      };
+      // Build required_doc as comma-separated string of selected documents
+      const requiredDocObj = Array.isArray(formData.requiredDocument) 
+        ? formData.requiredDocument.join(", ") 
+        : "";
 
       const rfpPayload = {
         rfp_id: rfpId || undefined,

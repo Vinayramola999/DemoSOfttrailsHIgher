@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { EditIcon, DeleteIcon, ContactIcon, FlagIcon } from "../component/Icons";
+import {
+  EditIcon,
+  DeleteIcon,
+  ContactIcon,
+  FlagIcon,
+} from "../component/Icons";
 import { Country, State, City } from "country-state-city";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -41,7 +46,6 @@ import LoadingSpinner from "../component/LoadingSpinner";
 import ErrorBoundary from "../component/ErrorBoundary";
 import ConfirmationModal from "../../../NewComponents/ConfirmationModal";
 import MessageModal from "../../../NewComponents/MessageModal";
-import {MAIN_API_BASE} from "../../../config/apiBase";
 import "../../../App.css";
 const Customer = () => {
   const API_BASE_URL = process.env.REACT_APP_API_CRM_BASE_URL;
@@ -111,7 +115,7 @@ const Customer = () => {
     phone: "",
     email: "",
   });
-  // Flag functionality states 
+  // Flag functionality states
   const [flagState, setFlagState] = useState({
     reasonText: "",
     customerId: null,
@@ -152,11 +156,14 @@ const Customer = () => {
 
   const validateGST = useCallback((gst) => VALIDATION_REGEX.GST.test(gst), []);
   const validatePAN = useCallback((pan) => VALIDATION_REGEX.PAN.test(pan), []);
-  const validateEmail = useCallback((email) => VALIDATION_REGEX.EMAIL.test(email), []);
+  const validateEmail = useCallback(
+    (email) => VALIDATION_REGEX.EMAIL.test(email),
+    [],
+  );
 
   const resetForm = useCallback(() => {
     setNewCustomer(DEFAULT_CUSTOMER);
-    setEditState(prev => ({
+    setEditState((prev) => ({
       ...prev,
       isEditMode: false,
       currentCustomerIndex: null,
@@ -170,18 +177,17 @@ const Customer = () => {
     });
     clearValidationErrors();
   }, [clearValidationErrors]);
-
   const resetContactForm = useCallback(() => {
     setNewContact(DEFAULT_CONTACT);
-    setErrors(prev => ({ ...prev, general: "" }));
+    setErrors((prev) => ({ ...prev, general: "" }));
   }, []);
 
   const openModal = useCallback((modalType) => {
-    setModals(prev => ({ ...prev, [modalType]: true }));
+    setModals((prev) => ({ ...prev, [modalType]: true }));
   }, []);
 
   const closeModal = useCallback((modalType) => {
-    setModals(prev => ({ ...prev, [modalType]: false }));
+    setModals((prev) => ({ ...prev, [modalType]: false }));
   }, []);
 
   // ============================================================================
@@ -196,10 +202,16 @@ const Customer = () => {
     }
 
     try {
-      const response = await axios.post(`${MAIN_API_BASE}/users/verify-token`, { token });
+      const response = await axios.post(
+        ` http://devdemo.softtrails.net/users/verify-token`,
+        { token },
+      );
       console.log("Token is valid:", response.data);
     } catch (error) {
-      console.error("Token verification failed:", error.response?.data || error.message);
+      console.error(
+        "Token verification failed:",
+        error.response?.data || error.message,
+      );
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("tokenExpiry");
       navigate("/");
@@ -208,363 +220,458 @@ const Customer = () => {
 
   // CUSTOMER CRUD OPERATIONS
 
-  const handleAddCustomer = useCallback(async (event) => {
-    console.log("🚀 handleAddCustomer function called");
-    console.log("📝 Form data received:", newCustomer);
+  const handleAddCustomer = useCallback(
+    async (event) => {
+      console.log("🚀 handleAddCustomer function called");
+      console.log("📝 Form data received:", newCustomer);
 
-    // Prevent default form submission behavior
-    event.preventDefault();
-    console.log("✅ Default form submission prevented");
+      // Prevent default form submission behavior
+      event.preventDefault();
+      console.log("✅ Default form submission prevented");
 
-    // Clear all previous errors to start fresh
-    setErrors(prev => ({
-      ...prev,
-      general: "",
-      gst: "",
-      pan: "",
-      phone: "",
-      email: ""
-    }));
-    console.log("🧹 Previous errors cleared");
-
-    // ============================================================================
-    // STEP 1: VALIDATE REQUIRED FIELDS
-    // ============================================================================
-
-    console.log("🔍 Starting validation checks...");
-
-    // Check if customer name is provided (REQUIRED)
-    if (!newCustomer.customer_name || !newCustomer.customer_name.trim()) {
-      console.log("❌ Validation failed: Customer name is missing");
-      setErrors(prev => ({
+      // Clear all previous errors to start fresh
+      setErrors((prev) => ({
         ...prev,
-        general: "Customer name is required"
+        general: "",
+        gst: "",
+        pan: "",
+        phone: "",
+        email: "",
       }));
-      return;
-    }
-    console.log("✅ Customer name validation passed:", newCustomer.customer_name);
+      console.log("🧹 Previous errors cleared");
 
-    // Check that either phone OR email is provided (at least one REQUIRED)
-    const hasPhone = newCustomer.phone_number && newCustomer.phone_number.trim();
-    const hasEmail = newCustomer.email_id && newCustomer.email_id.trim();
+      // ============================================================================
+      // STEP 1: VALIDATE REQUIRED FIELDS
+      // ============================================================================
 
-    console.log("📞 Has phone:", hasPhone ? "Yes" : "No", hasPhone || "(empty)");
-    console.log("📧 Has email:", hasEmail ? "Yes" : "No", hasEmail || "(empty)");
+      console.log("🔍 Starting validation checks...");
 
-    if (!hasPhone && !hasEmail) {
-      console.log("❌ Validation failed: Neither phone nor email provided");
-      setErrors(prev => ({
-        ...prev,
-        general: "Either phone number or email is required"
-      }));
-      return;
-    }
-    console.log("✅ Contact method validation passed - at least one provided");
-
-    // STEP 2: VALIDATE PHONE FORMAT (if provided)
-
-    if (hasPhone) {
-      console.log("🔍 Validating phone number format...");
-
-      // Check if phone contains only digits
-      if (!VALIDATION_REGEX.PHONE_DIGITS.test(newCustomer.phone_number)) {
-        console.log("❌ Phone validation failed: Contains non-digit characters");
-        setErrors(prev => ({ ...prev, phone: "Phone number should contain only digits" }));
+      // Check if customer name is provided (REQUIRED)
+      if (!newCustomer.customer_name || !newCustomer.customer_name.trim()) {
+        console.log("❌ Validation failed: Customer name is missing");
+        setErrors((prev) => ({
+          ...prev,
+          general: "Customer name is required",
+        }));
         return;
       }
-      console.log("✅ Phone digits validation passed");
+      console.log(
+        "✅ Customer name validation passed:",
+        newCustomer.customer_name,
+      );
 
-      // Check phone number length
-      if (newCustomer.phone_number.length !== FIELD_LENGTHS.PHONE) {
-        console.log(`❌ Phone validation failed: Length is ${newCustomer.phone_number.length}, expected ${FIELD_LENGTHS.PHONE}`);
-        setErrors(prev => ({ ...prev, phone: ERROR_MESSAGES.INVALID_PHONE_LENGTH }));
+      // Check that either phone OR email is provided (at least one REQUIRED)
+      const hasPhone =
+        newCustomer.phone_number && newCustomer.phone_number.trim();
+      const hasEmail = newCustomer.email_id && newCustomer.email_id.trim();
+
+      console.log(
+        "📞 Has phone:",
+        hasPhone ? "Yes" : "No",
+        hasPhone || "(empty)",
+      );
+      console.log(
+        "📧 Has email:",
+        hasEmail ? "Yes" : "No",
+        hasEmail || "(empty)",
+      );
+
+      if (!hasPhone && !hasEmail) {
+        console.log("❌ Validation failed: Neither phone nor email provided");
+        setErrors((prev) => ({
+          ...prev,
+          general: "Either phone number or email is required",
+        }));
         return;
       }
-      console.log(`✅ Phone length validation passed (${FIELD_LENGTHS.PHONE} digits)`);
-    }
+      console.log(
+        "✅ Contact method validation passed - at least one provided",
+      );
 
-    // STEP 3: VALIDATE EMAIL FORMAT (if provided)
+      // STEP 2: VALIDATE PHONE FORMAT (if provided)
 
-    if (hasEmail) {
-      console.log("🔍 Validating email format...");
+      if (hasPhone) {
+        console.log("🔍 Validating phone number format...");
 
-      if (!validateEmail(newCustomer.email_id)) {
-        console.log("❌ Email validation failed: Invalid format");
-        setErrors(prev => ({ ...prev, email: ERROR_MESSAGES.INVALID_EMAIL }));
-        return;
+        // Check if phone contains only digits
+        if (!VALIDATION_REGEX.PHONE_DIGITS.test(newCustomer.phone_number)) {
+          console.log(
+            "❌ Phone validation failed: Contains non-digit characters",
+          );
+          setErrors((prev) => ({
+            ...prev,
+            phone: "Phone number should contain only digits",
+          }));
+          return;
+        }
+        console.log("✅ Phone digits validation passed");
+
+        // Check phone number length
+        if (newCustomer.phone_number.length !== FIELD_LENGTHS.PHONE) {
+          console.log(
+            `❌ Phone validation failed: Length is ${newCustomer.phone_number.length}, expected ${FIELD_LENGTHS.PHONE}`,
+          );
+          setErrors((prev) => ({
+            ...prev,
+            phone: ERROR_MESSAGES.INVALID_PHONE_LENGTH,
+          }));
+          return;
+        }
+        console.log(
+          `✅ Phone length validation passed (${FIELD_LENGTHS.PHONE} digits)`,
+        );
       }
-      console.log("✅ Email format validation passed");
-    }
 
-    // STEP 4: VALIDATE GST (optional field)
+      // STEP 3: VALIDATE EMAIL FORMAT (if provided)
 
-    if (newCustomer.gst_number && newCustomer.gst_number.trim()) {
-      console.log("🔍 Validating GST number (optional field provided)...");
+      if (hasEmail) {
+        console.log("🔍 Validating email format...");
 
-      if (!validateGST(newCustomer.gst_number)) {
-        console.log("❌ GST validation failed: Invalid format");
-        setErrors(prev => ({ ...prev, gst: ERROR_MESSAGES.INVALID_GST }));
-        return;
+        if (!validateEmail(newCustomer.email_id)) {
+          console.log("❌ Email validation failed: Invalid format");
+          setErrors((prev) => ({
+            ...prev,
+            email: ERROR_MESSAGES.INVALID_EMAIL,
+          }));
+          return;
+        }
+        console.log("✅ Email format validation passed");
       }
-      console.log("✅ GST validation passed");
-    } else {
-      console.log("ℹ️ GST number not provided (optional field)");
-    }
 
-    // STEP 5: VALIDATE PAN (optional field)
+      // STEP 4: VALIDATE GST (optional field)
 
-    if (newCustomer.pan_no && newCustomer.pan_no.trim()) {
-      console.log("🔍 Validating PAN number (optional field provided)...");
+      if (newCustomer.gst_number && newCustomer.gst_number.trim()) {
+        console.log("🔍 Validating GST number (optional field provided)...");
 
-      if (!validatePAN(newCustomer.pan_no)) {
-        console.log("❌ PAN validation failed: Invalid format");
-        setErrors(prev => ({ ...prev, pan: ERROR_MESSAGES.INVALID_PAN }));
-        return;
-      }
-      console.log("✅ PAN validation passed");
-    } else {
-      console.log("ℹ️ PAN number not provided (optional field)");
-    }
-
-    // STEP 6: USE FORM VALIDATION HOOK (if needed)
-
-    console.log("🔍 Running form validation hook...");
-    const validationResult = validateForm(newCustomer);
-    console.log("📊 Form validation result:", validationResult);
-    console.log("📋 Validation errors:", validationErrors);
-
-    if (!validationResult) {
-      console.log("❌ Form validation hook failed - stopping submission");
-      return;
-    }
-    console.log("✅ Form validation hook passed");
-
-    // STEP 7: ALL VALIDATIONS PASSED - ATTEMPT TO CREATE CUSTOMER
-
-    console.log("🎉 All validations passed! Attempting to create customer...");
-    console.log("📤 Sending data to API:", newCustomer);
-
-    try {
-      // Call the API to create customer and pass "Approved" filter to maintain current view
-      const result = await createCustomer(newCustomer, "Approved");
-      console.log("📥 API response received:", result);
-
-      if (result.success) {
-        console.log("🎉 Customer created successfully!");
-
-        // Close modal and reset form
-        closeModal('customer');
-        console.log("🔒 Modal closed");
-
-        resetForm();
-        console.log("🧹 Form reset");
-
-        // Show success message to user
-        await Swal.fire({
-          icon: "success",
-          title: "Success!",
-          text: SUCCESS_MESSAGES.CUSTOMER_CREATED,
-          timer: 2000,
-          showConfirmButton: false,
-        });
-        console.log("✅ Success message displayed");
-
+        if (!validateGST(newCustomer.gst_number)) {
+          console.log("❌ GST validation failed: Invalid format");
+          setErrors((prev) => ({ ...prev, gst: ERROR_MESSAGES.INVALID_GST }));
+          return;
+        }
+        console.log("✅ GST validation passed");
       } else {
-        // API returned error
-        console.log("❌ API returned error:", result.error);
-        setErrors(prev => ({ ...prev, general: result.error || "Failed to create customer" }));
+        console.log("ℹ️ GST number not provided (optional field)");
       }
 
-    } catch (error) {
-      // Unexpected error occurred
-      console.error("💥 Unexpected error occurred:", error);
-      console.error("📍 Error stack:", error.stack);
-      setErrors(prev => ({
-        ...prev,
-        general: "An unexpected error occurred. Please try again."
-      }));
-    }
+      // STEP 5: VALIDATE PAN (optional field)
 
-    console.log("🏁 handleAddCustomer function completed");
+      if (newCustomer.pan_no && newCustomer.pan_no.trim()) {
+        console.log("🔍 Validating PAN number (optional field provided)...");
 
-  }, [
-    newCustomer, validateGST, validatePAN, validateEmail, validateForm, validationErrors, createCustomer, closeModal, resetForm]);
+        if (!validatePAN(newCustomer.pan_no)) {
+          console.log("❌ PAN validation failed: Invalid format");
+          setErrors((prev) => ({ ...prev, pan: ERROR_MESSAGES.INVALID_PAN }));
+          return;
+        }
+        console.log("✅ PAN validation passed");
+      } else {
+        console.log("ℹ️ PAN number not provided (optional field)");
+      }
 
-  const handleEditCustomer = useCallback((index) => {
-    const customer = customers[index];
-    console.log("Customer status from database:", customer.status);
+      // STEP 6: USE FORM VALIDATION HOOK (if needed)
 
-    setNewCustomer({
-      customer_name: customer.customer_name || "",
-      phone_number: customer.phone_number || "",
-      email_id: customer.email_id || "",
-      industry: customer.industry || "",
-      address: customer.address || "",
-      country: customer.country || "",
-      state: customer.state || "",
-      city: customer.city || "",
-      pincode: customer.pincode || "",
-      tan_number: customer.tan_number || "",
-      gst_number: customer.gst_number || "",
-      pan_no: customer.pan_no || "",
-      status: customer.status?.toLowerCase() || "active",
-    });
+      console.log("🔍 Running form validation hook...");
+      const validationResult = validateForm(newCustomer);
+      console.log("📊 Form validation result:", validationResult);
+      console.log("📋 Validation errors:", validationErrors);
 
-    setEditState(prev => ({
-      ...prev,
-      isEditMode: true,
-      currentCustomerIndex: index,
-    }));
+      if (!validationResult) {
+        console.log("❌ Form validation hook failed - stopping submission");
+        return;
+      }
+      console.log("✅ Form validation hook passed");
 
-    openModal('customer');
-  }, [customers, openModal]);
+      // STEP 7: ALL VALIDATIONS PASSED - ATTEMPT TO CREATE CUSTOMER
 
-  const handleEditSubmit = useCallback(async (event) => {
-    event.preventDefault();
-    console.log("=== EDIT SUBMIT STARTED ===");
-    console.log("newCustomer object:", newCustomer);
-    console.log("Status value:", newCustomer.status);
+      console.log(
+        "🎉 All validations passed! Attempting to create customer...",
+      );
+      console.log("📤 Sending data to API:", newCustomer);
 
-    setErrors({
-      general: "",
-      pan: "",
-      gst: "",
-      phone: "",
-      email: "",
-    });
-
-    // Validate GST and PAN
-    if (newCustomer.gst_number && !validateGST(newCustomer.gst_number)) {
-      setErrors(prev => ({ ...prev, gst: ERROR_MESSAGES.INVALID_GST }));
-      return;
-    }
-
-    if (newCustomer.pan_no && !validatePAN(newCustomer.pan_no)) {
-      setErrors(prev => ({ ...prev, pan: ERROR_MESSAGES.INVALID_PAN }));
-      return;
-    }
-
-    const customerId = customers[editState.currentCustomerIndex].customer_id;
-
-    setConfirmationModal({
-      isOpen: true,
-      title: "Update Customer",
-      message: "Are you sure you want to update this customer's details?",
-      onConfirm: async () => {
-        console.log("Calling updateCustomerData with:", customerId, newCustomer);
-        const result = await updateCustomerData(customerId, newCustomer);
-        console.log("Update result:", result);
+      try {
+        // Call the API to create customer and pass "Approved" filter to maintain current view
+        const result = await createCustomer(newCustomer, "Approved");
+        console.log("📥 API response received:", result);
 
         if (result.success) {
-          closeModal('customer');
-          resetForm();
-          setMessageModal({
-            message: SUCCESS_MESSAGES.CUSTOMER_UPDATED,
-            type: "success",
-          });
-        } else {
-          setErrors(prev => ({ ...prev, general: result.error }));
-          setMessageModal({
-            message: result.error || "Failed to update customer",
-            type: "error",
-          });
-        }
-      }
-    });
-  }, [newCustomer, validateGST, validatePAN, customers, editState.currentCustomerIndex, updateCustomerData, closeModal, resetForm]);
+          console.log("🎉 Customer created successfully!");
 
-  const handleDeleteCustomer = useCallback((customerId) => {
-    setConfirmationModal({
-      isOpen: true,
-      title: "Delete Customer",
-      message: "Are you sure you want to delete this customer? This action cannot be undone.",
-      onConfirm: async () => {
-        const result = await deleteCustomer(customerId, "Approved");
-        if (!result.success && result.error !== "Operation cancelled by user") {
-          setMessageModal({
-            message: result.error || "Failed to delete customer",
-            type: "error",
+          // Close modal and reset form
+          closeModal("customer");
+          console.log("🔒 Modal closed");
+
+          resetForm();
+          console.log("🧹 Form reset");
+
+          // Show success message to user
+          await Swal.fire({
+            icon: "success",
+            title: "Success!",
+            text: SUCCESS_MESSAGES.CUSTOMER_CREATED,
+            timer: 2000,
+            showConfirmButton: false,
           });
-        } else if (result.success) {
-          setMessageModal({
-            message: SUCCESS_MESSAGES.CUSTOMER_DELETED,
-            type: "success",
-          });
+          console.log("✅ Success message displayed");
+        } else {
+          // API returned error
+          console.log("❌ API returned error:", result.error);
+          setErrors((prev) => ({
+            ...prev,
+            general: result.error || "Failed to create customer",
+          }));
         }
+      } catch (error) {
+        // Unexpected error occurred
+        console.error("💥 Unexpected error occurred:", error);
+        console.error("📍 Error stack:", error.stack);
+        setErrors((prev) => ({
+          ...prev,
+          general: "An unexpected error occurred. Please try again.",
+        }));
       }
-    });
-  }, [deleteCustomer]);
+
+      console.log("🏁 handleAddCustomer function completed");
+    },
+    [
+      newCustomer,
+      validateGST,
+      validatePAN,
+      validateEmail,
+      validateForm,
+      validationErrors,
+      createCustomer,
+      closeModal,
+      resetForm,
+    ],
+  );
+
+  const handleEditCustomer = useCallback(
+    (index) => {
+      const customer = customers[index];
+      console.log("Customer status from database:", customer.status);
+
+      setNewCustomer({
+        customer_name: customer.customer_name || "",
+        phone_number: customer.phone_number || "",
+        email_id: customer.email_id || "",
+        industry: customer.industry || "",
+        address: customer.address || "",
+        country: customer.country || "",
+        state: customer.state || "",
+        city: customer.city || "",
+        pincode: customer.pincode || "",
+        tan_number: customer.tan_number || "",
+        gst_number: customer.gst_number || "",
+        pan_no: customer.pan_no || "",
+        status: customer.status?.toLowerCase() || "active",
+      });
+
+      setEditState((prev) => ({
+        ...prev,
+        isEditMode: true,
+        currentCustomerIndex: index,
+      }));
+
+      openModal("customer");
+    },
+    [customers, openModal],
+  );
+
+  const handleEditSubmit = useCallback(
+    async (event) => {
+      event.preventDefault();
+      console.log("=== EDIT SUBMIT STARTED ===");
+      console.log("newCustomer object:", newCustomer);
+      console.log("Status value:", newCustomer.status);
+
+      setErrors({
+        general: "",
+        pan: "",
+        gst: "",
+        phone: "",
+        email: "",
+      });
+
+      // Validate GST and PAN
+      if (newCustomer.gst_number && !validateGST(newCustomer.gst_number)) {
+        setErrors((prev) => ({ ...prev, gst: ERROR_MESSAGES.INVALID_GST }));
+        return;
+      }
+
+      if (newCustomer.pan_no && !validatePAN(newCustomer.pan_no)) {
+        setErrors((prev) => ({ ...prev, pan: ERROR_MESSAGES.INVALID_PAN }));
+        return;
+      }
+
+      const customerId = customers[editState.currentCustomerIndex].customer_id;
+
+      setConfirmationModal({
+        isOpen: true,
+        title: "Update Customer",
+        message: "Are you sure you want to update this customer's details?",
+        onConfirm: async () => {
+          console.log(
+            "Calling updateCustomerData with:",
+            customerId,
+            newCustomer,
+          );
+          const result = await updateCustomerData(customerId, newCustomer);
+          console.log("Update result:", result);
+
+          if (result.success) {
+            closeModal("customer");
+            resetForm();
+            setMessageModal({
+              message: SUCCESS_MESSAGES.CUSTOMER_UPDATED,
+              type: "success",
+            });
+          } else {
+            setErrors((prev) => ({ ...prev, general: result.error }));
+            setMessageModal({
+              message: result.error || "Failed to update customer",
+              type: "error",
+            });
+          }
+        },
+      });
+    },
+    [
+      newCustomer,
+      validateGST,
+      validatePAN,
+      customers,
+      editState.currentCustomerIndex,
+      updateCustomerData,
+      closeModal,
+      resetForm,
+    ],
+  );
+
+  const handleDeleteCustomer = useCallback(
+    (customerId) => {
+      setConfirmationModal({
+        isOpen: true,
+        title: "Delete Customer",
+        message:
+          "Are you sure you want to delete this customer? This action cannot be undone.",
+        onConfirm: async () => {
+          const result = await deleteCustomer(customerId, "Approved");
+          if (
+            !result.success &&
+            result.error !== "Operation cancelled by user"
+          ) {
+            setMessageModal({
+              message: result.error || "Failed to delete customer",
+              type: "error",
+            });
+          } else if (result.success) {
+            setMessageModal({
+              message: SUCCESS_MESSAGES.CUSTOMER_DELETED,
+              type: "success",
+            });
+          }
+        },
+      });
+    },
+    [deleteCustomer],
+  );
 
   // ============================================================================
   // CONTACT CRUD OPERATIONS
   // ============================================================================
 
-  const handleAddContact = useCallback((e) => {
-    e.preventDefault();
-    setErrors(prev => ({ ...prev, general: "" }));
+  const handleAddContact = useCallback(
+    (e) => {
+      e.preventDefault();
+      setErrors((prev) => ({ ...prev, general: "" }));
 
-    setConfirmationModal({
-      isOpen: true,
-      title: "Add Contact",
-      message: "Are you sure you want to add this contact?",
-      onConfirm: async () => {
-        const result = await createContact(newContact, editState.selectedCustomerId);
+      setConfirmationModal({
+        isOpen: true,
+        title: "Add Contact",
+        message: "Are you sure you want to add this contact?",
+        onConfirm: async () => {
+          const result = await createContact(
+            newContact,
+            editState.selectedCustomerId,
+          );
 
-        if (result.success) {
-          resetContactForm();
-          closeModal('contact');
-          setMessageModal({
-            message: "Contact added successfully",
-            type: "success",
-          });
-        } else {
-          setErrors(prev => ({ ...prev, general: result.error }));
-          setMessageModal({
-            message: result.error || "Failed to add contact",
-            type: "error",
-          });
-        }
-      }
-    });
-  }, [newContact, editState.selectedCustomerId, createContact, resetContactForm, closeModal]);
-
-  const handleEditContact = useCallback((contactId) => {
-    const contactToEdit = contactDetails.find(
-      (contact) => contact.contact_id === contactId
-    );
-    if (contactToEdit) {
-      setEditState(prev => ({ ...prev, editingContact: contactToEdit }));
-      openModal('editContact');
-    }
-  }, [contactDetails, openModal]);
-
-  const handleDeleteContact = useCallback(async (contactId) => {
-    const result = await deleteContact(contactId);
-    if (!result.success && result.error !== "Operation cancelled by user") {
-      await Swal.fire("Error", result.error, "error");
-    }
-  }, [deleteContact]);
-
-  const updateContactDetails = useCallback(async (contactId, updatedContactData) => {
-    const result = await updateContactData(contactId, updatedContactData);
-
-    if (result.success) {
-      if (editState.selectedCustomer) {
-        await fetchContactDetails(editState.selectedCustomer.customer_id);
-      }
-      closeModal('editContact');
-      setErrors(prev => ({ ...prev, general: "" }));
-      await Swal.fire({
-        icon: "success",
-        title: "Success!",
-        text: SUCCESS_MESSAGES.CONTACT_UPDATED,
-        timer: 2000,
-        showConfirmButton: false,
+          if (result.success) {
+            resetContactForm();
+            closeModal("contact");
+            setMessageModal({
+              message: "Contact added successfully",
+              type: "success",
+            });
+          } else {
+            setErrors((prev) => ({ ...prev, general: result.error }));
+            setMessageModal({
+              message: result.error || "Failed to add contact",
+              type: "error",
+            });
+          }
+        },
       });
-    } else {
-      setErrors(prev => ({ ...prev, general: result.error }));
-    }
-  }, [updateContactData, editState.selectedCustomer, fetchContactDetails, closeModal]);
+    },
+    [
+      newContact,
+      editState.selectedCustomerId,
+      createContact,
+      resetContactForm,
+      closeModal,
+    ],
+  );
+
+  const handleEditContact = useCallback(
+    (contactId) => {
+      const contactToEdit = contactDetails.find(
+        (contact) => contact.contact_id === contactId,
+      );
+      if (contactToEdit) {
+        setEditState((prev) => ({ ...prev, editingContact: contactToEdit }));
+        openModal("editContact");
+      }
+    },
+    [contactDetails, openModal],
+  );
+
+  const handleDeleteContact = useCallback(
+    async (contactId) => {
+      const result = await deleteContact(contactId);
+      if (!result.success && result.error !== "Operation cancelled by user") {
+        await Swal.fire("Error", result.error, "error");
+      }
+    },
+    [deleteContact],
+  );
+
+  const updateContactDetails = useCallback(
+    async (contactId, updatedContactData) => {
+      const result = await updateContactData(contactId, updatedContactData);
+
+      if (result.success) {
+        if (editState.selectedCustomer) {
+          await fetchContactDetails(editState.selectedCustomer.customer_id);
+        }
+        closeModal("editContact");
+        setErrors((prev) => ({ ...prev, general: "" }));
+        await Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: SUCCESS_MESSAGES.CONTACT_UPDATED,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      } else {
+        setErrors((prev) => ({ ...prev, general: result.error }));
+      }
+    },
+    [
+      updateContactData,
+      editState.selectedCustomer,
+      fetchContactDetails,
+      closeModal,
+    ],
+  );
 
   // ============================================================================
   // EVENT HANDLERS
@@ -574,7 +681,7 @@ const Customer = () => {
     const { name, value } = e.target;
     console.log("handleChange called:", name, value); // ADD THIS LINE
 
-    setNewCustomer(prevCustomer => ({
+    setNewCustomer((prevCustomer) => ({
       ...prevCustomer,
       [name]: value,
     }));
@@ -582,7 +689,7 @@ const Customer = () => {
 
   const handleNewContactChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
-    setNewContact(prev => ({
+    setNewContact((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
@@ -590,7 +697,7 @@ const Customer = () => {
 
   const handleEditContactChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
-    setEditState(prev => ({
+    setEditState((prev) => ({
       ...prev,
       editingContact: {
         ...prev.editingContact,
@@ -599,21 +706,27 @@ const Customer = () => {
     }));
   }, []);
 
-  const handleCustomerClick = useCallback(async (customer) => {
-    setEditState(prev => ({ ...prev, selectedCustomer: customer }));
-    openModal('customerDetails');
-    await fetchContactDetails(customer.customer_id);
-  }, [fetchContactDetails, openModal]);
+  const handleCustomerClick = useCallback(
+    async (customer) => {
+      setEditState((prev) => ({ ...prev, selectedCustomer: customer }));
+      openModal("customerDetails");
+      await fetchContactDetails(customer.customer_id);
+    },
+    [fetchContactDetails, openModal],
+  );
 
-  const handleContactClick = useCallback((contact) => {
-    setEditState(prev => ({ ...prev, selectedContact: contact }));
-    openModal('contactDetails');
-  }, [openModal]);
+  const handleContactClick = useCallback(
+    (contact) => {
+      setEditState((prev) => ({ ...prev, selectedContact: contact }));
+      openModal("contactDetails");
+    },
+    [openModal],
+  );
 
   // Location handlers
   const handleCountryChange = useCallback((e) => {
     const selectedCountry = e.target.value;
-    setNewCustomer(prev => ({
+    setNewCustomer((prev) => ({
       ...prev,
       country: selectedCountry,
       state: "",
@@ -623,7 +736,7 @@ const Customer = () => {
 
   const handleStateChange = useCallback((e) => {
     const selectedState = e.target.value;
-    setNewCustomer(prev => ({
+    setNewCustomer((prev) => ({
       ...prev,
       state: selectedState,
       city: "",
@@ -631,76 +744,84 @@ const Customer = () => {
   }, []);
 
   const handleCityChange = useCallback((e) => {
-    setNewCustomer(prev => ({
+    setNewCustomer((prev) => ({
       ...prev,
       city: e.target.value,
     }));
   }, []);
 
-
   // Contact Location Handlers
-  const handleContactCountryChange = useCallback((e) => {
-    const selectedCountry = e.target.value;
-    if (modals.editContact) {
-      setEditState(prev => ({
-        ...prev,
-        editingContact: {
-          ...prev.editingContact,
+  const handleContactCountryChange = useCallback(
+    (e) => {
+      const selectedCountry = e.target.value;
+      if (modals.editContact) {
+        setEditState((prev) => ({
+          ...prev,
+          editingContact: {
+            ...prev.editingContact,
+            country: selectedCountry,
+            state: "",
+            city: "",
+          },
+        }));
+      } else {
+        setNewContact((prev) => ({
+          ...prev,
           country: selectedCountry,
           state: "",
           city: "",
-        }
-      }));
-    } else {
-      setNewContact(prev => ({
-        ...prev,
-        country: selectedCountry,
-        state: "",
-        city: "",
-      }));
-    }
-  }, [modals.editContact]);
+        }));
+      }
+    },
+    [modals.editContact],
+  );
 
-  const handleContactStateChange = useCallback((e) => {
-    const selectedState = e.target.value;
-    if (modals.editContact) {
-      setEditState(prev => ({
-        ...prev,
-        editingContact: {
-          ...prev.editingContact,
+  const handleContactStateChange = useCallback(
+    (e) => {
+      const selectedState = e.target.value;
+      if (modals.editContact) {
+        setEditState((prev) => ({
+          ...prev,
+          editingContact: {
+            ...prev.editingContact,
+            state: selectedState,
+            city: "",
+          },
+        }));
+      } else {
+        setNewContact((prev) => ({
+          ...prev,
           state: selectedState,
           city: "",
-        }
-      }));
-    } else {
-      setNewContact(prev => ({
-        ...prev,
-        state: selectedState,
-        city: "",
-      }));
-    }
-  }, [modals.editContact]);
+        }));
+      }
+    },
+    [modals.editContact],
+  );
 
-  const handleContactCityChange = useCallback((e) => {
-    const selectedCity = e.target.value;
-    if (modals.editContact) {
-      setEditState(prev => ({
-        ...prev,
-        editingContact: {
-          ...prev.editingContact,
+  const handleContactCityChange = useCallback(
+    (e) => {
+      const selectedCity = e.target.value;
+      if (modals.editContact) {
+        setEditState((prev) => ({
+          ...prev,
+          editingContact: {
+            ...prev.editingContact,
+            city: selectedCity,
+          },
+        }));
+      } else {
+        setNewContact((prev) => ({
+          ...prev,
           city: selectedCity,
-        }
-      }));
-    } else {
-      setNewContact(prev => ({
-        ...prev,
-        city: selectedCity,
-      }));
-    }
-  }, [modals.editContact]);
+        }));
+      }
+    },
+    [modals.editContact],
+  );
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
-    setNewCustomer(prev => ({ ...prev, [name]: value }));
+    setNewCustomer((prev) => ({ ...prev, [name]: value }));
   }, []);
 
   // Validation handlers
@@ -708,49 +829,61 @@ const Customer = () => {
     const { value } = event.target;
     if (!VALIDATION_REGEX.PHONE_DIGITS.test(value)) return;
 
-    setNewCustomer(prevState => ({
+    setNewCustomer((prevState) => ({
       ...prevState,
       phone_number: value,
     }));
 
     if (value && value.length !== FIELD_LENGTHS.PHONE) {
-      setErrors(prev => ({ ...prev, phone: ERROR_MESSAGES.INVALID_PHONE_LENGTH }));
+      setErrors((prev) => ({
+        ...prev,
+        phone: ERROR_MESSAGES.INVALID_PHONE_LENGTH,
+      }));
     } else {
-      setErrors(prev => ({ ...prev, phone: "" }));
+      setErrors((prev) => ({ ...prev, phone: "" }));
     }
   }, []);
 
-  const handleEmailChange = useCallback((event) => {
-    const { value } = event.target;
-    setNewCustomer(prevState => ({
-      ...prevState,
-      email_id: value,
-    }));
+  const handleEmailChange = useCallback(
+    (event) => {
+      const { value } = event.target;
+      setNewCustomer((prevState) => ({
+        ...prevState,
+        email_id: value,
+      }));
 
-    if (value && !validateEmail(value)) {
-      setErrors(prev => ({ ...prev, email: ERROR_MESSAGES.INVALID_EMAIL }));
-    } else {
-      setErrors(prev => ({ ...prev, email: "" }));
-    }
-  }, [validateEmail]);
+      if (value && !validateEmail(value)) {
+        setErrors((prev) => ({ ...prev, email: ERROR_MESSAGES.INVALID_EMAIL }));
+      } else {
+        setErrors((prev) => ({ ...prev, email: "" }));
+      }
+    },
+    [validateEmail],
+  );
 
   // ============================================================================
   // FLAG FUNCTIONALITY
   // ============================================================================
 
-  const toggleFlagCustomer = useCallback((customerId) => {
-    setFlagState({
-      customerId,
-      reasonText: "",
-    });
-    openModal('flagReason');
-  }, [openModal]);
+  const toggleFlagCustomer = useCallback(
+    (customerId) => {
+      setFlagState({
+        customerId,
+        reasonText: "",
+      });
+      openModal("flagReason");
+    },
+    [openModal],
+  );
 
   const handleFlagReasonSubmit = useCallback(async () => {
-    const result = await flagCustomer(flagState.customerId, flagState.reasonText);
+    const result = await flagCustomer(
+      flagState.customerId,
+      flagState.reasonText,
+    );
 
     if (result.success) {
-      closeModal('flagReason');
+      closeModal("flagReason");
       setFlagState({
         reasonText: "",
         customerId: null,
@@ -766,7 +899,7 @@ const Customer = () => {
   }, [flagCustomer, flagState, closeModal]);
 
   const handleFlagReasonClose = useCallback(() => {
-    closeModal('flagReason');
+    closeModal("flagReason");
     setFlagState({
       reasonText: "",
       customerId: null,
@@ -777,66 +910,103 @@ const Customer = () => {
   // VERIFICATION HANDLERS
   // ============================================================================
 
-  const handleVerifyChange = useCallback(async (customerId, field, value) => {
-    await verifyCustomer(customerId, field, value);
-    // await Swal.fire({
-    //   icon: "success",
-    //   title: "Updated!",
-    //   text: SUCCESS_MESSAGES.VERIFICATION_UPDATED,
-    //   timer: 1500,
-    //   showConfirmButton: false,
-    // });
-  }, [verifyCustomer]);
+  const handleVerifyChange = useCallback(
+    async (customerId, field, value) => {
+      await verifyCustomer(customerId, field, value);
+      // await Swal.fire({
+      //   icon: "success",
+      //   title: "Updated!",
+      //   text: SUCCESS_MESSAGES.VERIFICATION_UPDATED,
+      //   timer: 1500,
+      //   showConfirmButton: false,
+      // });
+    },
+    [verifyCustomer],
+  );
 
   // ============================================================================
   // DOWNLOAD HANDLERS
   // ============================================================================
 
-
-
   // ============================================================================
   // MEMOIZED VALUES
   // ============================================================================
 
-  const filtersConfig = useMemo(() => [
-    { type: "search", key: "searchQuery", placeholder: "Search by Customer name and Email" },
-    { type: "select", key: "selectedState", label: "State", options: locationData.states },
-    { type: "select", key: "selectedCity", label: "City", options: locationData.cities },
-    { type: "dateRange", key: "dateRange", label: "Date Range" },
-    {
-      type: "select",
-      key: "selectedStatus",
-      label: "Status",
-      options: [CUSTOMER_STATUS.ACTIVE, CUSTOMER_STATUS.INACTIVE]
-    },
-    {
-      type: "select",
-      key: "selectedStage",
-      label: "Stage",
-      options: Object.values(CUSTOMER_STAGES)
-    },
-  ], [locationData.states, locationData.cities]);
+  const filtersConfig = useMemo(
+    () => [
+      {
+        type: "search",
+        key: "searchQuery",
+        placeholder: "Search by Customer name and Email",
+      },
+      {
+        type: "select",
+        key: "selectedState",
+        label: "State",
+        options: locationData.states,
+      },
+      {
+        type: "select",
+        key: "selectedCity",
+        label: "City",
+        options: locationData.cities,
+      },
+      { type: "dateRange", key: "dateRange", label: "Date Range" },
+      {
+        type: "select",
+        key: "selectedStatus",
+        label: "Status",
+        options: [CUSTOMER_STATUS.ACTIVE, CUSTOMER_STATUS.INACTIVE],
+      },
+      {
+        type: "select",
+        key: "selectedStage",
+        label: "Stage",
+        options: Object.values(CUSTOMER_STAGES),
+      },
+    ],
+    [locationData.states, locationData.cities],
+  );
 
   const filteredCustomers = useMemo(() => {
-    const { searchQuery, selectedState, selectedCity, dateRange, selectedStatus, selectedStage } = filterState;
+    const {
+      searchQuery,
+      selectedState,
+      selectedCity,
+      dateRange,
+      selectedStatus,
+      selectedStage,
+    } = filterState;
 
     return customers.filter((customer) => {
       const matchesSearch =
         !searchQuery ||
-        customer.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.customer_name
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
         customer.email_id?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesState = !selectedState || customer.state === selectedState;
       const matchesCity = !selectedCity || customer.city === selectedCity;
 
       const matchesDate =
-        (!dateRange.start || new Date(customer.created_at) >= new Date(dateRange.start)) &&
-        (!dateRange.end || new Date(customer.created_at) <= new Date(dateRange.end));
+        (!dateRange.start ||
+          new Date(customer.created_at) >= new Date(dateRange.start)) &&
+        (!dateRange.end ||
+          new Date(customer.created_at) <= new Date(dateRange.end));
 
-      const matchesStatus = !selectedStatus || customer.status === selectedStatus;
+      const matchesStatus =
+        !selectedStatus || customer.status === selectedStatus;
       const matchesStage = !selectedStage || customer.stage === selectedStage;
 
-      return matchesSearch && matchesState && matchesCity && matchesDate && matchesStatus && matchesStage;
+      return (
+        matchesSearch &&
+        matchesState &&
+        matchesCity &&
+        matchesDate &&
+        matchesStatus &&
+        matchesStage
+      );
     });
   }, [customers, filterState]);
 
@@ -871,7 +1041,12 @@ const Customer = () => {
     doc.text("Filtered Customer List", 14, 12);
 
     const tableColumn = [
-      "Customer Name", "Email", "Phone", "State", "City", "Stage"
+      "Customer Name",
+      "Email",
+      "Phone",
+      "State",
+      "City",
+      "Stage",
     ];
 
     const tableRows = filteredCustomers.map((c) => [
@@ -902,188 +1077,206 @@ const Customer = () => {
 
   console.log("Filtered Customers:", filteredCustomers);
 
-
   const paginationData = useMemo(() => {
-    const totalPages = Math.ceil(filteredCustomers.length / PAGINATION.CUSTOMER_PAGE_SIZE);
+    const totalPages = Math.ceil(
+      filteredCustomers.length / PAGINATION.CUSTOMER_PAGE_SIZE,
+    );
     const paginatedCustomers = filteredCustomers.slice(
       (currentPage - 1) * PAGINATION.CUSTOMER_PAGE_SIZE,
-      currentPage * PAGINATION.CUSTOMER_PAGE_SIZE
+      currentPage * PAGINATION.CUSTOMER_PAGE_SIZE,
     );
 
     return { totalPages, paginatedCustomers };
   }, [filteredCustomers, currentPage]);
 
-  const columns = useMemo(() => [
-    {
-      label: "S.No.",
-      render: (item, i) => (currentPage - 1) * PAGINATION.CUSTOMER_PAGE_SIZE + i + 1,
-      className: "w-16",
-    },
-    {
-      label: "Customer Name",
-      render: (item) => {
-        const LIMIT = 12;
-        const text = item.customer_name || "N/A";
-        const key = `cust-${item.customer_id}`;
-
-        const isExpanded = expandedRows[key];
-        const showDots = text.length > LIMIT && !isExpanded;
-
-        return (
-          <div className="max-w-[150px] whitespace-normal break-words flex flex-wrap gap-1">
-            {/* Name Modal Click Still Works */}
-            <button
-              className="text-blue-600 hover:text-blue-800 cursor-pointer whitespace-normal break-words"
-              onClick={() => handleCustomerClick(item)}
-            >
-              {isExpanded ? text : text.substring(0, LIMIT)}
-            </button>
-
-            {/* Expand/Collapse Toggle */}
-            {showDots && (
-              <button
-                className="text-blue-600 font-medium text-xs"
-                onClick={(e) => {
-                  e.stopPropagation(); // prevent opening details
-                  setExpandedRows(prev => ({ ...prev, [key]: true }));
-                }}
-              >
-                ...
-              </button>
-            )}
-          </div>
-        );
+  const columns = useMemo(
+    () => [
+      {
+        label: "S.No.",
+        render: (item, i) =>
+          (currentPage - 1) * PAGINATION.CUSTOMER_PAGE_SIZE + i + 1,
+        className: "w-16",
       },
-    },
+      {
+        label: "Customer Name",
+        render: (item) => {
+          const LIMIT = 12;
+          const text = item.customer_name || "N/A";
+          const key = `cust-${item.customer_id}`;
 
-    {
-      label: "Email",
-      render: (item) => {
-        const LIMIT = 20
-        const text = item.email_id || "N/A";
-        const key = `email-${item.customer_id}`;
+          const isExpanded = expandedRows[key];
+          const showDots = text.length > LIMIT && !isExpanded;
 
-        const isExpanded = expandedRows[key];
-        const showDots = text.length > LIMIT && !isExpanded;
+          return (
+            <div className="max-w-[150px] whitespace-normal break-words flex flex-wrap gap-1">
+              {/* Name Modal Click Still Works */}
+              <button
+                className="text-blue-600 hover:text-blue-800 cursor-pointer whitespace-normal break-words"
+                onClick={() => handleCustomerClick(item)}
+              >
+                {isExpanded ? text : text.substring(0, LIMIT)}
+              </button>
 
-        return (
-          <div className="max-w-[220px] whitespace-normal break-words flex flex-wrap gap-1">
-            <span className="text-gray-800 whitespace-normal break-words">
-              {isExpanded ? text : text.substring(0, LIMIT)}
+              {/* Expand/Collapse Toggle */}
+              {showDots && (
+                <button
+                  className="text-blue-600 font-medium text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation(); // prevent opening details
+                    setExpandedRows((prev) => ({ ...prev, [key]: true }));
+                  }}
+                >
+                  ...
+                </button>
+              )}
+            </div>
+          );
+        },
+      },
+
+      {
+        label: "Email",
+        render: (item) => {
+          const LIMIT = 20;
+          const text = item.email_id || "N/A";
+          const key = `email-${item.customer_id}`;
+
+          const isExpanded = expandedRows[key];
+          const showDots = text.length > LIMIT && !isExpanded;
+
+          return (
+            <div className="max-w-[220px] whitespace-normal break-words flex flex-wrap gap-1">
+              <span className="text-gray-800 whitespace-normal break-words">
+                {isExpanded ? text : text.substring(0, LIMIT)}
+              </span>
+
+              {/* Expand button */}
+              {showDots && (
+                <button
+                  className="text-blue-600 font-medium text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedRows((prev) => ({
+                      ...prev,
+                      [key]: true,
+                    }));
+                  }}
+                >
+                  ...
+                </button>
+              )}
+            </div>
+          );
+        },
+      },
+
+      {
+        label: "Email Verified Status",
+        render: (item) =>
+          item.email_id ? (
+            <input
+              type="checkbox"
+              checked={!!item.email_verified}
+              disabled
+              className="w-4 h-4 accent-green-600 cursor-not-allowed flex items-center justify-center w-full"
+              title={
+                item.email_verified ? "Email Verified" : "Email Not Verified"
+              }
+              aria-label={`Email verification status for ${item.customer_name}`}
+            />
+          ) : (
+            <span className="text-gray-400 text-sm flex items-center justify-center w-full">
+              N/A
             </span>
-
-            {/* Expand button */}
-            {showDots && (
-              <button
-                className="text-blue-600 font-medium text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExpandedRows(prev => ({
-                    ...prev,
-                    [key]: true,
-                  }));
-                }}
-              >
-                ...
-              </button>
-            )}
-          </div>
-        );
+          ),
+        className: "hidden lg:table-cell text-center",
       },
-    },
-
-
-    {
-      label: "Email Verified Status",
-      render: (item) => (
-        item.email_id ? (
-          <input
-            type="checkbox"
-            checked={!!item.email_verified}
-            disabled
-            className="w-4 h-4 accent-green-600 cursor-not-allowed flex items-center justify-center w-full"
-            title={item.email_verified ? "Email Verified" : "Email Not Verified"}
-            aria-label={`Email verification status for ${item.customer_name}`}
-          />
-        ) : (
-          <span className="text-gray-400 text-sm flex items-center justify-center w-full">N/A</span>
-        )
-      ),
-      className: "hidden lg:table-cell text-center",
-    },
-    {
-      label: "Phone no.",
-      key: "phone_number",
-      className: "whitespace-nowrap"
-    },
-    {
-      label: "Phone Verified Status",
-      render: (item) => (
-        item.phone_number ? (
-          <input
-            type="checkbox"
-            checked={!!item.phone_verified}
-            disabled
-            className="w-4 h-4 accent-green-600 cursor-not-allowed flex items-center justify-center w-full"
-            title={item.phone_verified ? "Phone Verified" : "Phone Not Verified"}
-            aria-label={`Phone verification status for ${item.customer_name}`}
-          />
-        ) : (
-          <span className="text-gray-400 text-sm flex items-center justify-center w-full">N/A</span>
-        )
-      ),
-      className: "hidden lg:table-cell text-center",
-    },
-    {
-      label: "Source",
-      key: "source",
-      className: "hidden lg:table-cell"
-    },
-    {
-      label: "Stage",
-      render: (item) => {
-        const colorClass = STAGE_COLORS[item.stage] || "text-gray-600 bg-gray-100";
-
-        return (
-          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${colorClass}`}>
-            {item.stage}
-          </span>
-        );
+      {
+        label: "Phone no.",
+        key: "phone_number",
+        className: "whitespace-nowrap",
       },
-    },
-  ], [currentPage, handleCustomerClick, expandedRows]);
-
-
-  const tableActions = useMemo(() => [
-    {
-      label: "Edit",
-      icon: EditIcon,
-      onClick: (item, index) => handleEditCustomer(index),
-      show: permissions.updateCustomer,
-      color: "text-blue-500 hover:text-blue-700",
-      className: "p-2 md:p-2.5 rounded-lg hover:bg-blue-50 transition-colors",
-    },
-    {
-      label: "Delete",
-      icon: DeleteIcon,
-      onClick: (item) => handleDeleteCustomer(item.customer_id),
-      show: permissions.deleteCustomer,
-      color: "text-red-500 hover:text-red-700",
-      className: "p-2 md:p-2.5 rounded-lg hover:bg-red-50 transition-colors",
-    },
-    {
-      label: "Contact",
-      icon: ContactIcon,
-      onClick: (item) => {
-        setEditState(prev => ({ ...prev, selectedCustomerId: item.customer_id }));
-        openModal('contact');
+      {
+        label: "Phone Verified Status",
+        render: (item) =>
+          item.phone_number ? (
+            <input
+              type="checkbox"
+              checked={!!item.phone_verified}
+              disabled
+              className="w-4 h-4 accent-green-600 cursor-not-allowed flex items-center justify-center w-full"
+              title={
+                item.phone_verified ? "Phone Verified" : "Phone Not Verified"
+              }
+              aria-label={`Phone verification status for ${item.customer_name}`}
+            />
+          ) : (
+            <span className="text-gray-400 text-sm flex items-center justify-center w-full">
+              N/A
+            </span>
+          ),
+        className: "hidden lg:table-cell text-center",
       },
-      show: permissions.createContact,
-      color: "text-green-500 hover:text-green-700",
-      className: "p-2 md:p-2.5 rounded-lg hover:bg-green-50 transition-colors",
-    },
-  ], [permissions, handleEditCustomer, handleDeleteCustomer, openModal]);
+      {
+        label: "Source",
+        key: "source",
+        className: "hidden lg:table-cell",
+      },
+      {
+        label: "Stage",
+        render: (item) => {
+          const colorClass =
+            STAGE_COLORS[item.stage] || "text-gray-600 bg-gray-100";
 
+          return (
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-semibold ${colorClass}`}
+            >
+              {item.stage}
+            </span>
+          );
+        },
+      },
+    ],
+    [currentPage, handleCustomerClick, expandedRows],
+  );
+
+  const tableActions = useMemo(
+    () => [
+      {
+        label: "Edit",
+        icon: EditIcon,
+        onClick: (item, index) => handleEditCustomer(index),
+        show: permissions.updateCustomer,
+        color: "text-blue-500 hover:text-blue-700",
+        className: "p-2 md:p-2.5 rounded-lg hover:bg-blue-50 transition-colors",
+      },
+      {
+        label: "Delete",
+        icon: DeleteIcon,
+        onClick: (item) => handleDeleteCustomer(item.customer_id),
+        show: permissions.deleteCustomer,
+        color: "text-red-500 hover:text-red-700",
+        className: "p-2 md:p-2.5 rounded-lg hover:bg-red-50 transition-colors",
+      },
+      {
+        label: "Contact",
+        icon: ContactIcon,
+        onClick: (item) => {
+          setEditState((prev) => ({
+            ...prev,
+            selectedCustomerId: item.customer_id,
+          }));
+          openModal("contact");
+        },
+        show: permissions.createContact,
+        color: "text-green-500 hover:text-green-700",
+        className:
+          "p-2 md:p-2.5 rounded-lg hover:bg-green-50 transition-colors",
+      },
+    ],
+    [permissions, handleEditCustomer, handleDeleteCustomer, openModal],
+  );
 
   useEffect(() => {
     const initializeComponent = async () => {
@@ -1095,8 +1288,6 @@ const Customer = () => {
 
     initializeComponent();
   }, [verifyToken, fetchCustomers, fetchContactDetails, checkAccess]);
-
-
 
   useEffect(() => {
     const handlePopState = () => {
@@ -1114,16 +1305,18 @@ const Customer = () => {
 
   // Update states and cities based on customers and selected filters
   useEffect(() => {
-    const uniqueStates = [...new Set(customers.map(c => c.state).filter(Boolean))];
+    const uniqueStates = [
+      ...new Set(customers.map((c) => c.state).filter(Boolean)),
+    ];
 
     let filteredCities;
     if (filterState.selectedState) {
       filteredCities = customers
-        .filter(c => c.state === filterState.selectedState)
-        .map(c => c.city)
+        .filter((c) => c.state === filterState.selectedState)
+        .map((c) => c.city)
         .filter(Boolean);
     } else {
-      filteredCities = customers.map(c => c.city).filter(Boolean);
+      filteredCities = customers.map((c) => c.city).filter(Boolean);
     }
 
     setLocationData({
@@ -1159,8 +1352,8 @@ const Customer = () => {
             {permissions.createCustomer && (
               <button
                 onClick={() => {
-                  setEditState(prev => ({ ...prev, isEditMode: false }));
-                  openModal('customer');
+                  setEditState((prev) => ({ ...prev, isEditMode: false }));
+                  openModal("customer");
                   resetForm();
                 }}
                 className="bg-[#005BE7] text-white font-semibold px-4 py-2 rounded-xl shadow-sm hover:bg-[#004dc5] transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1199,7 +1392,6 @@ const Customer = () => {
             </div>
           </div>
 
-
           {/* Customer Form Modal */}
           <CustomerFormModal
             isOpen={modals.customer}
@@ -1209,10 +1401,12 @@ const Customer = () => {
             onmobileChange={handlemobileChange}
             onEmailChange={handleEmailChange}
             onInputChange={handleInputChange}
-            onSubmit={editState.isEditMode ? handleEditSubmit : handleAddCustomer}
+            onSubmit={
+              editState.isEditMode ? handleEditSubmit : handleAddCustomer
+            }
             onClose={() => {
-              closeModal('customer');
-              setEditState(prev => ({ ...prev, isEditMode: false }));
+              closeModal("customer");
+              setEditState((prev) => ({ ...prev, isEditMode: false }));
               resetForm();
             }}
             errorMessage={errors.general}
@@ -1233,18 +1427,26 @@ const Customer = () => {
             isOpen={modals.contact || modals.editContact}
             isEditMode={modals.editContact}
             contact={modals.editContact ? editState.editingContact : newContact}
-            onChange={modals.editContact ? handleEditContactChange : handleNewContactChange}
-            onSubmit={modals.editContact ?
-              (e) => {
-                e.preventDefault();
-                updateContactDetails(editState.editingContact.contact_id, editState.editingContact);
-              } :
-              handleAddContact
+            onChange={
+              modals.editContact
+                ? handleEditContactChange
+                : handleNewContactChange
+            }
+            onSubmit={
+              modals.editContact
+                ? (e) => {
+                    e.preventDefault();
+                    updateContactDetails(
+                      editState.editingContact.contact_id,
+                      editState.editingContact,
+                    );
+                  }
+                : handleAddContact
             }
             onClose={() => {
-              closeModal('contact');
-              closeModal('editContact');
-              setErrors(prev => ({ ...prev, general: "" }));
+              closeModal("contact");
+              closeModal("editContact");
+              setErrors((prev) => ({ ...prev, general: "" }));
               resetContactForm();
             }}
             errorMessage={errors.general}
@@ -1262,7 +1464,7 @@ const Customer = () => {
             customer={editState.selectedCustomer}
             contacts={contactDetails}
             loadingContacts={loadingContacts}
-            onClose={() => closeModal('customerDetails')}
+            onClose={() => closeModal("customerDetails")}
             onEditContact={handleEditContact}
             onDeleteContact={handleDeleteContact}
             hasAMSAccessEditContact={permissions.updateContact}
@@ -1274,7 +1476,7 @@ const Customer = () => {
           <ContactDetailsModal
             isOpen={modals.contactDetails}
             contact={editState.selectedContact}
-            onClose={() => closeModal('contactDetails')}
+            onClose={() => closeModal("contactDetails")}
           />
 
           {/* Flag Reason Modal */}
@@ -1292,12 +1494,19 @@ const Customer = () => {
                 <h2 className="text-xl font-bold mb-4">Flag Customer</h2>
 
                 <div className="mb-4">
-                  <label className="block text-md font-medium mb-2">Reason</label>
+                  <label className="block text-md font-medium mb-2">
+                    Reason
+                  </label>
                   <textarea
                     className="border rounded px-3 py-2 w-full min-h-[120px] sm:min-h-[150px] resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Type reason"
                     value={flagState.reasonText}
-                    onChange={(e) => setFlagState(prev => ({ ...prev, reasonText: e.target.value }))}
+                    onChange={(e) =>
+                      setFlagState((prev) => ({
+                        ...prev,
+                        reasonText: e.target.value,
+                      }))
+                    }
                   />
                 </div>
 
@@ -1335,7 +1544,6 @@ const Customer = () => {
           </div>
         </div>
 
-
         {/* Fixed Pagination at bottom */}
         <div className="flex flex-col sm:flex-row justify-center items-center gap-2 py-4 sticky bottom-0">
           <Pagination
@@ -1351,14 +1559,18 @@ const Customer = () => {
           title={confirmationModal.title}
           message={confirmationModal.message}
           onConfirm={confirmationModal.onConfirm}
-          onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+          onClose={() =>
+            setConfirmationModal((prev) => ({ ...prev, isOpen: false }))
+          }
         />
 
         {/* Message Modal */}
         <MessageModal
           message={messageModal.message}
           type={messageModal.type}
-          setMessage={(msg) => setMessageModal(prev => ({ ...prev, message: msg }))}
+          setMessage={(msg) =>
+            setMessageModal((prev) => ({ ...prev, message: msg }))
+          }
         />
       </div>
     </ErrorBoundary>
