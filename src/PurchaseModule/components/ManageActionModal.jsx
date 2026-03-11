@@ -97,6 +97,22 @@ const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
     }
   }, [selectedSubModule]);
 
+  // Update action name options based on selected workflow
+  useEffect(() => {
+    if (!selectedWorkflow) {
+      return;
+    }
+
+    const workflowName = (selectedWorkflow?.workflow_name || "").toString().trim().toLowerCase();
+
+    if (workflowName.includes("rfp_approval") || workflowName.includes("rfp approval")) {
+      const opts = ["RFP Update"];
+      setActionNameOptions(opts);
+      setUseSelectForActionName(true);
+      setIdentifier((prev) => (prev ? prev : opts[0]));
+    }
+  }, [selectedWorkflow]);
+
   const fetchWorkflows = async () => {
     try {
       const token = sessionStorage.getItem("token");

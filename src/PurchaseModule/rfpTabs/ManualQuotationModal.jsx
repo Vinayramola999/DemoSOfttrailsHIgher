@@ -98,7 +98,7 @@ export default function ManualQuotationModal({
     const fetchVendors = async () => {
       try {
         const res = await axios.get(
-          "http://devdemo.softtrails.net/purchase/supplier/list",
+          "https://devdemo.softtrails.net/purchase/supplier/list",
           {
             headers: { Authorization: token ? `Bearer ${token}` : "" },
           }
@@ -130,7 +130,7 @@ export default function ManualQuotationModal({
       setRfpError("");
       try {
         const res = await axios.get(
-          `http://devdemo.softtrails.net/purchase/rfps/${vendor.value}/rfpIDs`,
+          `https://devdemo.softtrails.net/purchase/rfps/${vendor.value}/rfpIDs`,
           { headers: { Authorization: token ? `Bearer ${token}` : "" } }
         );
         const data = res.data?.data || res.data || [];
@@ -168,7 +168,7 @@ export default function ManualQuotationModal({
 
     const fetchExisting = async () => {
       try {
-        const url = `http://devdemo.softtrails.net/purchase/supplier_quotation/quotationDetails?rfp_id=${encodeURIComponent(
+        const url = `https://devdemo.softtrails.net/purchase/supplier_quotation/quotationDetails?rfp_id=${encodeURIComponent(
           rfpId
         )}&&vendor_id=${encodeURIComponent(vendor.value)}`;
         const res = await axios.get(url, {
@@ -376,7 +376,7 @@ export default function ManualQuotationModal({
         // If vendor already has a quotation, call versions endpoint or allow POST as per API rules.
         // We attempt to POST to manual endpoint to add a new grouped manual quotation (API may dedupe server-side)
         await axios.post(
-          "http://devdemo.softtrails.net/purchase/supplier_quotation/manual/quotation",
+          "https://devdemo.softtrails.net/purchase/supplier_quotation/manual/quotation",
           createPayload,
           {
             headers: {
@@ -390,7 +390,7 @@ export default function ManualQuotationModal({
       } else {
         // Create new manual quotation
         await axios.post(
-          "http://devdemo.softtrails.net/purchase/supplier_quotation/manual/quotation",
+          "https://devdemo.softtrails.net/purchase/supplier_quotation/manual/quotation",
           createPayload,
           {
             headers: {

@@ -24,6 +24,7 @@ const Usermng = () => {
     const [domains, setDomains] = useState([]);
     const [categoryOptions, setCategoryOptions] = useState([]);
     const [locations, setLocations] = useState([]);
+    const [shifts, setShifts] = useState([]);
     const [users, setUsers] = useState([]);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
@@ -51,6 +52,7 @@ const Usermng = () => {
         dept_id: null,
         category_id: null,
         band: null,
+        shift_id: null,
     });
     const [formData, setFormData] = useState({
         user_id: '',
@@ -70,6 +72,7 @@ const Usermng = () => {
         dept_id: '',
         category_id: '',
         band: '',
+        shift_id: '',
     });
     const [errorMessage, setErrorMessage] = useState("");
     const [searchTerm, setSearchTerm] = useState('');
@@ -120,6 +123,7 @@ const Usermng = () => {
         fetchUsers();
         fetchDomains();
         fetchSubDepartments();
+        fetchShifts();
     }, []);
 
     const fetchCommon = async (url, setter, itemName) => {
@@ -144,6 +148,22 @@ const Usermng = () => {
     const fetchDesignations = () => fetchCommon(`${MAIN_API_BASE}/designation`, setDesignations, 'designations');
     const fetchLocation = () => fetchCommon(`${MAIN_API_BASE}/loc`, setLocations, 'locations');
     const fetchDomains = () => fetchCommon(`${MAIN_API_BASE}/domain`, setDomains, 'domains');
+
+    const fetchShifts = async () => {
+        try {
+            const currentToken = sessionStorage.getItem('token');
+            if (!currentToken) return;
+            const response = await axios.get(`${MAIN_API_BASE}/attendance/get-shifts`, {
+                headers: { Authorization: `Bearer ${currentToken}` }
+            });
+            const data = response.data.data || response.data;
+            if (Array.isArray(data)) {
+                setShifts(data);
+            }
+        } catch (error) {
+            console.error('Error fetching shifts:', error);
+        }
+    };
 
     const fetchUsers = async () => {
         try {
@@ -215,6 +235,7 @@ const Usermng = () => {
 
         if (!formData.category_id) { currentFormErrors.category_id = "User category is required."; formIsValid = false; }
         if (!formData.band) { currentFormErrors.band = "Band is required."; formIsValid = false; }
+        if (!formData.shift_id) { currentFormErrors.shift_id = "Shift is required."; formIsValid = false; }
 
         if (!formData.emp_id.trim()) { currentFormErrors.emp_id = "Employee ID is required."; formIsValid = false; }
         if (!formData.manager_id) { currentFormErrors.manager_id = "Manager selection is required."; formIsValid = false; }
@@ -244,6 +265,7 @@ const Usermng = () => {
                 user_status: formData.user_status,
                 category_id: parseInt(formData.category_id),
                 band: parseInt(formData.band),
+                shift_id: parseInt(formData.shift_id),
             };
 
             console.log("Signup payload:", payload);
@@ -302,6 +324,7 @@ const Usermng = () => {
                     dept_id: '',
                     category_id: '',
                     band: '',
+                    shift_id: '',
                 });
                 setFormErrors({});
                 setFilteredSubDepartments([]);
@@ -489,6 +512,7 @@ const Usermng = () => {
             email_part2: '',
             category_id: user.category_id ? String(user.category_id) : '',
             band: user.band ? String(user.band) : '',
+            shift_id: user.shift_id ? String(user.shift_id) : '',
 
         });
         setShowEditModal(true);
@@ -517,6 +541,7 @@ const [modalMessage, setModalMessage] = useState(""); // for MessageModal
         if (!formData.dept_id) { currentEditErrors.dept_id = "Department is required."; formIsValid = false; }
         if (!formData.sub_id) { currentEditErrors.sub_id = "Verticals is required."; formIsValid = false; }
         if (!formData.desig_id) { currentEditErrors.desig_id = "Designation is required."; formIsValid = false; }
+        if (!formData.shift_id) { currentEditErrors.shift_id = "Shift is required."; formIsValid = false; }
 
         setFormErrors(currentEditErrors);
         if (!formIsValid) return;
@@ -539,6 +564,7 @@ const [modalMessage, setModalMessage] = useState(""); // for MessageModal
                 designation: parseInt(formData.desig_id),
                 category: formData.category_id ? parseInt(formData.category_id) : null,
                 band: formData.band ? parseInt(formData.band) : null,
+                shift_id: formData.shift_id ? parseInt(formData.shift_id) : null,
             };
 
             const response = await axios.put(
@@ -588,7 +614,7 @@ const [modalMessage, setModalMessage] = useState(""); // for MessageModal
         setFormData({
             user_id: '', first_name: '', last_name: '', phone_no: '', email: '', email_part2: '', dom_id: '',
             location_id: '', sub_id: '', emp_id: '', desig_id: '', manager_id: '',
-            user_status: 'active', gender: '', dept_id: '',
+            user_status: 'active', gender: '', dept_id: '', shift_id: '',
         });
         setFormErrors({});
         setFilteredSubDepartments([]);
@@ -647,6 +673,17 @@ const [modalMessage, setModalMessage] = useState(""); // for MessageModal
         { value: 3, label: 'C' }
     ];
 
+    const shiftOptionsForAdd = shifts
+        .filter(s => s.is_active)
+        .map(s => {
+            const timeStr = s.time_in && s.time_out ? `(${s.time_in.slice(0, 5)} - ${s.time_out.slice(0, 5)})` : "";
+            const shiftTypeStr = s.shift_type ? `[${s.shift_type.charAt(0).toUpperCase() + s.shift_type.slice(1)}]` : "";
+            return {
+                value: s.id || s.shift_id,
+                label: `${s.shift_name || s.name} ${timeStr} ${shiftTypeStr}`
+            };
+        });
+
     return (
         <div>
             <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
@@ -655,7 +692,7 @@ const [modalMessage, setModalMessage] = useState(""); // for MessageModal
                         setFormData({
                             user_id: '', first_name: '', last_name: '', phone_no: '', email: '', email_part2: '', dom_id: '',
                             location_id: '', sub_id: '', emp_id: '', desig_id: '', manager_id: '',
-                            user_status: 'active', gender: '', dept_id: '',
+                            user_status: 'active', gender: '', dept_id: '', shift_id: '',
                         });
                         setFormErrors({});
                         setFilteredSubDepartments([]);
@@ -781,6 +818,23 @@ const [modalMessage, setModalMessage] = useState(""); // for MessageModal
                             </div>
                             {/* Category & Band */}
                             <div className="grid gap-4 mb-4 md:grid-cols-2">
+                                {/* Shift Dropdown */}
+                                <div>
+                                    <label htmlFor="add_shift_label" className="block text-sm font-medium text-gray-700">
+                                        Shift <span className="text-red-500">*</span>
+                                    </label>
+                                    <Select
+                                        inputId="add_shift_label"
+                                        options={shiftOptionsForAdd}
+                                        value={shiftOptionsForAdd.find(opt => String(opt.value) === String(formData.shift_id)) || null}
+                                        onChange={(sel) => setFormData({ ...formData, shift_id: sel ? sel.value : "" })}
+                                        placeholder="Select Shift"
+                                        className="mt-1 w-full react-select-container"
+                                        classNamePrefix="react-select"
+                                        isSearchable
+                                    />
+                                    {formErrors.shift_id && <span className="text-red-500 text-xs">{formErrors.shift_id}</span>}
+                                </div>
                                 {/* User Category Dropdown */}
                                 <div>
                                     <label htmlFor="add_category_id_label" className="block text-sm font-medium text-gray-700">User Category <span className="text-red-500">*</span></label>
@@ -798,6 +852,9 @@ const [modalMessage, setModalMessage] = useState(""); // for MessageModal
                                     />
                                     {formErrors.category_id && <span className="text-red-500 text-xs">{formErrors.category_id}</span>}
                                 </div>
+                            </div>
+                            {/* Band & Gender */}
+                            <div className="grid gap-4 mb-4 md:grid-cols-2">
                                 {/* Band Dropdown */}
                                 <div>
                                     <label htmlFor="add_band_label" className="block text-sm font-medium text-gray-700">
@@ -825,9 +882,6 @@ const [modalMessage, setModalMessage] = useState(""); // for MessageModal
                                     />
                                     {formErrors.band && <span className="text-red-500 text-xs">{formErrors.band}</span>}
                                 </div>
-                            </div>
-                            {/* Gender & Status */}
-                            <div className="grid gap-4 mb-4 md:grid-cols-2">
                                 <div>
                                     <label htmlFor="add_gender" className="block text-sm font-medium text-gray-700">Gender <span className="text-red-500">*</span></label>
                                     <select id="add_gender" name="gender" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="mt-1 w-full border border-gray-400 rounded-md p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
@@ -836,6 +890,9 @@ const [modalMessage, setModalMessage] = useState(""); // for MessageModal
                                     </select>
                                     {formErrors.gender && <span className="text-red-500 text-xs">{formErrors.gender}</span>}
                                 </div>
+                            </div>
+                            {/* Status */}
+                            <div className="grid gap-4 mb-4 md:grid-cols-2">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">User Status <span className="text-red-500">*</span></label>
                                     <div className="flex items-center mt-2 space-x-4">
@@ -970,6 +1027,26 @@ const [modalMessage, setModalMessage] = useState(""); // for MessageModal
                                     <option value="">Select Band</option>
                                     {bandOptions.map((b) => (<option key={b.value} value={b.value}> {b.label} </option>))}
                                 </select>
+                            </div>
+                        </div>
+                        <div className="grid gap-4 mb-4 md:grid-cols-2">
+                            <div>
+                                <div>
+                                    <label htmlFor="edit_shift_label" className="block text-sm font-medium text-gray-700">
+                                        Shift <span className="text-red-500">*</span>
+                                    </label>
+                                    <Select
+                                        inputId="edit_shift_label"
+                                        options={shiftOptionsForAdd}
+                                        value={shiftOptionsForAdd.find(opt => String(opt.value) === String(formData.shift_id)) || null}
+                                        onChange={(sel) => setFormData({ ...formData, shift_id: sel ? sel.value : "" })}
+                                        placeholder="Select Shift"
+                                        className="mt-1 w-full react-select-container"
+                                        classNamePrefix="react-select"
+                                        isSearchable
+                                    />
+                                    {formErrors.shift_id && <span className="text-red-500 text-xs">{formErrors.shift_id}</span>}
+                                </div>
                             </div>
                         </div>
                         <div className="flex justify-end mt-6">

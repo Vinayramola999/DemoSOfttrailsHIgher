@@ -6,6 +6,8 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import Pagination from "../../NewComponents/Pagination";
 import { FaTable, FaCalendarAlt, FaSearch } from "react-icons/fa";
+import Swal from 'sweetalert2';
+import { EyeIcon, EditIcon } from "../../NewComponents/ReactIcons";
 
 const IndividualAttendance = () => {
   const [data, setData] = useState([]);
@@ -24,6 +26,18 @@ const IndividualAttendance = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Form states
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [mode, setMode] = useState("date");
+  const [date, setDate] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [inTime, setInTime] = useState("");
+  const [outTime, setOutTime] = useState("");
+  const [reason, setReason] = useState("");
+  const [editId, setEditId] = useState(null);
 
   // Fetch Logged-in User Data to get empCode
   useEffect(() => {
@@ -53,7 +67,9 @@ const IndividualAttendance = () => {
     if (!empCode) return;
     setLoading(true);
     try {
-      const response = await fetch(`https://devdemo.softtrails.net/attendance/att/${empCode}`);
+      const response = await fetch(`https://devdemo.softtrails.net/attendance/att/V12`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const result = await response.json();
       if (result.success && Array.isArray(result.data)) {
         setData(result.data);
@@ -68,13 +84,101 @@ const IndividualAttendance = () => {
     }
   };
 
+  const handleEdit = (row) => {
+    setIsEditMode(true);
+    setEditId(row.id || null);
+    setMode("date");
+    const formattedDate = row.att_date ? row.att_date.split('T')[0] : "";
+    setDate(formattedDate);
+    setFromDate(formattedDate);
+    setToDate(formattedDate);
+    setInTime(row.first_in && row.first_in !== "--:--" ? row.first_in : "");
+    setOutTime(row.last_out && row.last_out !== "--:--" ? row.last_out : "");
+    setReason(row.reason || "");
+    setIsAddModalOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!userId) {
+      Swal.fire({ icon: 'error', title: 'Error', text: 'User ID not found in session' });
+      return;
+    }
+    const payload = {
+      user_id: parseInt(userId),
+      date_from: mode === "date" ? date : fromDate,
+      date_to: mode === "date" ? date : toDate,
+      in_time: inTime,
+      out_time: outTime,
+      reason: reason,
+      source: "Regularization"
+    };
+
+    try {
+      let res;
+      const authToken = sessionStorage.getItem("token");
+      if (isEditMode) {
+        if (!userInfo) {
+          Swal.fire({ icon: 'error', title: 'Error', text: 'User data not loaded for edit' });
+          return;
+        }
+        res = await axios.put(`https://devdemo.softtrails.net/attendance/${editId}`, {
+          employee_name: `${userInfo.first_name} ${userInfo.last_name}`,
+          employee_code: empCode || "NA",
+          date_from: mode === "date" ? date : fromDate,
+          date_to: mode === "date" ? date : toDate,
+          in_time: inTime,
+          out_time: outTime,
+          reason: reason
+        }, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+      } else {
+        res = await axios.post("https://devdemo.softtrails.net/attendance/mark-bulk", payload, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+      }
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: isEditMode ? 'Attendance updated successfully' : 'Attendance marked successfully',
+      });
+      setIsAddModalOpen(false);
+      if (!isEditMode) {
+        resetForm();
+      }
+      setIsEditMode(false);
+      setEditId(null);
+      fetchAttendance();
+    } catch (error) {
+      console.error("Submission Error:", error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Something went wrong';
+      Swal.fire({
+        icon: 'error',
+        title: 'Failed',
+        text: errorMessage,
+      });
+    }
+  };
+
+  const resetForm = () => {
+    setDate("");
+    setFromDate("");
+    setToDate("");
+    setInTime("");
+    setOutTime("");
+    setReason("");
+    setMode("date");
+  };
+
   useEffect(() => {
     if (empCode) {
       fetchAttendance();
     }
   }, [empCode]);
 
-  // Filtered Data based on Month and Year
   const filteredData = useMemo(() => {
     return data.filter(item => {
       const date = moment(item.att_date);
@@ -148,7 +252,7 @@ const IndividualAttendance = () => {
     <div className="px-1 md:px-1 space-y-6 min-h-screen bg-gray-50/30 font-sans">
       {/* Header Bar - Removed Employee Code Filter */}
       {/* Sticky Header Bar */}
-      <div className="sticky top-0 z-[40] bg-gray-50/50 backdrop-blur-md py-2">
+      <div className="sticky top-0 z-[30] bg-gray-50/50 backdrop-blur-md py-2">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex flex-col">
             {userInfo && (<p className="text-lg font-bold text-blue tracking-widest flex items-center gap-2">{userInfo.first_name} {userInfo.last_name}</p>)}
@@ -190,7 +294,7 @@ const IndividualAttendance = () => {
                     onChange={(e) => setSelectedYear(e.target.value)}
                     className="w-full border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 text-gray-700 appearance-none bg-gray-50/50"
                   >
-                    {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                    {Array.from({ length: 11 }, (_, i) => moment().year() - 5 + i).map(y => <option key={y} value={y}>{y}</option>)}
                   </select>
                 </div>
 
@@ -284,7 +388,7 @@ const IndividualAttendance = () => {
                     onChange={(e) => setSelectedYear(e.target.value)}
                     className="border rounded-lg px-3 py-1 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 text-gray-700"
                   >
-                    {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                    {Array.from({ length: 11 }, (_, i) => moment().year() - 5 + i).map(y => <option key={y} value={y}>{y}</option>)}
                   </select>
                 </div>
                 <div className="ml-auto flex items-center gap-4">
@@ -306,13 +410,14 @@ const IndividualAttendance = () => {
                       <th className="p-5 text-left text-black uppercase tracking-wider">Out Time</th>
                       <th className="p-5 text-left text-black uppercase tracking-wider text-center">Status</th>
                       <th className="p-5 text-left text-black uppercase tracking-wider text-center">Hours</th>
+                      <th className="p-5 text-left text-black uppercase tracking-wider text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr><td colSpan={5} className="h-3 bg-white" /></tr>
+                    <tr><td colSpan={6} className="h-3 bg-white" /></tr>
                     {paginatedData.length === 0 ? (
                       <tr>
-                        <td colSpan="5" className="p-24 text-center">
+                        <td colSpan="6" className="p-24 text-center">
                           <div className="flex flex-col items-center gap-2 opacity-30">
                             <FaCalendarAlt size={48} className="text-gray-400 mb-2" />
                             <p className="text-gray-400 font-bold italic text-sm">No records for this timeframe</p>
@@ -323,8 +428,7 @@ const IndividualAttendance = () => {
                       paginatedData.map((row, index) => (
                         <tr
                           key={row.id || index}
-                          onClick={() => setSelectedDay(row)}
-                          className={`group cursor-pointer transition-all active:bg-blue-100 ${(index + 1) % 2 === 0 ? "bg-white hover:bg-gray-50" : "bg-blue-50 hover:bg-blue-100/50"}`}
+                          className={`group transition-all active:bg-blue-100 ${(index + 1) % 2 === 0 ? "bg-white hover:bg-gray-50" : "bg-blue-50 hover:bg-blue-100/50"}`}
                         >
                           <td className="px-5 py-4 text-left text-[14px] text-gray-700 font-bold">
                             {moment(row.att_date).format("DD MMM YYYY")}
@@ -337,7 +441,36 @@ const IndividualAttendance = () => {
                             </span>
                           </td>
                           <td className="px-5 py-4 text-center text-[14px] font-black text-blue-600">
-                            {row.total_hours ? parseFloat(row.total_hours).toFixed(2) + 'h' : "--:--"}
+                            {(() => {
+                              const val = row.total_hours;
+                              if (!val) return "--:--";
+                              if (String(val).includes(':')) {
+                                const parts = String(val).split(':');
+                                const h = parts[0].padStart(2, '0');
+                                const m = parts.length > 1 ? parts[1].substring(0, 2).padStart(2, '0') : '00';
+                                const s = parts.length > 2 ? parts[2].substring(0, 2).padStart(2, '0') : '00';
+                                return `${h}:${m}:${s}`;
+                              }
+                              const decimal = parseFloat(val);
+                              if (isNaN(decimal)) return "--:--";
+                              const totalSecs = Math.round(decimal * 3600);
+                              const h = Math.floor(totalSecs / 3600);
+                              const m = Math.floor((totalSecs % 3600) / 60);
+                              const s = totalSecs % 60;
+                              return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                            })()}
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <div className="flex justify-center items-center gap-3">
+                              <button onClick={() => setSelectedDay(row)} className="text-blue-500 hover:text-blue-700" title="View Details">
+                                <EyeIcon />
+                              </button>
+                              {row.final_status !== "PRESENT" && (
+                                <button onClick={() => handleEdit(row)} className="text-blue-500 hover:text-blue-700" title="Edit">
+                                  <EditIcon />
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -492,7 +625,24 @@ const IndividualAttendance = () => {
               <div className="flex justify-between items-center bg-gray-50 p-4 rounded-3xl">
                 <span className="text-xs font-black text-gray-500 uppercase">Worked Hours</span>
                 <span className="text-lg font-black text-blue-600">
-                  {selectedDay.total_hours ? parseFloat(selectedDay.total_hours).toFixed(2) : "0.00"}h
+                  {(() => {
+                    const val = selectedDay.total_hours;
+                    if (!val) return "--:--";
+                    if (String(val).includes(':')) {
+                      const parts = String(val).split(':');
+                      const h = parts[0].padStart(2, '0');
+                      const m = parts.length > 1 ? parts[1].substring(0, 2).padStart(2, '0') : '00';
+                      const s = parts.length > 2 ? parts[2].substring(0, 2).padStart(2, '0') : '00';
+                      return `${h}:${m}:${s}`;
+                    }
+                    const decimal = parseFloat(val);
+                    if (isNaN(decimal)) return "--:--";
+                    const totalSecs = Math.round(decimal * 3600);
+                    const h = Math.floor(totalSecs / 3600);
+                    const m = Math.floor((totalSecs % 3600) / 60);
+                    const s = totalSecs % 60;
+                    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                  })()}
                 </span>
               </div>
             </div>
@@ -503,6 +653,144 @@ const IndividualAttendance = () => {
             >
               Close Record
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Input / Edit Form */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative">
+            <button
+              className="absolute top-2 right-2 text-red-600 text-2xl"
+              onClick={() => setIsAddModalOpen(false)}
+            >
+              &#10006;
+            </button>
+
+            <h2 className="text-lg font-semibold mb-4">
+              {isEditMode ? 'Edit Attendance' : 'Manual Attendance'}
+            </h2>
+
+            {/* Mode Selection */}
+            {!isEditMode && (
+              <div className="flex gap-4 mb-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="date"
+                    checked={mode === "date"}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  Date
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="range"
+                    checked={mode === "range"}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  Date Range
+                </label>
+              </div>
+            )}
+
+            {/* Date Inputs */}
+            {mode === "date" ? (
+              <div className="mb-4">
+                <label>Date</label>
+                <input
+                  type="date"
+                  className={`w-full border p-2 rounded ${isEditMode ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  readOnly={isEditMode}
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label>From Date</label>
+                  <input
+                    type="date"
+                    className={`w-full border p-2 rounded ${isEditMode ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    readOnly={isEditMode}
+                  />
+                </div>
+                <div>
+                  <label>To Date</label>
+                  <input
+                    type="date"
+                    className={`w-full border p-2 rounded ${isEditMode ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    readOnly={isEditMode}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Time Inputs */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label>In Time</label>
+                <input
+                  type="time"
+                  className="w-full border p-2 rounded"
+                  value={inTime}
+                  onChange={(e) => setInTime(e.target.value)}
+                />
+              </div>
+              <div>
+                <label>Out Time</label>
+                <input
+                  type="time"
+                  className="w-full border p-2 rounded"
+                  value={outTime}
+                  onChange={(e) => setOutTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Reason */}
+            <div className="mb-4">
+              <label>Reason</label>
+              <textarea
+                className="w-full border p-2 rounded"
+                rows={3}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              ></textarea>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={handleSubmit}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                {isEditMode ? 'Update' : 'Submit'}
+              </button>
+              <button
+                onClick={() => {
+                  setIsAddModalOpen(false);
+                  if (!isEditMode) {
+                    resetForm(); // Clear only for Add mode
+                  }
+                  setIsEditMode(false);
+                  setEditId(null);
+                }}
+                className="border px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+
+            </div>
           </div>
         </div>
       )}

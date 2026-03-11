@@ -28,7 +28,6 @@ const RfpApprovals = () => {
   const columns = [
     { header: "S. No.", accessor: "sno" },
     { header: "RFP ID", accessor: "rfp_id" },
-    { header: "Organization", accessor: "organization_name" },
     { header: "Title", accessor: "title" },
     { header: "Start Date", accessor: "rfp_start_date" },
     { header: "End Date", accessor: "rfp_end_date" },
@@ -80,23 +79,23 @@ const RfpApprovals = () => {
   };
 
   // Fetch Departments
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const response = await axios.get(
-          `${API.API_BASE}/departments`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setDepartments(response.data);
-      } catch (error) {
-        console.error("Error fetching departments:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchDepartments = async () => {
+  //     try {
+  //       const response = await axios.get(
+  //         `${API.PURCHASE_API}/rfps/receive_rfp`,
+  //         { headers: { Authorization: `Bearer ${token}` } }
+  //       );
+  //       setDepartments(response.data);
+  //     } catch (error) {
+  //       console.error("Error fetching departments:", error);
+  //     }
+  //   };
 
-    if (token) {
-      fetchDepartments();
-    }
-  }, [token]);
+  //   if (token) {
+  //     fetchDepartments();
+  //   }
+  // }, [token]);
 
   // Fetch RFP Data
   useEffect(() => {
@@ -104,7 +103,7 @@ const RfpApprovals = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          `${API.PURCHASE_API}/rfps/rfp`,
+          `${API.PURCHASE_API}/rfps/receive_rfp`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         
@@ -377,7 +376,7 @@ const RfpApprovals = () => {
                         {item.rfp_id}
                       </button>
                     </td>
-                    <td className="px-6 py-3 text-sm text-gray-700">{item.organization_name || "-"}</td>
+                    {/* <td className="px-6 py-3 text-sm text-gray-700">{item.organization_name || "-"}</td> */}
                     <td className="px-6 py-3 text-sm text-gray-700">{item.title || "-"}</td>
                     <td className="px-6 py-3 text-sm text-gray-700">
                       {formatDate(item.rfp_start_date)}

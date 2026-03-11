@@ -203,7 +203,7 @@ const Customer = () => {
 
     try {
       const response = await axios.post(
-        ` http://devdemo.softtrails.net/users/verify-token`,
+        ` https://devdemo.softtrails.net/users/verify-token`,
         { token },
       );
       console.log("Token is valid:", response.data);

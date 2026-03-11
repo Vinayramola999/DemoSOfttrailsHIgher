@@ -7,7 +7,7 @@ import API_BASE_URL from "../../config/api";
 
 const ACTIONS_API = `${API_BASE_URL}/uniworkflow/get-All/actions?module_name=Customer Relation Management`;
 const MODULES_API =
-  " http://devdemo.softtrails.net/uniworkflow/modules/with-submodules";
+  " https://devdemo.softtrails.net/uniworkflow/modules/with-submodules";
 
 const ManageActionModal = ({ open, onClose, onActionsUpdated }) => {
   const [identifier, setIdentifier] = useState("");

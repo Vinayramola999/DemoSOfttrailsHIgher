@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { HRMS_API_BASE } from "../../config/apiBase";
 
-export default function RuleEngineModal({ open, onClose, onSaved, shifts }) {
+function RuleEngineModal({ open, onClose, onSaved, shifts }) {
     // Rule Engine States
     const [selectedShiftId, setSelectedShiftId] = useState("");
     const [graceInEnabled, setGraceInEnabled] = useState(true);
@@ -18,6 +18,9 @@ export default function RuleEngineModal({ open, onClose, onSaved, shifts }) {
     const [workingHoursRule, setWorkingHoursRule] = useState({ half_day: "", absent: "" });
 
     const [error, setError] = useState("");
+
+    const selectedShift = shifts.find((s) => (s.id || s.shift_id).toString() === selectedShiftId.toString());
+    const isFlexible = selectedShift?.shift_type === "flexible";
 
     const resetAndClose = () => {
         setSelectedShiftId("");
@@ -68,9 +71,9 @@ export default function RuleEngineModal({ open, onClose, onSaved, shifts }) {
             created_by: userId ? parseInt(userId) : 1,
             rule_config: {
                 grace: {
-                    is_enabled: graceInEnabled || graceOutEnabled,
+                    is_enabled: !isFlexible && (graceInEnabled || graceOutEnabled),
                     in: {
-                        treatment: graceInEnabled
+                        treatment: (!isFlexible && graceInEnabled)
                             ? graceInRules.map((r) => ({
                                 after_minutes: parseInt(r.after_minutes) || 0,
                                 action: r.action,
@@ -78,7 +81,7 @@ export default function RuleEngineModal({ open, onClose, onSaved, shifts }) {
                             : [],
                     },
                     out: {
-                        treatment: graceOutEnabled
+                        treatment: (!isFlexible && graceOutEnabled)
                             ? graceOutRules.map((r) => ({
                                 after_minutes: parseInt(r.after_minutes) || 0,
                                 action: r.action,
@@ -87,8 +90,8 @@ export default function RuleEngineModal({ open, onClose, onSaved, shifts }) {
                     },
                 },
                 break: {
-                    is_enabled: breakEnabled,
-                    treatment: breakEnabled
+                    is_enabled: !isFlexible && breakEnabled,
+                    treatment: (!isFlexible && breakEnabled)
                         ? [{ after_minutes: parseInt(breakRule.after_minutes) || 0, action: breakRule.action }]
                         : [],
                 },
@@ -154,175 +157,188 @@ export default function RuleEngineModal({ open, onClose, onSaved, shifts }) {
                             <option value="">Select Shift</option>
                             {shifts.map((shift) => (
                                 <option key={shift.id || shift.shift_id} value={shift.id || shift.shift_id}>
-                                    {shift.shift_name || shift.name}
+                                    {shift.shift_name || shift.name} {shift.time_in && shift.time_out ? `(${shift.time_in.slice(0, 5)} - ${shift.time_out.slice(0, 5)})` : ""}
                                 </option>
                             ))}
                         </select>
+                        {/* Show selected shift type */}
+                        {selectedShiftId && (
+                            <p className="text-xs text-gray-500 mt-1 italic">
+                                Shift Type: <span className="font-semibold text-gray-700">{selectedShift?.shift_type?.charAt(0).toUpperCase() + selectedShift?.shift_type?.slice(1) || "Unknown"}</span>
+                            </p>
+                        )}
                     </div>
 
-                    {/* GRACE IN */}
-                    <div className="border rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-2">
-                            <label className="flex items-center gap-2 text-sm font-semibold text-slate-800 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={graceInEnabled}
-                                    onChange={(e) => setGraceInEnabled(e.target.checked)}
-                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-600"
-                                />
-                                Grace In Rules
-                            </label>
-                            <button
-                                onClick={addGraceInRule}
-                                disabled={!graceInEnabled}
-                                className="text-xs text-blue-600 font-medium hover:text-blue-800 disabled:opacity-40"
-                            >
-                                + Add
-                            </button>
-                        </div>
-                        {graceInEnabled && (
-                            <div className="space-y-2">
-                                {graceInRules.map((rule, idx) => (
-                                    <div key={idx} className="flex gap-2">
+                    {/* Only show rules if a shift is selected */}
+                    {selectedShiftId && (
+                        <>
+                            {/* GRACE AND BREAK RULES (Hidden for Flexible Shifts) */}
+                            {!isFlexible && (
+                                <>
+                                    {/* GRACE IN */}
+                                    <div className="border rounded-lg p-3">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="flex items-center gap-2 text-sm font-semibold text-slate-800 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={graceInEnabled}
+                                                    onChange={(e) => setGraceInEnabled(e.target.checked)}
+                                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-600"
+                                                />
+                                                Grace In Rules
+                                            </label>
+                                            <button
+                                                onClick={addGraceInRule}
+                                                disabled={!graceInEnabled}
+                                                className="text-xs text-blue-600 font-medium hover:text-blue-800 disabled:opacity-40"
+                                            >
+                                                + Add
+                                            </button>
+                                        </div>
+                                        {graceInEnabled && (
+                                            <div className="space-y-2">
+                                                {graceInRules.map((rule, idx) => (
+                                                    <div key={idx} className="flex gap-2">
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Mins"
+                                                            className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
+                                                            value={rule.after_minutes}
+                                                            onChange={(e) => updateGraceInRule(idx, "after_minutes", e.target.value)}
+                                                        />
+                                                        <select
+                                                            className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
+                                                            value={rule.action}
+                                                            onChange={(e) => updateGraceInRule(idx, "action", e.target.value)}
+                                                        >
+                                                            <option value="warning">Warning</option>
+                                                            <option value="late">Late</option>
+                                                            <option value="grace">Grace</option>
+                                                            <option value="half_day">Half Day</option>
+                                                            <option value="absent">Absent</option>
+                                                        </select>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* GRACE OUT */}
+                                    <div className="border rounded-lg p-3">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="flex items-center gap-2 text-sm font-semibold text-slate-800 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={graceOutEnabled}
+                                                    onChange={(e) => setGraceOutEnabled(e.target.checked)}
+                                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-600"
+                                                />
+                                                Grace Out Rules
+                                            </label>
+                                            <button
+                                                onClick={addGraceOutRule}
+                                                disabled={!graceOutEnabled}
+                                                className="text-xs text-blue-600 font-medium hover:text-blue-800 disabled:opacity-40"
+                                            >
+                                                + Add
+                                            </button>
+                                        </div>
+                                        {graceOutEnabled && (
+                                            <div className="space-y-2">
+                                                {graceOutRules.map((rule, idx) => (
+                                                    <div key={idx} className="flex gap-2">
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Mins"
+                                                            className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
+                                                            value={rule.after_minutes}
+                                                            onChange={(e) => updateGraceOutRule(idx, "after_minutes", e.target.value)}
+                                                        />
+                                                        <select
+                                                            className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
+                                                            value={rule.action}
+                                                            onChange={(e) => updateGraceOutRule(idx, "action", e.target.value)}
+                                                        >
+                                                            <option value="warning">Warning</option>
+                                                            <option value="late">Late</option>
+                                                            <option value="grace">Grace</option>
+                                                            <option value="half_day">Half Day</option>
+                                                            <option value="absent">Absent</option>
+                                                        </select>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* BREAK */}
+                                    <div className="border rounded-lg p-3">
+                                        <label className="flex items-center gap-2 mb-2 text-sm font-semibold text-slate-800 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={breakEnabled}
+                                                onChange={(e) => setBreakEnabled(e.target.checked)}
+                                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-600"
+                                            />
+                                            Break Rule
+                                        </label>
+                                        {breakEnabled && (
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="number"
+                                                    placeholder="Mins"
+                                                    className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
+                                                    value={breakRule.after_minutes}
+                                                    onChange={(e) => setBreakRule({ ...breakRule, after_minutes: e.target.value })}
+                                                />
+                                                <select
+                                                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
+                                                    value={breakRule.action}
+                                                    onChange={(e) => setBreakRule({ ...breakRule, action: e.target.value })}
+                                                >
+                                                    <option value="warning">Warning</option>
+                                                    <option value="late">Late</option>
+                                                    <option value="grace">Grace</option>
+                                                    <option value="half_day">Half Day</option>
+                                                    <option value="absent">Absent</option>
+                                                </select>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+
+                            {/* WORKING HOURS */}
+                            <div className="border rounded-lg p-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <span className="text-xs text-slate-500 block mb-1">Half Day (&lt; Hrs)</span>
                                         <input
                                             type="number"
-                                            placeholder="Mins"
-                                            className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
-                                            value={rule.after_minutes}
-                                            onChange={(e) => updateGraceInRule(idx, "after_minutes", e.target.value)}
+                                            placeholder="Hours"
+                                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                                            value={workingHoursRule.half_day}
+                                            onChange={(e) => setWorkingHoursRule({ ...workingHoursRule, half_day: e.target.value })}
                                         />
-                                        <select
-                                            className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
-                                            value={rule.action}
-                                            onChange={(e) => updateGraceInRule(idx, "action", e.target.value)}
-                                        >
-                                            <option value="warning">Warning</option>
-                                            <option value="half_day">Half Day</option>
-                                            <option value="absent">Absent</option>
-                                        </select>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* GRACE OUT */}
-                    <div className="border rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-2">
-                            <label className="flex items-center gap-2 text-sm font-semibold text-slate-800 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={graceOutEnabled}
-                                    onChange={(e) => setGraceOutEnabled(e.target.checked)}
-                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-600"
-                                />
-                                Grace Out Rules
-                            </label>
-                            <button
-                                onClick={addGraceOutRule}
-                                disabled={!graceOutEnabled}
-                                className="text-xs text-blue-600 font-medium hover:text-blue-800 disabled:opacity-40"
-                            >
-                                + Add
-                            </button>
-                        </div>
-                        {graceOutEnabled && (
-                            <div className="space-y-2">
-                                {graceOutRules.map((rule, idx) => (
-                                    <div key={idx} className="flex gap-2">
+                                    <div>
+                                        <span className="text-xs text-slate-500 block mb-1">Absent (&lt; Hrs)</span>
                                         <input
                                             type="number"
-                                            placeholder="Mins"
-                                            className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
-                                            value={rule.after_minutes}
-                                            onChange={(e) => updateGraceOutRule(idx, "after_minutes", e.target.value)}
+                                            placeholder="Hours"
+                                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                                            value={workingHoursRule.absent}
+                                            onChange={(e) => setWorkingHoursRule({ ...workingHoursRule, absent: e.target.value })}
                                         />
-                                        <select
-                                            className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
-                                            value={rule.action}
-                                            onChange={(e) => updateGraceOutRule(idx, "action", e.target.value)}
-                                        >
-                                            <option value="warning">Warning</option>
-                                            <option value="half_day">Half Day</option>
-                                            <option value="absent">Absent</option>
-                                        </select>
                                     </div>
-                                ))}
+                                </div>
                             </div>
-                        )}
-                    </div>
-
-                    {/* BREAK */}
-                    <div className="border rounded-lg p-3">
-                        <label className="flex items-center gap-2 mb-2 text-sm font-semibold text-slate-800 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={breakEnabled}
-                                onChange={(e) => setBreakEnabled(e.target.checked)}
-                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-600"
-                            />
-                            Break Rule
-                        </label>
-                        {breakEnabled && (
-                            <div className="flex gap-2">
-                                <input
-                                    type="number"
-                                    placeholder="Mins"
-                                    className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
-                                    value={breakRule.after_minutes}
-                                    onChange={(e) => setBreakRule({ ...breakRule, after_minutes: e.target.value })}
-                                />
-                                <select
-                                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
-                                    value={breakRule.action}
-                                    onChange={(e) => setBreakRule({ ...breakRule, action: e.target.value })}
-                                >
-                                    <option value="warning">Warning</option>
-                                    <option value="half_day">Half Day</option>
-                                    <option value="absent">Absent</option>
-                                </select>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* WORKING HOURS */}
-                    <div className="border rounded-lg p-3">
-                        <label className="flex items-center gap-2 mb-2 text-sm font-semibold text-slate-800 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={workingHoursEnabled}
-                                onChange={(e) => setWorkingHoursEnabled(e.target.checked)}
-                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-600"
-                            />
-                            Working Hours Rule
-                        </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <span className="text-xs text-slate-500 block mb-1">Half Day (&lt; Hrs)</span>
-                                <input
-                                    type="number"
-                                    placeholder="Hours"
-                                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                                    value={workingHoursRule.half_day}
-                                    onChange={(e) => setWorkingHoursRule({ ...workingHoursRule, half_day: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <span className="text-xs text-slate-500 block mb-1">Absent (&lt; Hrs)</span>
-                                <input
-                                    type="number"
-                                    placeholder="Hours"
-                                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                                    value={workingHoursRule.absent}
-                                    onChange={(e) => setWorkingHoursRule({ ...workingHoursRule, absent: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Inline error */}
-                    {error && <p className="text-red-600 text-sm font-medium">{error}</p>}
+                        </>
+                    )}
                 </div>
+
+                {/* Inline error */}
+                {error && <div className="px-6 mb-2"><p className="text-red-600 text-sm font-medium">{error}</p></div>}
 
                 {/* Footer */}
                 <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
@@ -344,3 +360,5 @@ export default function RuleEngineModal({ open, onClose, onSaved, shifts }) {
         </div>
     );
 }
+
+export default RuleEngineModal;

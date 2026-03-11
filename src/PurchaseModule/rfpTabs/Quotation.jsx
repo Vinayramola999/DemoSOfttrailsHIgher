@@ -265,14 +265,14 @@ const Quotation = () => {
   return (
     <div className="p-6  min-h-[70vh] rounded-xl">
       {/* <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} /> */}
-      <div className="pl-4 pt-2">
+      {/* <div className="pl-4 pt-2">
         <button
           className="bg-[#0057FF] text-white font-semibold px-5 py-2 rounded-lg shadow mb-4"
           onClick={() => setShowPopup(true)}
         >
           + Manual Quotation
         </button>
-      </div>
+      </div> */}
       <ManualQuotationModal
         isOpen={showPopup}
         onClose={() => setShowPopup(false)}

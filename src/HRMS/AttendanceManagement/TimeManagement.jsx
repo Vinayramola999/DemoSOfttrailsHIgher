@@ -8,7 +8,7 @@ import { DeleteIcon, EditIcon, EyeIcon } from "../../NewComponents/ReactIcons";
 
 const ITEMS_PER_PAGE = 25;
 
-export default function ShiftRulesPage() {
+export default function TimeManagement() {
   const [activeTab, setActiveTab] = useState("shift");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -19,6 +19,10 @@ export default function ShiftRulesPage() {
 
   const [editItem, setEditItem] = useState(null);
   const [shiftStatus, setShiftStatus] = useState(true);
+  const [shiftType, setShiftType] = useState("strict");
+  const [shiftName, setShiftName] = useState("");
+  const [timeIn, setTimeIn] = useState("");
+  const [timeOut, setTimeOut] = useState("");
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("success");
@@ -96,16 +100,26 @@ export default function ShiftRulesPage() {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
+  const closeShiftForm = () => {
+    setShowForm(false);
+    setEditItem(null);
+    setShiftName("");
+    setTimeIn("");
+    setTimeOut("");
+    setShiftType("strict");
+    setShiftStatus(true);
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
-    const form = e.target;
     const token = sessionStorage.getItem("token");
     const userId = sessionStorage.getItem("userId");
 
     const payload = {
-      shift_name: form.name.value,
-      time_in: form.in.value,
-      time_out: form.out.value,
+      shift_name: shiftName,
+      time_in: timeIn,
+      time_out: timeOut,
+      shift_type: shiftType,
       ...(editItem ? { is_active: shiftStatus } : {}),
     };
 
@@ -119,8 +133,7 @@ export default function ShiftRulesPage() {
         if (response.ok) {
           setMessage("Shift updated successfully");
           setMessageType("success");
-          setShowForm(false);
-          setEditItem(null);
+          closeShiftForm();
           fetchShifts();
         } else {
           const errData = await response.json().catch(() => ({}));
@@ -141,8 +154,7 @@ export default function ShiftRulesPage() {
         if (response.ok) {
           setMessage("Shift created successfully");
           setMessageType("success");
-          setShowForm(false);
-          setEditItem(null);
+          closeShiftForm();
           fetchShifts();
         } else {
           const errData = await response.json().catch(() => ({}));
@@ -207,7 +219,14 @@ export default function ShiftRulesPage() {
         </div>
 
         {activeTab === "shift" ? (
-          <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+          <button onClick={() => {
+            setShiftType("strict");
+            setShiftName("");
+            setTimeIn("");
+            setTimeOut("");
+            setEditItem(null);
+            setShowForm(true);
+          }} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
             + Add Shift
           </button>
         ) : (
@@ -250,6 +269,7 @@ export default function ShiftRulesPage() {
                   <th className="p-5 text-left text-black">Shift Name</th>
                   <th className="p-5 text-left text-black">Time In</th>
                   <th className="p-5 text-left text-black">Time Out</th>
+                  <th className="p-5 text-left text-black">Shift Type</th>
                   <th className="p-5 text-left text-black">Status</th>
                   <th className="p-5 text-left text-black">Action</th>
                 </tr>
@@ -263,12 +283,21 @@ export default function ShiftRulesPage() {
                     <tr key={item.id || index} className={(index + 1) % 2 === 0 ? "bg-white" : "bg-blue-50"} >
                       <td className="px-5 py-4 text-left text-[14px] text-black"> {indexOfFirst + index + 1} </td>
                       <td className="px-5 py-4 text-left text-[14px] text-black font-medium"> {item.shift_name || item.name} </td>
-                      <td className="px-5 py-4 text-left text-[14px] text-black"> {item.time_in ? item.time_in.slice(0, 5) : item.in || "-"} </td>
-                      <td className="px-5 py-4 text-left text-[14px] text-black"> {item.time_out ? item.time_out.slice(0, 5) : item.out || "-"} </td>
+                      <td className="px-5 py-4 text-left text-[14px] text-black"> {item.time_in ? item.time_in.slice(0, 5) : item.in || "NA"} </td>
+                      <td className="px-5 py-4 text-left text-[14px] text-black"> {item.time_out ? item.time_out.slice(0, 5) : item.out || "NA"} </td>
+                      <td className="px-5 py-4 text-left text-[14px] text-black"> {item.shift_type ? item.shift_type.charAt(0).toUpperCase() + item.shift_type.slice(1) : "NA"} </td>
                       <td className="px-5 py-4 text-left text-[14px]"> <span className={`rounded-full text-sm font-semibold ${item.is_active ? "text-green-700" : "text-red-600"}`} > {item.is_active ? "Active" : "Inactive"} </span> </td>
                       <td className="px-5 py-4 text-left">
                         <div className="flex items-center gap-3">
-                          <button onClick={() => { setShiftStatus(item.is_active ?? true); setEditItem(item); setShowForm(true); }} title="Edit" className="text-blue-500 hover:text-blue-700 transition-colors" > <EditIcon /> </button>
+                          <button onClick={() => {
+                            setShiftStatus(item.is_active ?? true);
+                            setShiftType(item.shift_type || "strict");
+                            setShiftName(item.shift_name || item.name || "");
+                            setTimeIn(item.time_in ? item.time_in.slice(0, 5) : item.in ? item.in.slice(0, 5) : "");
+                            setTimeOut(item.time_out ? item.time_out.slice(0, 5) : item.out ? item.out.slice(0, 5) : "");
+                            setEditItem(item);
+                            setShowForm(true);
+                          }} title="Edit" className="text-blue-500 hover:text-blue-700 transition-colors" > <EditIcon /> </button>
                           <button onClick={() => { setDeleteError(""); setDeleteModal({ open: true, item }); }} title="Delete" className="text-red-400 hover:text-red-600 transition-colors" > <DeleteIcon /> </button>
                         </div>
                       </td>
@@ -407,23 +436,37 @@ export default function ShiftRulesPage() {
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-lg">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <h2 className="text-lg font-semibold">{editItem ? "Edit Shift" : "Add Shift"}</h2>
-              <button onClick={() => { setShowForm(false); setEditItem(null); }} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+              <button type="button" onClick={closeShiftForm} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
             </div>
 
             <form onSubmit={handleSave} className="px-6 py-4 space-y-4">
               <div>
+                <label className="text-sm font-medium text-gray-700 block mb-2">Shift Type</label>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="shiftTypeRadio" checked={shiftType === "strict"} onChange={() => setShiftType("strict")} className="w-4 h-4 border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <span className="text-sm font-medium text-gray-700">Strict</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="shiftTypeRadio" checked={shiftType === "flexible"} onChange={() => setShiftType("flexible")} className="w-4 h-4 border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <span className="text-sm font-medium text-gray-700">Flexible</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
                 <label className="text-sm font-medium">Shift Name</label>
-                <input name="name" defaultValue={editItem?.shift_name || editItem?.name || ""} placeholder="Enter shift name" required className="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                <input name="name" value={shiftName} onChange={(e) => setShiftName(e.target.value)} placeholder="Enter shift name" required className="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">In Time</label>
-                  <input type="time" name="in" defaultValue={editItem?.time_in || editItem?.in || ""} required className="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input type="time" name="in" value={timeIn} onChange={(e) => setTimeIn(e.target.value)} required className="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
                 <div>
                   <label className="text-sm font-medium">Out Time</label>
-                  <input type="time" name="out" defaultValue={editItem?.time_out || editItem?.out || ""} required className="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input type="time" name="out" value={timeOut} onChange={(e) => setTimeOut(e.target.value)} required className="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
               </div>
 
@@ -445,7 +488,7 @@ export default function ShiftRulesPage() {
               )}
 
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => { setShowForm(false); setEditItem(null); }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+                <button type="button" onClick={closeShiftForm} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancel</button>
                 <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Submit</button>
               </div>
             </form>

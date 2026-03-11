@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 import { faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-const AttendanceTable = () => {
+const ManualInput = () => {
     const [data, setData] = useState([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [mode, setMode] = useState("date");
@@ -504,4 +504,4 @@ const AttendanceTable = () => {
         </div>
     );
 }
-export default AttendanceTable;
+export default ManualInput;
