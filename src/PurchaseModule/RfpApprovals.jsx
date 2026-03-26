@@ -1,8 +1,8 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
 import { FaSearch, FaCheck, FaTimes } from "react-icons/fa";
-import Swal from "sweetalert2";
 import Select from "react-select";
+import PopupModal from "./PopupModal";
 import DownloadTableButtons from "./components/Downloadpdfexcel";
 import API from "../config/api";
 
@@ -17,6 +17,10 @@ const RfpApprovals = () => {
   const [rejectionReason, setRejectionReason] = useState("");
   const [pendingAction, setPendingAction] = useState(null); // "approve" or "reject"
   const [pendingRfpId, setPendingRfpId] = useState(null);
+  const [modalType, setModalType] = useState(null);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalCallback, setModalCallback] = useState(null);
 
   const getToken = () => sessionStorage.getItem("token");
   const token = getToken();
@@ -37,7 +41,7 @@ const RfpApprovals = () => {
 
   const statusOptions = [
     { value: "", label: "All Status" },
-    { value: "Approved", label: "Approved" },
+    { value: "RFP Approved", label: "Approved" },
     { value: "Rejected", label: "Rejected" },
     { value: "Pending", label: "Pending" },
   ];
@@ -103,7 +107,7 @@ const RfpApprovals = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          `${API.PURCHASE_API}/rfps/receive_rfp`,
+          `${API.PURCHASE_API}/rfps/all-rfp`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         
@@ -113,8 +117,14 @@ const RfpApprovals = () => {
           ? response.data
           : [];
 
+        // Extract rfp_info and flatten the structure
+        const flattenedData = rfpData.map((item) => ({
+          ...(item.rfp_info || item),
+          items: item.items || [],
+        }));
+
         // Add serial numbers
-        const dataWithSno = rfpData.map((item, index) => ({
+        const dataWithSno = flattenedData.map((item, index) => ({
           ...item,
           sno: index + 1,
         }));
@@ -176,34 +186,31 @@ const RfpApprovals = () => {
     setShowReasonModal(true);
   };
 
+  // Close Modal
+  const closeModal = () => {
+    setModalType(null);
+    setModalTitle("");
+    setModalMessage("");
+    setModalCallback(null);
+  };
+
   // Confirm Approval
   const handleConfirmApproval = async () => {
-    if (!approvalReason.trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: "Please provide an approval reason.",
-      });
-      return;
-    }
-
     try {
-      await axios.patch(
-        `${API.PURCHASE_API}/rfps/${pendingRfpId}/approve`,
-        { status: "Approved", reason: approvalReason },
+      await axios.put(
+        `${API.PURCHASE_API}/rfps/update-status/${pendingRfpId}`,
+        { status: "Approved", },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: "RFP approved successfully.",
-      });
+      setModalType("success");
+      setModalTitle("Success");
+      setModalMessage("RFP approved successfully.");
 
       // Refresh data
       setData(data.map(item => 
         item.rfp_id === pendingRfpId 
-          ? { ...item, status: "Approved" }
+          ? { ...item, status: "RFP Approved" }
           : item
       ));
 
@@ -211,39 +218,39 @@ const RfpApprovals = () => {
       setApprovalReason("");
       setPendingRfpId(null);
       setPendingAction(null);
+      setModalCallback(() => () => {
+        setShowReasonModal(false);
+        setApprovalReason("");
+        setPendingRfpId(null);
+        setPendingAction(null);
+      });
     } catch (error) {
       console.error("Error approving RFP:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.response?.data?.message || "Failed to approve RFP.",
-      });
+      setModalType("error");
+      setModalTitle("Error");
+      setModalMessage(error.response?.data?.message || "Failed to approve RFP.");
     }
   };
 
   // Confirm Rejection
   const handleConfirmRejection = async () => {
     if (!rejectionReason.trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: "Please provide a rejection reason.",
-      });
+      setModalType("warning");
+      setModalTitle("Warning");
+      setModalMessage("Please provide a rejection reason.");
       return;
     }
 
     try {
-      await axios.patch(
-        `${API.PURCHASE_API}/rfps/${pendingRfpId}/reject`,
+      await axios.put(
+        `${API.PURCHASE_API}/rfps/update-status/${pendingRfpId}`,
         { status: "Rejected", reason: rejectionReason },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: "RFP rejected successfully.",
-      });
+      setModalType("success");
+      setModalTitle("Success");
+      setModalMessage("RFP rejected successfully.");
 
       // Refresh data
       setData(data.map(item => 
@@ -256,13 +263,17 @@ const RfpApprovals = () => {
       setRejectionReason("");
       setPendingRfpId(null);
       setPendingAction(null);
+      setModalCallback(() => () => {
+        setShowReasonModal(false);
+        setRejectionReason("");
+        setPendingRfpId(null);
+        setPendingAction(null);
+      });
     } catch (error) {
       console.error("Error rejecting RFP:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.response?.data?.message || "Failed to reject RFP.",
-      });
+      setModalType("error");
+      setModalTitle("Error");
+      setModalMessage(error.response?.data?.message || "Failed to reject RFP.");
     }
   };
 
@@ -289,7 +300,7 @@ const RfpApprovals = () => {
   // Get Status Badge Color
   const getStatusBadgeColor = (status) => {
     switch (status) {
-      case "Approved":
+      case "RFP Approved":
         return "bg-green-100 text-green-800";
       case "Rejected":
         return "bg-red-100 text-red-800";
@@ -300,101 +311,131 @@ const RfpApprovals = () => {
     }
   };
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg shadow-md">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">RFP Approvals</h1>
-
-          {/* Search and Filters */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            {/* Search */}
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-3 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search RFP ID, Organization, Title..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-
-            {/* Status Filter */}
-            <div>
-              <Select
-                options={statusOptions}
-                value={statusOptions.find((opt) => opt.value === selectedStatus) || statusOptions[0]}
-                onChange={(opt) => setSelectedStatus(opt.value)}
-                styles={selectStyles}
-                isSearchable={false}
-              />
-            </div>
-
-            {/* Download */}
-            <div className="flex justify-end">
-              <DownloadTableButtons data={filteredData} columns={columns} />
-            </div>
+    <div className="flex">
+      <div className="p-3 w-full">
+        <div className="flex mb-4 gap-4 items-center">
+          <div className="relative w-1/4">
+            <input
+              type="text"
+              placeholder="Search"
+              className="border border-gray-300 w-full p-2 pl-10 rounded-xl bg-[#FFFFFF] h-10 text-base"
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ minHeight: "40px" }}
+            />
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          </div>
+          <div className="w-1/6">
+            <Select
+              className="w-full"
+              styles={{
+                ...selectStyles,
+                control: (provided) => ({
+                  ...provided,
+                  backgroundColor: "#FFFFFF",
+                }),
+                menu: (provided) => ({
+                  ...provided,
+                  backgroundColor: "#FFFFFF",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  backgroundColor: state.isFocused ? "#F3F4F6" : "#FFFFFF",
+                  color: "#111827",
+                }),
+              }}
+              options={statusOptions}
+              value={statusOptions.find((opt) => opt.value === selectedStatus)}
+              onChange={(opt) => setSelectedStatus(opt.value)}
+              isSearchable
+              placeholder="All Status"
+            />
+          </div>
+          <div className="flex-1 flex justify-end">
+            <DownloadTableButtons
+              data={filteredData.map((item, idx) => ({
+                sno: idx + 1,
+                rfp_id: item.rfp_id,
+                title: item.title,
+                start_date: formatDate(item.rfp_start_date),
+                end_date: formatDate(item.rfp_end_date),
+                status: item.status,
+              }))}
+              columns={columns}
+              fileName="RFPRequests"
+            />
           </div>
         </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-100 border-b border-gray-200">
-              <tr>
-                {columns.map((col) => (
-                  <th
-                    key={col.accessor}
-                    className="px-6 py-3 text-left text-sm font-semibold text-gray-700"
-                  >
-                    {col.header}
-                  </th>
-                ))}
+        <div
+          className="overflow-x-auto rounded-lg shadow bg-white p-4"
+          style={{ maxHeight: 600, overflowY: "auto", minWidth: 900 }}
+        >
+          <table className="w-full bg-white rounded-lg border-collapse">
+            <thead className="border-b-2 border-black top-0 bg-white z-10">
+              <tr className="p-4 text-center">
+                <th className="p-2">S. No.</th>
+                <th className="p-2">RFP ID</th>
+                <th className="p-2">Title</th>
+                <th className="p-2">Start Date</th>
+                <th className="p-2">End Date</th>
+                <th className="p-2">Status</th>
+                <th className="p-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={columns.length} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="p-4 text-center text-gray-500">
                     Loading...
                   </td>
                 </tr>
-              ) : filteredData.length === 0 ? (
+              ) : paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="p-4 text-center text-gray-500">
                     No RFP requests found.
                   </td>
                 </tr>
               ) : (
-                filteredData.map((item, index) => (
-                  <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition">
-                    <td className="px-6 py-3 text-sm text-gray-900">{item.sno}</td>
-                    <td className="px-6 py-3 text-sm text-blue-600 cursor-pointer font-medium">
+                paginatedData.map((item, index) => (
+                  <tr
+                    key={index}
+                    className="odd:bg-blue-50 text-center"
+                  >
+                    <td className="p-2">
+                      {index + 1 + (currentPage - 1) * rowsPerPage}
+                    </td>
+                    <td className="p-2 text-blue-600 cursor-pointer font-medium">
                       <button onClick={() => handleViewDetails(item)}>
                         {item.rfp_id}
                       </button>
                     </td>
-                    {/* <td className="px-6 py-3 text-sm text-gray-700">{item.organization_name || "-"}</td> */}
-                    <td className="px-6 py-3 text-sm text-gray-700">{item.title || "-"}</td>
-                    <td className="px-6 py-3 text-sm text-gray-700">
+                    <td className="p-2">{item.title || "-"}</td>
+                    <td className="p-2">
                       {formatDate(item.rfp_start_date)}
                     </td>
-                    <td className="px-6 py-3 text-sm text-gray-700">
+                    <td className="p-2">
                       {formatDate(item.rfp_end_date)}
                     </td>
-                    <td className="px-6 py-3 text-sm">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(item.status)}`}>
+                    <td className="p-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${getStatusBadgeColor(item.status)}`}>
                         {item.status || "Pending"}
                       </span>
                     </td>
-                    <td className="px-6 py-3 text-sm">
+                    <td className="p-2">
                       {item.status === "Pending" ? (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 justify-center">
                           <button
                             onClick={() => handleApproveClick(item)}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 transition"
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 transition text-xs"
                             title="Approve"
                           >
                             <FaCheck size={14} />
@@ -402,7 +443,7 @@ const RfpApprovals = () => {
                           </button>
                           <button
                             onClick={() => handleRejectClick(item)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 transition"
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 transition text-xs"
                             title="Reject"
                           >
                             <FaTimes size={14} />
@@ -418,6 +459,39 @@ const RfpApprovals = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center gap-2 mt-4 justify-center">
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.max(prev - 1, 1))
+            }
+            disabled={currentPage === 1}
+            className="px-3 py-2 bg-white border-gray-300 border rounded disabled:opacity-50"
+          >
+            &lt;
+          </button>
+
+          <button className="px-4 py-2 bg-custome-blue border-custome-blue text-white rounded">
+            {currentPage}
+          </button>
+
+          <span className="px-2">of</span>
+
+          <button className="px-4 py-2 border rounded text-custome-blue">
+            {totalPages}
+          </button>
+
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-3 py-2 bg-white border-gray-300 border rounded disabled:opacity-50"
+          >
+            &gt;
+          </button>
         </div>
       </div>
 
@@ -509,27 +583,25 @@ const RfpApprovals = () => {
       {showReasonModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-8 w-[90%] max-w-md shadow-lg">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl font-bold text-center text-gray-900 mb-4">
               {pendingAction === "approve" ? "Approve RFP" : "Reject RFP"}
             </h2>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {pendingAction === "approve" ? "Approval Reason" : "Rejection Reason"}
-              </label>
-              <textarea
-                value={pendingAction === "approve" ? approvalReason : rejectionReason}
-                onChange={(e) =>
-                  pendingAction === "approve"
-                    ? setApprovalReason(e.target.value)
-                    : setRejectionReason(e.target.value)
-                }
-                placeholder="Please provide your reason..."
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none h-32"
-              />
-            </div>
+            {pendingAction === "reject" && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rejection Reason
+                </label>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="Please provide your reason..."
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none h-32"
+                />
+              </div>
+            )}
 
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-center gap-3">
               <button
                 onClick={handleCloseReasonModal}
                 className="bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-2 rounded-lg transition"
@@ -553,6 +625,18 @@ const RfpApprovals = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Custom Popup Modal */}
+      {modalType && (
+        <PopupModal
+          type={modalType}
+          title={modalTitle}
+          message={modalMessage}
+          onClose={closeModal}
+          onConfirm={modalCallback}
+          onCancel={closeModal}
+        />
       )}
     </div>
   );

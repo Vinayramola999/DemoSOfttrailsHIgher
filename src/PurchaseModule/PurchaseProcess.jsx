@@ -740,7 +740,7 @@ const PurchaseProcess = ({ onClose, selectedContacts }) => {
                       ID, or upload the document manually?
                     </p>
                     <div className="flex justify-end gap-4">
-                      <button
+                      {/* <button
                         className="bg-gray-200 text-gray-700 px-4 py-2 rounded"
                         onClick={() => {
                           setShowSendOptions(false); // close the send options popup
@@ -748,7 +748,7 @@ const PurchaseProcess = ({ onClose, selectedContacts }) => {
                         }}
                       >
                         Upload Manually
-                      </button>
+                      </button> */}
 
                       <button
                         className="bg-blue-600 text-white px-4 py-2 rounded"

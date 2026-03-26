@@ -175,9 +175,12 @@ const Header = ({ onHamburgerClick }) => {
         return "Customers";
       case "/productaddon/ucs":
         return "Communication Service";
-        case "/SetupWorkflow":
-          return "Approval Workflow"
+      case "/SetupWorkflow":
+        return "Approval Workflow";
       default:
+        if (location.pathname.includes("/HospitalManagement")) {
+          return "Hospital Management";
+        }
         return "Employee Data";
     }
   };

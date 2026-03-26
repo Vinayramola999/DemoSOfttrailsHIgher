@@ -6,7 +6,7 @@ import DownloadTableButtons from "../components/Downloadpdfexcel";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import PopupModal from "../PopupModal";
-import ManualQuotationModal from "./ManualQuotationModal";
+// import ManualQuotationModal from "./ManualQuotationModal";
 const Quotation = () => {
   const createdBy = sessionStorage.getItem("userId");
   const getToken = () => sessionStorage.getItem("token");
@@ -85,7 +85,7 @@ const Quotation = () => {
     const fetchRfps = async () => {
       try {
         const res = await axios.get(
-          `${process.env.REACT_APP_PURCHASE_API}/supplier_quotation/rfp_ids/shared`,
+          `${process.env.REACT_APP_PURCHASE_API}/supplier_quotation/rfp_ids/quotation`, //https://devdemo.softtrails.net/purchase/supplier_quotation/rfp_ids/quotation
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -122,19 +122,32 @@ const Quotation = () => {
       .then((res) => {
         const data = Array.isArray(res.data.data) ? res.data.data : [];
         // Map documents for popup and normalize id field
-        const mapped = data.map((row) => ({
-          // ensure component uses `quotation_id`
-          quotation_id: row.quotation_id || row.quotation_group_id || "",
-          // keep original fields
-          ...row,
-          // documents normalized from required_doc
-          documents: row.required_doc
-            ? Object.entries(row.required_doc).map(([name, url]) => ({
+        const mapped = data.map((row) => {
+          let documents = [];
+          if (row.required_doc) {
+            try {
+              // Parse required_doc if it's a JSON string
+              const docObj = typeof row.required_doc === 'string' 
+                ? JSON.parse(row.required_doc) 
+                : row.required_doc;
+              documents = Object.entries(docObj).map(([name, url]) => ({
                 name,
                 url,
-              }))
-            : [],
-        }));
+              }));
+            } catch (e) {
+              console.error('Error parsing required_doc:', e);
+              documents = [];
+            }
+          }
+          return {
+            // ensure component uses `quotation_id`
+            quotation_id: row.quotation_id || row.quotation_group_id || "",
+            // keep original fields
+            ...row,
+            // documents normalized from required_doc
+            documents,
+          };
+        });
 
         setQuotations(mapped);
       })
@@ -273,11 +286,12 @@ const Quotation = () => {
           + Manual Quotation
         </button>
       </div> */}
-      <ManualQuotationModal
+      
+      {/* <ManualQuotationModal
         isOpen={showPopup}
         onClose={() => setShowPopup(false)}
         quotationOptions={rfpSelectOptions}
-      />
+      /> */}
       <div className="flex gap-4 mb-4 items-center">
         {/* Filters */}
         <div className="relative flex items-center">
@@ -424,17 +438,16 @@ const Quotation = () => {
                           setShowDocModal(true);
 
                           // Initialize docStatus for this quotation
-                          if (row.documents) {
+                          if (row.documents && row.documents.length > 0) {
                             const initialStatus = {};
-                            // documents may be objects {name, url} or plain urls; normalize to use url as key
                             row.documents.forEach((doc) => {
-                              const key =
-                                (typeof doc === "string" ? doc : doc?.url) ||
-                                doc?.name ||
-                                "";
+                              // Use document name as key for consistency
+                              const key = doc.name || doc.url || "";
                               if (key) initialStatus[key] = "Qualified";
                             });
                             setDocStatus(initialStatus);
+                          } else {
+                            setDocStatus({});
                           }
                         }
                       }}
@@ -552,19 +565,15 @@ const Quotation = () => {
               </h2>
               {(selectedQuotation.documents || []).length > 0 ? (
                 selectedQuotation.documents.map((doc, idx) => {
-                  // doc may be a string (url) or an object { name, url }
-                  const docUrl = typeof doc === "string" ? doc : doc?.url;
-                  const docName =
-                    (typeof doc === "string"
-                      ? docUrl?.split("/").pop()
-                      : doc?.name) ||
-                    docUrl?.split("/").pop() ||
-                    `Document-${idx + 1}`;
-                  const statusKey = docUrl || docName;
+                  // doc is an object { name, url }
+                  const docUrl = doc.url || "";
+                  const docName = doc.name || `Document-${idx + 1}`;
+                  const statusKey = docName; // Use name as consistent key
+                  
                   return (
                     <div key={idx} style={{ marginBottom: 18 }}>
                       <div style={{ fontWeight: 500, marginBottom: 6 }}>
-                        Document name
+                        {docName}
                       </div>
                       <div
                         style={{

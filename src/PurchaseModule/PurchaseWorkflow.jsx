@@ -42,7 +42,7 @@ const SetupWorkflow = () => {
       try {
         const token = sessionStorage.getItem("token");
         if (!token) return;
-        const { data } = await axios.get(`${API.COLUMN_TYPES_API}/role`, { headers: { Authorization: `Bearer ${token}` } });
+        const { data } = await axios.get(`${API.API_BASE}/role`, { headers: { Authorization: `Bearer ${token}` } });
         setRoles(data || []);
         setRoleOptions(
           (data || []).map((role) => ({ value: role.role, label: role.role }))
