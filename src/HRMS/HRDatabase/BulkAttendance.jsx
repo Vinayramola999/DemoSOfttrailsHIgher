@@ -15,7 +15,7 @@ const BulkAttendance = () => {
     const [filterYear, setFilterYear] = useState(new Date().getFullYear().toString());
     const [uploading, setUploading] = useState(false);
 
-    const recordsPerPage = 15;
+    const recordsPerPage = 31;
 
     /* ================= FETCH ATTENDANCE ================= */
     const fetchAttendance = async () => {
@@ -288,59 +288,75 @@ const BulkAttendance = () => {
                     <div className="relative bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200 max-h-[90vh] flex flex-col">
 
                         {/* Modal Header */}
-                        <div className="p-6 border-b flex items-center justify-between bg-gray-50/50">
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-900">{selectedEmployee.emp_name}</h3>
-                                <p className="text-sm text-gray-500 font-medium tracking-wide">{selectedEmployee.emp_code} • Attendance History</p>
+                        <div className="px-6 py-3 border-b flex items-center justify-between bg-gray-50/50">
+                            <div className="flex items-center gap-4">
+                                <div>
+                                    <h3 className="text-lg font-extrabold text-gray-900">{userMap.get(selectedEmpCode) || "Unknown"}</h3>
+                                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{selectedEmpCode} • History</p>
+                                </div>
+                                <div className="h-8 w-px bg-gray-200 mx-2 hidden md:block" />
+                                <div className="hidden md:flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase">Year</span>
+                                        <select
+                                            className="bg-gray-100 rounded-lg px-2 py-1 text-xs font-bold outline-none border-none"
+                                            value={filterYear}
+                                            onChange={(e) => setFilterYear(e.target.value)}
+                                        >
+                                            {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase">Month</span>
+                                        <select
+                                            className="bg-gray-100 rounded-lg px-2 py-1 text-xs font-bold outline-none border-none"
+                                            value={filterMonth}
+                                            onChange={(e) => setFilterMonth(e.target.value)}
+                                        >
+                                            <option value="">All</option>
+                                            {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((m, i) => (
+                                                <option key={m} value={i + 1}>{m}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                                className="p-1.5 rounded-full hover:bg-gray-200 transition-colors text-gray-400 hover:text-gray-600"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
 
-                        {/* Stats Overview */}
-                        <div className="px-6 py-4 bg-blue-50/50 border-b grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-blue-100">
-                                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Total Days</p>
-                                <p className="text-xl font-bold text-blue-900">{stats.total}</p>
+                        {/* Stats & Filters Combined Row */}
+                        <div className="px-6 py-3 border-b bg-white flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex flex-wrap gap-4 items-center">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total: <span className="text-gray-800">{stats.total}</span></span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Late: <span className="text-gray-800">{stats.late}</span></span>
+                                </div>
+                                <div className="flex items-center gap-2 text-blue-600">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Avg: <span className="text-blue-700 font-extrabold">{stats.avg}</span></span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Work: <span className="text-gray-800">{stats.work}</span></span>
+                                </div>
                             </div>
-                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-red-100">
-                                <p className="text-[10px] font-black text-red-400 uppercase tracking-widest">Late Arrival</p>
-                                <p className="text-xl font-bold text-red-900">{stats.late}</p>
-                            </div>
-                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-green-100">
-                                <p className="text-[10px] font-black text-green-400 uppercase tracking-widest">Avg. Work Hrs</p>
-                                <p className="text-xl font-bold text-green-900">{stats.avg}</p>
-                            </div>
-                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
-                                <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Total Work</p>
-                                <p className="text-xl font-bold text-purple-900">{stats.work}</p>
-                            </div>
-                        </div>
 
-                        {/* Filters */}
-                        <div className="p-6 bg-white border-b flex flex-wrap items-center gap-6">
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs font-bold text-gray-500">Year</span>
-                                <select
-                                    className="border-0 bg-gray-100 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20"
-                                    value={filterYear}
-                                    onChange={(e) => setFilterYear(e.target.value)}
-                                >
+                            {/* Mobile Filters (visible only on small screens) */}
+                            <div className="md:hidden flex items-center gap-2">
+                                <select className="bg-gray-100 rounded px-2 py-1 text-[10px] font-bold" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
                                     {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
                                 </select>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs font-bold text-gray-500">Month</span>
-                                <select
-                                    className="border-0 bg-gray-100 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20"
-                                    value={filterMonth}
-                                    onChange={(e) => setFilterMonth(e.target.value)}
-                                >
-                                    <option value="">All Months</option>
+                                <select className="bg-gray-100 rounded px-2 py-1 text-[10px] font-bold" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
+                                    <option value="">Mo</option>
                                     {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((m, i) => (
                                         <option key={m} value={i + 1}>{m}</option>
                                     ))}
@@ -351,16 +367,16 @@ const BulkAttendance = () => {
                         {/* History Table */}
                         <div className="flex-1 overflow-auto px-4 scrollbar-hide bg-white">
                             <table className="w-full text-left">
-                                <thead className="text-[13px] font-bold bg-white sticky top-0 z-20" style={{ boxShadow: "0 2px 0 black" }}>
-                                    <tr className="bg-white text-black">
-                                        <th className="px-5 py-4 bg-white text-left uppercase tracking-wider">Date</th>
-                                        <th className="px-5 py-4 bg-white text-left uppercase tracking-wider">In Time</th>
-                                        <th className="px-5 py-4 bg-white text-left uppercase tracking-wider">Out Time</th>
-                                        <th className="px-5 py-4 bg-white text-left uppercase tracking-wider">Status</th>
-                                        <th className="px-5 py-4 bg-white text-left uppercase tracking-wider">Work Hrs</th>
-                                        <th className="px-5 py-4 bg-white text-left uppercase tracking-wider">Break</th>
-                                        <th className="px-5 py-4 bg-white text-left uppercase tracking-wider">Late</th>
-                                        <th className="px-5 py-4 bg-white text-left uppercase tracking-wider">Remark</th>
+                                <thead className="text-[11px] font-black uppercase tracking-widest bg-white sticky top-0 z-20" style={{ boxShadow: "0 2px 0 black" }}>
+                                    <tr className="bg-white text-gray-400">
+                                        <th className="px-3 py-2 bg-white text-left whitespace-nowrap">Date</th>
+                                        <th className="px-3 py-2 bg-white text-left whitespace-nowrap">In</th>
+                                        <th className="px-3 py-2 bg-white text-left whitespace-nowrap">Out</th>
+                                        <th className="px-3 py-2 bg-white text-left whitespace-nowrap text-center">Status</th>
+                                        <th className="px-3 py-2 bg-white text-left whitespace-nowrap">Work Hrs</th>
+                                        <th className="px-3 py-2 bg-white text-left whitespace-nowrap">Break</th>
+                                        <th className="px-3 py-2 bg-white text-left whitespace-nowrap">Late</th>
+                                        <th className="px-3 py-2 bg-white text-left">Remark</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -370,25 +386,25 @@ const BulkAttendance = () => {
                                         </tr>
                                     ) : (
                                         historyData.map((item, i) => (
-                                            <tr key={i} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-5 py-4 text-[14px] font-semibold text-gray-700">{formatDate(item.att_date)}</td>
-                                                <td className="px-5 py-4 text-[14px] text-gray-600 font-medium">{item.first_in || "--:--"}</td>
-                                                <td className="px-5 py-4 text-[14px] text-gray-600 font-medium">{item.last_out || "--:--"}</td>
-                                                <td className="px-5 py-4">
-                                                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${getStatusStyle(item.final_status)}`}>
+                                            <tr key={i} className="hover:bg-blue-50/30 transition-colors border-b border-gray-50">
+                                                <td className="px-3 py-1.5 text-[12px] font-bold text-gray-600">{formatDate(item.att_date)}</td>
+                                                <td className="px-3 py-1.5 text-[12px] text-gray-500 font-bold">{item.first_in || "--:--"}</td>
+                                                <td className="px-3 py-1.5 text-[12px] text-gray-500 font-bold">{item.last_out || "--:--"}</td>
+                                                <td className="px-3 py-1.5 text-center">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(item.final_status)}`}>
                                                         {item.final_status}
                                                     </span>
                                                 </td>
-                                                <td className="px-5 py-4 text-[14px] text-blue-600 font-bold whitespace-nowrap">
+                                                <td className="px-3 py-1.5 text-[12px] text-blue-600 font-black">
                                                     {Math.floor((item.total_work_minutes || 0) / 60)}h {(item.total_work_minutes || 0) % 60}m
                                                 </td>
-                                                <td className="px-5 py-4 text-[14px] text-gray-500 font-medium">
+                                                <td className="px-3 py-1.5 text-[12px] text-gray-400 font-bold italic">
                                                     {item.break_minutes || 0}m
                                                 </td>
-                                                <td className="px-5 py-4 text-[14px] text-red-500 font-medium">
+                                                <td className="px-3 py-1.5 text-[12px] text-red-400 font-bold italic">
                                                     {item.late_minutes || 0}m
                                                 </td>
-                                                <td className="px-5 py-4 text-[13px] text-gray-600 font-medium italic max-w-[150px] truncate" title={item.treatment}>
+                                                <td className="px-3 py-1.5 text-[11px] text-gray-400 font-bold italic truncate max-w-[120px]" title={item.treatment}>
                                                     {item.treatment || "-"}
                                                 </td>
                                             </tr>

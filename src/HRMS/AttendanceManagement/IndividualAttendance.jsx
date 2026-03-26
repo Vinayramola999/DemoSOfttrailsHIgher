@@ -405,12 +405,12 @@ const IndividualAttendance = () => {
                 <table className="min-w-full table-auto border-collapse text-sm">
                   <thead className="text-[14px] font-medium bg-white sticky top-0 z-10" style={{ boxShadow: "0 2px 0 black" }}>
                     <tr>
-                      <th className="p-5 text-left text-black uppercase tracking-wider">Date</th>
-                      <th className="p-5 text-left text-black uppercase tracking-wider">In Time</th>
-                      <th className="p-5 text-left text-black uppercase tracking-wider">Out Time</th>
-                      <th className="p-5 text-left text-black uppercase tracking-wider text-center">Status</th>
-                      <th className="p-5 text-left text-black uppercase tracking-wider text-center">Hours</th>
-                      <th className="p-5 text-left text-black uppercase tracking-wider text-center">Action</th>
+                      <th className="px-4 py-2.5 text-left text-black uppercase tracking-wider">Date</th>
+                      <th className="px-4 py-2.5 text-left text-black uppercase tracking-wider">In Time</th>
+                      <th className="px-4 py-2.5 text-left text-black uppercase tracking-wider">Out Time</th>
+                      <th className="px-4 py-2.5 text-left text-black uppercase tracking-wider text-center">Status</th>
+                      <th className="px-4 py-2.5 text-left text-black uppercase tracking-wider text-center">Hours</th>
+                      <th className="px-4 py-2.5 text-left text-black uppercase tracking-wider text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -430,17 +430,17 @@ const IndividualAttendance = () => {
                           key={row.id || index}
                           className={`group transition-all active:bg-blue-100 ${(index + 1) % 2 === 0 ? "bg-white hover:bg-gray-50" : "bg-blue-50 hover:bg-blue-100/50"}`}
                         >
-                          <td className="px-5 py-4 text-left text-[14px] text-gray-700 font-bold">
+                          <td className="px-4 py-2 text-left text-[14px] text-gray-700 font-bold">
                             {moment(row.att_date).format("DD MMM YYYY")}
                           </td>
-                          <td className="px-5 py-4 text-left text-[14px] text-gray-600 font-bold">{row.first_in || "--:--"}</td>
-                          <td className="px-5 py-4 text-left text-[14px] text-gray-600 font-bold">{row.last_out || "--:--"}</td>
-                          <td className="px-5 py-4 text-center">
+                          <td className="px-4 py-2 text-left text-[14px] text-gray-600 font-bold">{row.first_in || "--:--"}</td>
+                          <td className="px-4 py-2 text-left text-[14px] text-gray-600 font-bold">{row.last_out || "--:--"}</td>
+                          <td className="px-4 py-2 text-center">
                             <span className={`px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider border shadow-sm ${getStatusColor(row.final_status)}`}>
                               {row.final_status}
                             </span>
                           </td>
-                          <td className="px-5 py-4 text-center text-[14px] font-black text-blue-600">
+                          <td className="px-4 py-2 text-center text-[14px] font-black text-blue-600">
                             {(() => {
                               const val = row.total_hours;
                               if (!val) return "--:--";
@@ -460,16 +460,14 @@ const IndividualAttendance = () => {
                               return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
                             })()}
                           </td>
-                          <td className="px-5 py-4 text-center">
+                          <td className="px-4 py-2 text-center">
                             <div className="flex justify-center items-center gap-3">
                               <button onClick={() => setSelectedDay(row)} className="text-blue-500 hover:text-blue-700" title="View Details">
                                 <EyeIcon />
                               </button>
-                              {row.final_status !== "PRESENT" && (
-                                <button onClick={() => handleEdit(row)} className="text-blue-500 hover:text-blue-700" title="Edit">
-                                  <EditIcon />
-                                </button>
-                              )}
+                              <button onClick={() => handleEdit(row)} className="text-blue-500 hover:text-blue-700" title="Regularize">
+                                <EditIcon />
+                              </button>
                             </div>
                           </td>
                         </tr>

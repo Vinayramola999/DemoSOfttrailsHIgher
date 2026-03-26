@@ -80,6 +80,9 @@ const Sidebar = ({ isOpen, onClose }) => {
     const [isSalesManagementOpen, setIsSalesManagementOpen] = useState([
         location.pathname.includes("/Lead"),
     ]);
+    const [isHospitalManagementOpen, setIsHospitalManagementOpen] = useState(
+        location.pathname.includes("/HospitalManagement")
+    );
     const toggleCrmMenu = () => {
         setIsCrmOpen(prevState => !prevState);
     };
@@ -97,6 +100,9 @@ const Sidebar = ({ isOpen, onClose }) => {
     };
     const toggleSalesManagementMenu = () => {
         setIsSalesManagementOpen((prevState) => !prevState);
+    };
+    const toggleHospitalManagementMenu = () => {
+        setIsHospitalManagementOpen((prevState) => !prevState);
     };
     const togglePurchaseMenu = () => {
         setIsPurchaseOpen(prevState => !prevState);
@@ -443,6 +449,38 @@ const Sidebar = ({ isOpen, onClose }) => {
                                 </ul>
                             )}
                         </li>
+
+                        {/* Hospital Management */}
+                        <li className="mt-3">
+                            <div
+                                onClick={toggleHospitalManagementMenu}
+                                className="flex items-center p-2 text-black rounded cursor-pointer hover:bg-blue-600 hover:text-white transition-colors"
+                            >
+                                <FaBuilding className="mr-2" /> Hospital Management
+                            </div>
+
+                            {isHospitalManagementOpen && (
+                                <ul className="ml-4">
+                                    <li className="mt-1">
+                                        <Link to="/HospitalManagement/patient-registration" className={`flex items-center p-2 text-black rounded transition-colors text-[10px] ${location.pathname.includes('/patient-registration') ? "bg-blue-600 text-white" : "hover:bg-blue-600 hover:text-white"}`}> <FaUser className="mr-2" /> Patient Registration</Link>
+                                    </li>
+                                
+                                    <li className="mt-1">
+                                        <Link to="/HospitalManagement/ipd-management" className={`flex items-center p-2 text-black rounded transition-colors text-[10px] ${location.pathname.includes('/ipd-management') ? "bg-blue-600 text-white" : "hover:bg-blue-600 hover:text-white"}`}> <FaUser className="mr-2" /> IPD Management</Link>
+                                    </li>
+                                  
+                                    <li className="mt-1">
+                                        <Link to="/HospitalManagement/charge-list" className={`flex items-center p-2 text-black rounded transition-colors text-[10px] ${location.pathname.includes('/charge-list') ? "bg-blue-600 text-white" : "hover:bg-blue-600 hover:text-white"}`}> <FaClipboardList className="mr-2" /> Charge List</Link>
+                                    </li>
+                                   
+                                    <li className="mt-1">
+                                        <Link to="/HospitalManagement/inventory" className={`flex items-center p-2 text-black rounded transition-colors text-[10px] ${location.pathname.includes('/inventory') ? "bg-blue-600 text-white" : "hover:bg-blue-600 hover:text-white"}`}> <FaShoppingCart className="mr-2" /> Inventory Control</Link>
+                                    </li>
+                                
+                                </ul>
+                            )}
+                        </li>
+
                         {/* CRM */}
                         {hasAMSAccessCRM && (
                             <li className="mt-3">
@@ -520,6 +558,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                         {hasAMSAccessBudget && (
                             <li className="mt-1"> <Link to="/FinancialBudget" className={`flex items-center p-2 text-black rounded transition-colors ${location.pathname === '/FinancialBudget' ? 'bg-blue-600 text-white' : 'hover:bg-blue-600 hover:text-white'}`}> <FaCoins className="mr-2" /> Financial Budget </Link> </li>
                         )}
+
+
                         {hasAMSAccessWorkflow && (
                             <li className="mt-1">
                                 <Link

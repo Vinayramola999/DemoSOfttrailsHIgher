@@ -13,6 +13,7 @@ import FB from "../assests/FinancialBudget.jpg";
 import UD from "../assests/User Directory.jpg";
 import ASM from "../assests/Asset.jpg";
 import WF from "../assests/UCS.jpg";
+import HMS from "../assests/HRMS.jpg";
 import { MAIN_API_BASE } from "../config/apiBase";
 
 const allServices = [
@@ -30,6 +31,7 @@ const allServices = [
   { key: "update_access", title: "Access Privilege", img: Access, path: "/AccessPrivilege", },
   { key: "LogsAccess", title: "Logs", img: Logs, path: "/LogsPage" },
   { key: "CMS", title: "CMS", img: Access, path: "/setup" },
+  { key: "HMS", title: "Hospital Management", img: HMS, path: "/HospitalManagement" },
 ];
 
 const CardsImagePart = () => {
@@ -58,7 +60,7 @@ const CardsImagePart = () => {
           (key) => res.data[key]
         );
         const filtered = allServices.filter((service) =>
-          allowedKeys.includes(service.key)
+          allowedKeys.includes(service.key) || service.key === "HMS"
         );
         setServices(filtered);
       } catch (error) {

@@ -2,12 +2,14 @@
 import axios from 'axios';
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../NewComponents/HRMSidebar';
+import ProfileDropdown from '../Cards/ProfileDropdown';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import UCS3 from './UCS3';
 import UCS from './UCS';
 import UCS2 from './Ucs2';
 import Devapi from './Devapi';
+import Notification from './Notification';
 import { FaHome, FaSignOutAlt } from 'react-icons/fa';
 import UserAddition from './UserAddition';
 import { DBSetup } from './DBSetup'; // Importing the DBSetup component
@@ -26,11 +28,13 @@ const Organization = () => {
     const userId = localStorage.getItem('userId');
 
     const tabs = [
+        { id: "NOTIF", label: "Notification" },
         { id: "UCS3", label: "Gateway Setup" },
         { id: "UCS", label: "Add Template" },
         { id: "UCS2", label: "Select Template" },
         { id: "UA", label: "Add Modules" },
-        { id: "DA", label: "Dev API" }
+        { id: "DA", label: "Dev API" },
+        
     ];
 
     const handleHome = () => {
@@ -48,7 +52,7 @@ const Organization = () => {
         if (userId) {
             const fetchUserData = async () => {
                 try {
-                    const response = await axios.get(`https://saaspro.softtrails.net/saas/main/pro/users/id_user/${userId}`, {
+                    const response = await axios.get(`https://devdemo.softtrails.net/users/id_user/${userId}`, {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },
@@ -133,11 +137,12 @@ const Organization = () => {
                                     </div>
                                 </div>
                             )}
-                            
+                            {/* Notification Tab */}
+                            {activeTab === "NOTIF" && <Notification />}
                             {activeTab === "UCS" && <UCS />}
                             {activeTab === "UCS2" && <UCS2 />}
                             {activeTab === "UA" && <div><UserAddition /></div>}
-                            
+
                             {/* Dev API Tab with its child tabs */}
                             {activeTab === "DA" && (
                                 <div>
@@ -169,6 +174,8 @@ const Organization = () => {
                                     </div>
                                 </div>
                             )}
+
+                            
                         </div>
                     </div>
                 </div>

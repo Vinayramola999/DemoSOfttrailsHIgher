@@ -73,7 +73,7 @@ import SubmitApprovalTab from "./CRM/Customer/pages/SubmitApprovalTab";
 import Lead from "./SalesManagement/Lead";
 import QuotationPreview from "./SalesManagement/QuotationPreview";
 import Salesprocess from "./SalesManagement/Salesprocess";
-
+import HMSApp from "./HospitalManagement/HMSApp";
 
 function App({ employeeId, userId }) {
   const appRouter = createBrowserRouter([
@@ -165,6 +165,9 @@ function App({ employeeId, userId }) {
         ////..........UCS............
             { path: "/AllTabs", element: <AllTabs /> },
         { path: "/UCS3", element: <UCS3 /> },
+        
+        //..........Hospital Management..........
+        { path: "/HospitalManagement/*", element: <HMSApp /> },
 
       ],
     },
