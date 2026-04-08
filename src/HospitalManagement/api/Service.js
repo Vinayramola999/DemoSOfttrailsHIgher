@@ -9,6 +9,18 @@ const api = axios.create({
   },
 });
 
+api.interceptors.request.use(
+  (config) => {
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // POST: Register a patient
 export const createPatient = async (formData) => {
@@ -170,13 +182,13 @@ export const uploadDocument = async (
     document_name,
   }];
   formData.append("metadata", JSON.stringify(metadataArr));
-  formData.append("token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzYsImVtYWlsIjoibmVoYXBhbndhcjU0MEBnbWFpbC5jb20iLCJpYXQiOjE3NjU0MjkxMzksImV4cCI6MTc2NTUxNTUzOX0.OvrxSJ9eNK2mYfJiede8UcP3kCdw-midd9iYLl0K1GQ");
+  const token = sessionStorage.getItem("token");
+  formData.append("token", token);
 
   const response = await axios.post(url, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
-      Authorization:
-        "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzYsImVtYWlsIjoibmVoYXBhbndhcjU0MEBnbWFpbC5jb20iLCJpYXQiOjE3NjU0MjkxMzksImV4cCI6MTc2NTUxNTUzOX0.OvrxSJ9eNK2mYfJiede8UcP3kCdw-midd9iYLl0K1GQ"
+      Authorization: `Bearer ${token}`
     },
     timeout: 30000,
   });
@@ -684,7 +696,11 @@ export const getManageListItems = async (chargeTypeId) => {
   try {
     // The API to return all manage-list items (no chargeType filter)
     const url = `http://65.1.86.178:9000/api/manage-list`;
-    const response = await axios.get(url, { timeout: 10000 });
+    const token = sessionStorage.getItem("token");
+    const response = await axios.get(url, { 
+      timeout: 10000,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
 
     // Normalize similar to getaddManageListItem: backend may return array or wrapped object
     let data = [];
@@ -1214,7 +1230,11 @@ export const getDiscounts = async () => {
 export const getDiscountsExternal = async () => {
   try {
     const url = "http://65.1.86.178:9000/api/discounts";
-    const response = await axios.get(url, { timeout: 10000 });
+    const token = sessionStorage.getItem("token");
+    const response = await axios.get(url, { 
+      timeout: 10000,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
     // Expect an array payload like the example in the ticket
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
